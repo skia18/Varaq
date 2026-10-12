@@ -1,0 +1,15 @@
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS persona_blocks;
+DROP TABLE IF EXISTS saved_pieces;
+DROP TABLE IF EXISTS responses;
+DROP TABLE IF EXISTS collection_pieces;
+DROP TABLE IF EXISTS collections;
+DROP TABLE IF EXISTS piece_tags;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS pieces;
+DROP TABLE IF EXISTS personas;
+DROP TABLE IF EXISTS app_users;
+DROP TYPE IF EXISTS report_status;
+DROP TYPE IF EXISTS collection_visibility;
+DROP TYPE IF EXISTS piece_visibility;
+DROP TYPE IF EXISTS piece_status;
