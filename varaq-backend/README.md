@@ -43,3 +43,5 @@ The initial migration references `auth.users`, which exists in Supabase. For loc
 5. Add OpenAPI-generated TypeScript client for the React frontend.
 
 Do not expose the database directly to the frontend. The Go service must enforce piece visibility and ownership for every request.
+
+this is to check ownership
