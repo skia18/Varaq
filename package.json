@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/varaq/generated/api",
+    "api:generate:go": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g go-server -o apps/varaq-backend/generated/server",
+    "api:generate": "pnpm api:generate:web && pnpm api:generate:go"
+  
+}
   },
   "keywords": [],
   "author": "",
