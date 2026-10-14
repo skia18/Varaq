@@ -1,0 +1,667 @@
+
+openapi: 3.1.0
+
+info:
+  title: Varaq API
+  version: 0.1.0
+  description: >
+    REST API for Varaq, a literary writing and discovery platform.
+    Writers can create pseudonymous personas, draft and publish pieces,
+    and discover publicly available writing.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Health
+    description: Service health and readiness
+  - name: Personas
+    description: Pseudonymous literary identities
+  - name: Pieces
+    description: Writing drafts and published pieces
+  - name: Feed
+    description: Public literary discovery
+
+paths:
+  /healthz:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      summary: Check API liveness
+      description: >
+        Confirms that the HTTP process is running.
+        Does not check database connectivity.
+      security: []
+      responses:
+        "200":
+          description: API process is running
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+
+  /readyz:
+    get:
+      tags: [Health]
+      operationId: getReadiness
+      summary: Check database readiness
+      description: >
+        Executes a lightweight database query to verify that
+        PostgreSQL is reachable.
+      security: []
+      responses:
+        "200":
+          description: API and database are ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "503":
+          description: Database is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/personas:
+    post:
+      tags: [Personas]
+      operationId: createPersona
+      summary: Create a literary persona
+      description: >
+        Creates a persona owned by the authenticated Supabase user.
+        The owner is derived from the verified access token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePersona"
+      responses:
+        "201":
+          description: Persona created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Persona"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: Handle already exists or persona limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/personas/{handle}:
+    parameters:
+      - $ref: "#/components/parameters/Handle"
+
+    get:
+      tags: [Personas]
+      operationId: getPersona
+      summary: Retrieve a public persona
+      security: []
+      responses:
+        "200":
+          description: Persona found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Persona"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    patch:
+      tags: [Personas]
+      operationId: updatePersona
+      summary: Update an owned persona
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePersona"
+      responses:
+        "200":
+          description: Persona updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Persona"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/pieces:
+    post:
+      tags: [Pieces]
+      operationId: createPiece
+      summary: Create a writing draft
+      description: >
+        Creates a draft for a persona owned by the authenticated user.
+        New pieces always start in draft status and are private by default.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePiece"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/pieces/{id}:
+    parameters:
+      - $ref: "#/components/parameters/PieceId"
+
+    get:
+      tags: [Pieces]
+      operationId: getPiece
+      summary: Retrieve a piece
+      description: >
+        Retrieves a piece if its visibility and publication status
+        permit access. Drafts and inaccessible resources must not
+        be exposed to anonymous readers.
+      security: []
+      responses:
+        "200":
+          description: Piece found and accessible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    patch:
+      tags: [Pieces]
+      operationId: updatePiece
+      summary: Update an owned piece
+      description: >
+        Updates a piece owned by the authenticated user.
+        The author and ownership fields cannot be changed through this request.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePiece"
+      responses:
+        "200":
+          description: Piece updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      tags: [Pieces]
+      operationId: deletePiece
+      summary: Delete an owned piece
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Piece deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/pieces/{id}/publish:
+    parameters:
+      - $ref: "#/components/parameters/PieceId"
+
+    post:
+      tags: [Pieces]
+      operationId: publishPiece
+      summary: Publish a piece
+      description: >
+        Publishes an owned draft or unpublished piece.
+        The server sets publishedAt. The piece's visibility determines
+        whether it appears in public discovery.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Piece published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/feed:
+    get:
+      tags: [Feed]
+      operationId: getFeed
+      summary: Browse the public literary feed
+      description: >
+        Returns published pieces with public visibility only.
+        Supports cursor-based pagination.
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of pieces to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque cursor returned by the previous response
+          schema:
+            type: string
+
+        - name: type
+          in: query
+          required: false
+          description: Filter by literary piece type
+          schema:
+            $ref: "#/components/schemas/PieceType"
+
+      responses:
+        "200":
+          description: Public feed page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PiecePage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/v1/personas/{handle}/pieces:
+    parameters:
+      - $ref: "#/components/parameters/Handle"
+
+    get:
+      tags: [Personas]
+      operationId: listPersonaPieces
+      summary: List a persona's public writing
+      description: >
+        Returns published pieces with public visibility belonging
+        to the requested persona.
+      security: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: Persona's public writing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PiecePage"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Handle:
+      name: handle
+      in: path
+      required: true
+      description: Normalized, lowercase persona handle
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 30
+        pattern: "^[a-z0-9_]+$"
+
+    PieceId:
+      name: id
+      in: path
+      required: true
+      description: UUID of the piece
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status, database]
+      properties:
+        status:
+          type: string
+          const: ok
+        database:
+          type: string
+          const: connected
+
+    PieceType:
+      type: string
+      enum:
+        - poem
+        - fragment
+        - story
+        - letter
+        - essay
+
+    PieceStatus:
+      type: string
+      enum:
+        - draft
+        - published
+
+    Visibility:
+      type: string
+      enum:
+        - public
+        - unlisted
+        - private
+
+    CreatePersona:
+      type: object
+      additionalProperties: false
+      required:
+        - handle
+        - displayName
+      properties:
+        handle:
+          type: string
+          minLength: 3
+          maxLength: 30
+          pattern: "^[a-z0-9_]+$"
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        bio:
+          type: [string, "null"]
+          maxLength: 500
+
+    UpdatePersona:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 80
+        bio:
+          type: [string, "null"]
+          maxLength: 500
+
+    Persona:
+      type: object
+      required:
+        - id
+        - handle
+        - displayName
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        handle:
+          type: string
+        displayName:
+          type: string
+        bio:
+          type: [string, "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreatePiece:
+      type: object
+      additionalProperties: false
+      required:
+        - personaId
+        - title
+        - body
+        - type
+      properties:
+        personaId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 50000
+        type:
+          $ref: "#/components/schemas/PieceType"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+          default: private
+
+    UpdatePiece:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 50000
+        type:
+          $ref: "#/components/schemas/PieceType"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+
+    Piece:
+      type: object
+      required:
+        - id
+        - personaId
+        - slug
+        - title
+        - body
+        - type
+        - status
+        - visibility
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        personaId:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        type:
+          $ref: "#/components/schemas/PieceType"
+        status:
+          $ref: "#/components/schemas/PieceStatus"
+        visibility:
+          $ref: "#/components/schemas/Visibility"
+        publishedAt:
+          type: [string, "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PiecePage:
+      type: object
+      required:
+        - items
+        - nextCursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Piece"
+        nextCursor:
+          type: [string, "null"]
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: [string, "null"]
+
+    InternalError:
+      type: object
+      description: Generic internal server error response
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              const: internal_error
+            message:
+              type: string
+              const: An unexpected error occurred.
+            requestId:
+              type: [string, "null"]
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Missing or invalid access token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Forbidden:
+      description: Operation not permitted
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Resource not found or not accessible
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/InternalError"

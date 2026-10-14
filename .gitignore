@@ -1,1 +1,30 @@
 node_modules
+
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+.next/
+
+# Go build artifacts
+*.exe
+*.test
+*.out
+/bin/
+
+# Local editor and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Local coverage output
+coverage.out
+coverage.html

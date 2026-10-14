@@ -1,29 +1,27 @@
 {
-  "name": "Varaq",
+  "name": "varaq",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "A monorepo for the Varaq application",
+  "workspaces": [
+    "apps/varaq-frontend/varaq"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/varaq/generated/api",
-    "api:generate:go": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g go-server -o apps/varaq-backend/generated/server",
-    "api:generate": "pnpm api:generate:web && pnpm api:generate:go"
-  
-}
+    "dev:web": "npm run dev --workspace=apps/varaq-frontend/varaq",
+    "build:web": "npm run build --workspace=apps/varaq-frontend/varaq"
   },
-  "keywords": [],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skia18/Varaq.git"
+  },
+  "author": "skia18",
   "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.11.2",
-      "onFail": "download"
-    }
+  "bugs": {
+    "url": "https://github.com/skia18/Varaq/issues"
   },
-  "packageManager": "pnpm@12.11.2",
-  "type": "module",
+  "homepage": "https://github.com/skia18/Varaq#readme",
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.41.0"
+    "@openapitools/openapi-generator-cli": "^2.14.0"
   }
 }
