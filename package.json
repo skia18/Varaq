@@ -4,12 +4,12 @@
   "private": true,
   "description": "A monorepo for the Varaq application",
   "workspaces": [
-    "apps/varaq-frontend/varaq"
+    "apps/varaq-frontend"
   ],
   "scripts": {
-    "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/varaq/generated/api",
-    "dev:web": "npm run dev --workspace=apps/varaq-frontend/varaq",
-    "build:web": "npm run build --workspace=apps/varaq-frontend/varaq"
+      "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/src/generated/api",
+      "dev:web": "npm run dev --workspace=varaq-frontend",
+      "build:web": "npm run build --workspace=varaq-frontend"
   },
   "repository": {
     "type": "git",
