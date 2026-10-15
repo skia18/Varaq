@@ -4,25 +4,20 @@
   min-height: 100vh;
 }
 
+
 .sidebar {
   position: fixed;
-
   z-index: 20;
-
   inset: 0 auto 0 0;
-
   display: flex;
-
   width: 224px;
-
+  height: 100vh;
+  height: 100dvh;
   flex-direction: column;
-
+  overflow-y: auto;
   padding: 37px 25px 20px;
-
   border-right: 1px solid var(--border);
-
   background: var(--background);
-
   background-image: var(--texture);
 }
 
@@ -229,13 +224,11 @@
 
 .side-user {
   display: flex;
-
+  flex-shrink: 0;
   align-items: center;
-
   gap: 11px;
-
+  margin-top: auto;
   padding-top: 17px;
-
   border-top: 1px solid var(--border);
 }
 
