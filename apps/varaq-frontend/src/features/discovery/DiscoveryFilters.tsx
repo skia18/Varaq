@@ -24,9 +24,7 @@ export function DiscoveryFilters({
   return (
     <section className="space-y-6">
       <label className="block">
-        <span className="mb-2 block text-sm text-ink/65">
-          Search the pages
-        </span>
+        <span className="mb-2 block text-sm text-ink/65">Search the pages</span>
 
         <input
           type="search"
@@ -72,9 +70,7 @@ export function DiscoveryFilters({
             onClick={() => onThemeChange('')}
             aria-pressed={!selectedTheme}
             className={`text-sm underline-offset-4 ${
-              !selectedTheme
-                ? 'text-oxide underline'
-                : 'text-ink/60 hover:text-oxide'
+              !selectedTheme ? 'text-oxide underline' : 'text-ink/60 hover:text-oxide'
             }`}
           >
             All themes
@@ -84,9 +80,7 @@ export function DiscoveryFilters({
             <button
               key={theme}
               type="button"
-              onClick={() =>
-                onThemeChange(selectedTheme === theme ? '' : theme)
-              }
+              onClick={() => onThemeChange(selectedTheme === theme ? '' : theme)}
               aria-pressed={selectedTheme === theme}
               className={`rounded-full px-3 py-1 text-sm transition-colors ${
                 selectedTheme === theme

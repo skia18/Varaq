@@ -9,13 +9,9 @@ export function PieceCard({ piece }: PieceCardProps) {
   return (
     <article className="group flex h-full flex-col border-t border-ink/20 py-6">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <span className="text-xs tracking-widest text-oxide uppercase">
-          {piece.type}
-        </span>
+        <span className="text-xs tracking-widest text-oxide uppercase">{piece.type}</span>
 
-        <span className="text-xs text-ink/50">
-          {piece.readingTime} min read
-        </span>
+        <span className="text-xs text-ink/50">{piece.readingTime} min read</span>
       </div>
 
       <Link
@@ -25,9 +21,7 @@ export function PieceCard({ piece }: PieceCardProps) {
         {piece.title}
       </Link>
 
-      <p className="mt-4 flex-1 text-sm leading-7 text-ink/75">
-        {piece.excerpt}
-      </p>
+      <p className="mt-4 flex-1 text-sm leading-7 text-ink/75">{piece.excerpt}</p>
 
       <div className="mt-5 flex flex-wrap gap-2">
         {piece.themes.map((theme) => (
@@ -41,10 +35,7 @@ export function PieceCard({ piece }: PieceCardProps) {
       </div>
 
       <div className="mt-6 border-t border-ink/10 pt-4">
-        <Link
-          to={`/u/${piece.handle}`}
-          className="text-sm transition-colors hover:text-oxide"
-        >
+        <Link to={`/u/${piece.handle}`} className="text-sm transition-colors hover:text-oxide">
           {piece.author}
         </Link>
       </div>

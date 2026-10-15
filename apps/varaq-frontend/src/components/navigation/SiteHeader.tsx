@@ -1,12 +1,4 @@
-import {
-  BookOpen,
-  Bookmark,
-  Feather,
-  Library,
-  Search,
-  Sprout,
-  UserRound,
-} from 'lucide-react';
+import { BookOpen, Bookmark, Feather, Library, Search, Sprout, UserRound } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
 
 const navigation = [
@@ -35,9 +27,7 @@ export function SiteHeader() {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) =>
-              `nav-item${isActive ? ' active' : ''}`
-            }
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             <Icon aria-hidden="true" />
             <span>{label}</span>
@@ -94,10 +84,10 @@ export function Topbar() {
         </span>
       </Link>
 
-    <p className="topbar-note">
-      <span>✳</span>
-      Leave a page of yourself behind.
-    </p>
+      <p className="topbar-note">
+        <span>✳</span>
+        Leave a page of yourself behind.
+      </p>
 
       <div className="topbar-actions">
         <Link

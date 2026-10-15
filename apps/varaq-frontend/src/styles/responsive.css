@@ -1,23 +1,17 @@
 /* Responsive feed */
 
 @media (max-width: 1180px) {
-
   .page-content {
-
     padding-right: 30px;
 
     padding-left: 30px;
-
   }
 
   .feed-layout {
-
     grid-template-columns: minmax(0, 1fr);
-
   }
 
   .field-notes {
-
     display: grid;
 
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -27,267 +21,185 @@
     padding-top: 25px;
 
     border-top: 1px solid var(--border);
-
   }
 
   .notes-heading,
-
   .notes-bottom {
-
     display: none;
-
   }
 
   .daily-line,
-
   .prompt-note {
-
     margin-top: 0;
-
   }
-
 }
 
 @media (max-width: 800px) {
-
   .page-content {
-
     padding: 29px 24px;
-
   }
 
   .writing-grid {
-
     grid-template-columns: repeat(2, minmax(0, 1fr));
 
     gap: 20px;
-
   }
 
   .writing-column:last-child {
-
     display: none;
-
   }
 
   .intro-note {
-
     display: none;
-
   }
-
 }
 
 @media (max-width: 600px) {
-
   .page-content {
-
     padding: 29px 20px 20px;
-
   }
 
   .page-intro h1 {
-
     font-size: 50px;
-
   }
 
   .writing-grid {
-
     grid-template-columns: repeat(2, minmax(0, 1fr));
 
     gap: 16px;
-
   }
 
   .writing-column {
-
     gap: 23px;
-
   }
 
   .writing-card {
-
     padding: 19px 15px 11px;
-
   }
 
   .card-meta {
-
     flex-wrap: wrap;
 
     gap: 3px;
 
     font-size: 8px;
-
   }
 
   .card-read h2 {
-
     margin: 20px 0 15px;
 
     font-size: 24px;
-
   }
 
   .card-excerpt {
-
     font-size: 10px;
 
     line-height: 1.9;
-
   }
 
   .card-footer {
-
     gap: 0;
 
     margin-top: 20px;
 
     font-size: 8px;
-
   }
 
   .card-footer button {
-
     gap: 3px;
 
     font-size: 8px;
-
   }
 
   .card-photo {
-
     height: 195px;
-
   }
 
   .photo-content {
-
     padding: 16px 15px 10px;
-
   }
 
   .reading-modal {
-
     padding: 35px 25px;
-
   }
 
   .reading-title {
-
     font-size: 35px;
-
   }
 
   .reading-body {
-
     font-size: 14px;
-
   }
 
   .page-footer {
-
     flex-wrap: wrap;
-
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .writing-card {
-
     transition: none;
-
   }
 
   .writing-card:hover {
-
     transform: none;
-
   }
-
 }
 
 /* Responsive shell */
 
 @media (max-width: 900px) {
-
   .sidebar {
-
     width: 200px;
 
     padding-right: 18px;
 
     padding-left: 18px;
-
   }
 
   .main-shell {
-
     margin-left: 200px;
-
   }
 
   .topbar {
-
     padding-right: 24px;
 
     padding-left: 24px;
-
   }
 
   .topbar-note {
-
     display: none;
-
   }
-
 }
 
 @media (max-width: 680px) {
-
   .sidebar {
-
     display: none;
-
   }
 
   .main-shell {
-
     margin-left: 0;
-
   }
 
   .topbar {
-
     min-height: 66px;
 
     padding: 0 18px;
-
   }
 
   .mobile-brand {
-
     display: inline-flex;
-
   }
 
   .mobile-brand .brand-name {
-
     font-size: 38px;
-
   }
 
   .mobile-brand .brand-urdu {
-
     font-size: 21px;
-
   }
 
   .write-button {
-
     width: 38px;
 
     overflow: hidden;
@@ -297,25 +209,17 @@
     padding: 0;
 
     font-size: 0;
-
   }
 
   .write-button svg {
-
     flex-shrink: 0;
-
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
-
   *::before,
-
   *::after {
-
     scroll-behavior: auto !important;
 
     animation-duration: 0.01ms !important;
@@ -323,7 +227,5 @@
     animation-iteration-count: 1 !important;
 
     transition-duration: 0.01ms !important;
-
   }
-
 }

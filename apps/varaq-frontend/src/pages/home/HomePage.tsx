@@ -3,14 +3,7 @@ import { ArrowDownLeft, ArrowRight, Sprout } from 'lucide-react';
 import { WritingCard } from '../../components/literary/WritingCard';
 import { writings, type Writing, type WritingForm } from '../../features/feed/writings';
 
-const filters = [
-  'All pages',
-  'Poems',
-  'Short stories',
-  'Essays',
-  'Letters',
-  'Fragments',
-] as const;
+const filters = ['All pages', 'Poems', 'Short stories', 'Essays', 'Letters', 'Fragments'] as const;
 
 type FeedFilter = (typeof filters)[number];
 
@@ -29,9 +22,7 @@ export function HomePage() {
       : result;
   }, [filter, sort]);
 
-  const columns = [0, 1, 2].map((column) =>
-    filtered.filter((_, index) => index % 3 === column),
-  );
+  const columns = [0, 1, 2].map((column) => filtered.filter((_, index) => index % 3 === column));
 
   return (
     <div className="page-content">
@@ -42,7 +33,8 @@ export function HomePage() {
         </div>
 
         <div className="intro-note">
-          <span>Take what you need.
+          <span>
+            Take what you need.
             <br />
             Leave what you feel.
           </span>
@@ -81,11 +73,7 @@ export function HomePage() {
           {columns.map((column, index) => (
             <div className="writing-column" key={index}>
               {column.map((writing) => (
-                <WritingCard
-                  key={writing.id}
-                  writing={writing}
-                  onRead={setReading}
-                />
+                <WritingCard key={writing.id} writing={writing} onRead={setReading} />
               ))}
             </div>
           ))}
@@ -100,8 +88,8 @@ export function HomePage() {
           <div className="daily-line">
             <span className="eyebrow">A line to live with</span>
             <blockquote>
-              “Let everything happen to you: beauty and terror. Just keep going.
-              No feeling is final.”
+              “Let everything happen to you: beauty and terror. Just keep going. No feeling is
+              final.”
             </blockquote>
             <cite>— Rainer Maria Rilke</cite>
           </div>

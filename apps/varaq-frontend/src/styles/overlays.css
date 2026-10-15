@@ -1,7 +1,6 @@
 /* Reading overlay */
 
 .reading-backdrop {
-
   position: fixed;
 
   z-index: 100;
@@ -17,11 +16,9 @@
   padding: 20px;
 
   background: rgb(35 31 27 / 55%);
-
 }
 
 .reading-modal {
-
   position: relative;
 
   width: min(670px, 100%);
@@ -37,11 +34,9 @@
   background-image: var(--texture);
 
   box-shadow: 0 20px 70px rgb(0 0 0 / 20%);
-
 }
 
 .reading-close {
-
   position: absolute;
 
   top: 12px;
@@ -55,11 +50,9 @@
   color: var(--muted-foreground);
 
   font-size: 28px;
-
 }
 
 .reading-title {
-
   margin: 15px 0;
 
   font-family: var(--font-display);
@@ -69,21 +62,17 @@
   font-weight: 500;
 
   line-height: 1.15;
-
 }
 
 .reading-byline {
-
   color: var(--muted-foreground);
 
   font-family: var(--font-serif);
 
   font-size: 12px;
-
 }
 
 .reading-body {
-
   margin: 28px 0;
 
   font-family: var(--font-serif);
@@ -93,5 +82,4 @@
   line-height: 1.95;
 
   white-space: pre-wrap;
-
 }

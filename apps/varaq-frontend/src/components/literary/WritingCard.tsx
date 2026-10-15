@@ -16,9 +16,7 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
       <div className="card-meta">
         <span className="card-author">{writing.author}</span>
         <span className="card-type">
-          {writing.form === 'Short stories'
-            ? 'Short story'
-            : writing.form.replace(/s$/, '')}
+          {writing.form === 'Short stories' ? 'Short story' : writing.form.replace(/s$/, '')}
         </span>
       </div>
 
@@ -76,11 +74,7 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
         </button>
       )}
 
-      {writing.tone === 'photo' ? (
-        <div className="photo-content">{content}</div>
-      ) : (
-        content
-      )}
+      {writing.tone === 'photo' ? <div className="photo-content">{content}</div> : content}
     </article>
   );
 }

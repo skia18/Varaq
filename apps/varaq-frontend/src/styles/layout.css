@@ -1,13 +1,10 @@
 /* Application shell */
 
 .varaq-shell {
-
   min-height: 100vh;
-
 }
 
 .sidebar {
-
   position: fixed;
 
   z-index: 20;
@@ -27,11 +24,9 @@
   background: var(--background);
 
   background-image: var(--texture);
-
 }
 
 .brand {
-
   display: inline-flex;
 
   align-items: baseline;
@@ -39,11 +34,9 @@
   gap: 12px;
 
   color: var(--foreground);
-
 }
 
 .brand-name {
-
   font-family: var(--font-display);
 
   font-size: 49px;
@@ -53,11 +46,9 @@
   line-height: 1;
 
   letter-spacing: -1.8px;
-
 }
 
 .brand-urdu {
-
   color: var(--primary);
 
   font-family: serif;
@@ -65,11 +56,9 @@
   font-size: 25px;
 
   line-height: 1;
-
 }
 
 .brand-caption {
-
   margin-top: 11px;
 
   color: var(--muted-foreground);
@@ -79,11 +68,9 @@
   font-size: 12px;
 
   font-style: italic;
-
 }
 
 .side-navigation {
-
   display: flex;
 
   flex-direction: column;
@@ -91,11 +78,9 @@
   gap: 8px;
 
   margin-top: 47px;
-
 }
 
 .nav-item {
-
   position: relative;
 
   display: flex;
@@ -112,12 +97,12 @@
 
   font-size: 13px;
 
-  transition: color 160ms ease, background-color 160ms ease;
-
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
 }
 
 .nav-item svg {
-
   width: 17px;
 
   height: 17px;
@@ -125,25 +110,19 @@
   flex-shrink: 0;
 
   stroke-width: 1.5;
-
 }
 
 .nav-item:hover {
-
   color: var(--primary);
-
 }
 
 .nav-item.active {
-
   background: color-mix(in oklab, var(--primary) 7%, transparent);
 
   color: var(--primary);
-
 }
 
 .nav-item.active::before {
-
   position: absolute;
 
   inset: 9px auto 9px 0;
@@ -153,21 +132,17 @@
   background: var(--primary);
 
   content: '';
-
 }
 
 .side-section {
-
   margin-top: 36px;
 
   padding-top: 25px;
 
   border-top: 1px solid var(--border);
-
 }
 
 .eyebrow {
-
   color: var(--muted-foreground);
 
   font-size: 10px;
@@ -177,11 +152,9 @@
   letter-spacing: 1.6px;
 
   text-transform: uppercase;
-
 }
 
 .side-collection {
-
   display: flex;
 
   align-items: center;
@@ -197,17 +170,13 @@
   font-size: 12px;
 
   transition: color 160ms ease;
-
 }
 
 .side-collection:hover {
-
   color: var(--primary);
-
 }
 
 .collection-dot {
-
   width: 7px;
 
   height: 7px;
@@ -217,21 +186,15 @@
   border-radius: 50%;
 
   background: var(--faded);
-
 }
 
 .collection-dot.red {
-
   background: var(--primary);
-
 }
 
 .collection-dot.sage {
-
   background: var(--secondary);
-
 }
-
 
 .side-note {
   margin-top: auto;
@@ -254,11 +217,7 @@
   stroke-width: 1;
 }
 
-
-
-
 .side-note-quote {
-
   font-family: 'Caveat', cursive;
 
   font-size: 1.35rem;
@@ -266,12 +225,9 @@
   font-weight: 400;
 
   line-height: 1.35;
-
 }
 
-
 .side-user {
-
   display: flex;
 
   align-items: center;
@@ -281,11 +237,9 @@
   padding-top: 17px;
 
   border-top: 1px solid var(--border);
-
 }
 
 .avatar-mark {
-
   display: grid;
 
   width: 34px;
@@ -309,51 +263,40 @@
   font-size: 22px;
 
   font-style: italic;
-
 }
 
 .side-user strong,
-
 .side-user small {
-
   display: block;
-
 }
 
 .side-user strong {
-
   font-family: var(--font-serif);
 
   font-size: 12px;
 
   font-weight: 500;
-
 }
 
 .side-user small {
-
   margin-top: 4px;
 
   color: var(--muted-foreground);
 
   font-size: 10px;
-
 }
 
 /* Main content and top navigation */
 
 .main-shell {
-
   min-width: 0;
 
   min-height: 100vh;
 
   margin-left: 224px;
-
 }
 
 .topbar {
-
   position: sticky;
 
   z-index: 10;
@@ -377,17 +320,13 @@
   background: color-mix(in oklab, var(--background) 92%, transparent);
 
   backdrop-filter: blur(12px);
-
 }
 
 .mobile-brand {
-
   display: none;
-
 }
 
 .topbar-note {
-
   display: flex;
 
   align-items: center;
@@ -401,31 +340,24 @@
   font-size: 13px;
 
   font-style: italic;
-
 }
 
 .topbar-note span {
-
   color: var(--primary);
 
   font-style: normal;
-
 }
 
 .topbar-actions {
-
   display: flex;
 
   align-items: center;
 
   gap: 13px;
-
 }
 
 .icon-button,
-
 .literary-button {
-
   display: inline-flex;
 
   min-height: 38px;
@@ -442,40 +374,34 @@
 
   color: var(--foreground);
 
-  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
-
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
 }
 
 .icon-button {
-
   width: 38px;
 
   padding: 0;
-
 }
 
 .icon-button svg,
-
 .literary-button svg {
-
   width: 16px;
 
   height: 16px;
 
   stroke-width: 1.6;
-
 }
 
 .icon-button:hover {
-
   border-color: var(--primary);
 
   color: var(--primary);
-
 }
 
 .literary-button {
-
   padding: 0 15px;
 
   border-color: var(--primary);
@@ -485,11 +411,8 @@
   color: var(--primary-foreground);
 
   font-size: 12px;
-
 }
 
 .literary-button:hover {
-
   background: color-mix(in oklab, var(--primary) 88%, black);
-
 }

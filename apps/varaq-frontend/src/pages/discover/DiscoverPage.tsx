@@ -19,19 +19,13 @@ export function DiscoverPage() {
     return discoveryPieces.filter((piece) => {
       const matchesSearch =
         !query ||
-        [
-          piece.title,
-          piece.excerpt,
-          piece.author,
-          piece.type,
-          ...piece.themes,
-        ].some((value) => value.toLowerCase().includes(query));
+        [piece.title, piece.excerpt, piece.author, piece.type, ...piece.themes].some((value) =>
+          value.toLowerCase().includes(query),
+        );
 
-      const matchesType =
-        selectedType === 'all' || piece.type === selectedType;
+      const matchesType = selectedType === 'all' || piece.type === selectedType;
 
-      const matchesTheme =
-        !selectedTheme || piece.themes.includes(selectedTheme);
+      const matchesTheme = !selectedTheme || piece.themes.includes(selectedTheme);
 
       return matchesSearch && matchesType && matchesTheme;
     });
@@ -46,17 +40,13 @@ export function DiscoverPage() {
   return (
     <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
       <header className="max-w-3xl">
-        <p className="mb-4 text-xs tracking-[0.25em] text-oxide uppercase">
-          The open pages
-        </p>
+        <p className="mb-4 text-xs tracking-[0.25em] text-oxide uppercase">The open pages</p>
 
-        <h1 className="font-display text-6xl leading-none md:text-8xl">
-          Discover
-        </h1>
+        <h1 className="font-display text-6xl leading-none md:text-8xl">Discover</h1>
 
         <p className="mt-6 max-w-xl text-base leading-8 text-ink/65 md:text-lg">
-          Wander through the words people leave behind. Find a thought that
-          feels like yours, written by someone you have never met.
+          Wander through the words people leave behind. Find a thought that feels like yours,
+          written by someone you have never met.
         </p>
       </header>
 
@@ -77,8 +67,7 @@ export function DiscoverPage() {
         <section>
           <div className="mb-6 flex items-center justify-between border-b border-ink/15 pb-4">
             <p className="text-sm text-ink/60">
-              {filteredPieces.length}{' '}
-              {filteredPieces.length === 1 ? 'page' : 'pages'} found
+              {filteredPieces.length} {filteredPieces.length === 1 ? 'page' : 'pages'} found
             </p>
 
             {(search || selectedType !== 'all' || selectedTheme) && (
@@ -100,12 +89,8 @@ export function DiscoverPage() {
             </div>
           ) : (
             <div className="py-16">
-              <h2 className="font-display text-3xl">
-                No pages found, just yet.
-              </h2>
-              <p className="mt-3 text-sm text-ink/60">
-                Try another word or let go of a filter.
-              </p>
+              <h2 className="font-display text-3xl">No pages found, just yet.</h2>
+              <p className="mt-3 text-sm text-ink/60">Try another word or let go of a filter.</p>
               <button
                 type="button"
                 onClick={clearFilters}
