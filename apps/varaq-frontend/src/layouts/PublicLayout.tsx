@@ -1,13 +1,17 @@
 import { Outlet } from 'react-router-dom';
-import { SiteHeader } from '../components/navigation/SiteHeader';
+import { SiteHeader, Topbar } from '../components/navigation/SiteHeader';
+import { SavedPagesProvider } from '../features/saved/SavedPagesContext';
 
 export function PublicLayout() {
   return (
-    <div className="min-h-screen">
-      <SiteHeader />
-      <main>
-        <Outlet />
-      </main>
-    </div>
+    <SavedPagesProvider>
+      <div className="varaq-shell">
+        <SiteHeader />
+        <main className="main-shell">
+          <Topbar />
+          <Outlet />
+        </main>
+      </div>
+    </SavedPagesProvider>
   );
 }

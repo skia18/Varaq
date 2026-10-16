@@ -1,0 +1,321 @@
+/* Paper cards */
+
+.writing-card {
+  position: relative;
+
+  display: flex;
+
+  min-width: 0;
+
+  flex-direction: column;
+
+  padding: 23px 22px 15px;
+
+  background-color: var(--card);
+
+  background-image: var(--texture);
+
+  box-shadow: var(--shadow-paper);
+
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.writing-card:hover {
+  z-index: 1;
+
+  transform: translateY(-3px) rotate(0deg);
+}
+
+.writing-card.tone-paper {
+  transform: rotate(-1deg);
+}
+
+.writing-card.tone-sage {
+  margin-top: 13px;
+
+  background-color: var(--secondary);
+
+  transform: rotate(1.5deg);
+}
+
+.writing-card.tone-red {
+  background-color: var(--primary);
+
+  color: var(--primary-foreground);
+
+  transform: rotate(-1deg);
+}
+
+.writing-card.tone-plain {
+  padding: 14px 10px 15px;
+
+  border-bottom: 1px solid var(--border);
+
+  background: transparent;
+
+  box-shadow: none;
+}
+
+.writing-card.tone-photo {
+  padding: 0;
+
+  transform: rotate(-1deg);
+}
+
+.writing-card.tone-paper::before {
+  position: absolute;
+
+  z-index: 2;
+
+  top: -9px;
+
+  left: calc(50% - 34px);
+
+  width: 69px;
+
+  height: 19px;
+
+  background: color-mix(in oklab, var(--accent) 65%, transparent);
+
+  content: '';
+
+  transform: rotate(-5deg);
+}
+
+.card-meta {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 8px;
+
+  color: var(--muted-foreground);
+
+  font-size: 9px;
+}
+
+.card-author {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 6px;
+}
+
+.card-author::before {
+  width: 4px;
+
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: var(--primary);
+
+  content: '';
+}
+
+.card-type {
+  font-size: 8px;
+
+  letter-spacing: 1.1px;
+
+  text-transform: uppercase;
+}
+
+.card-read {
+  display: block;
+
+  min-height: 0;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: inherit;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.card-read h2 {
+  margin: 23px 0 18px;
+
+  font-family: var(--font-display);
+
+  font-size: 28px;
+
+  font-weight: 500;
+
+  line-height: 1.09;
+}
+
+.card-excerpt {
+  font-family: var(--font-serif);
+
+  font-size: 12px;
+
+  line-height: 1.95;
+
+  white-space: pre-line;
+}
+
+.tone-sage .card-read h2 {
+  margin-top: 35px;
+
+  font-size: 27px;
+}
+
+.tone-sage .card-excerpt {
+  margin: 25px 0 21px;
+
+  font-size: 16px;
+
+  font-style: italic;
+
+  line-height: 1.65;
+}
+
+.tone-red .card-meta {
+  color: var(--primary-foreground);
+
+  opacity: 0.8;
+}
+
+.tone-red .card-author::before {
+  background: var(--primary-foreground);
+}
+
+.tone-red .card-excerpt {
+  font-size: 13px;
+
+  line-height: 1.9;
+}
+
+/* Card actions */
+
+.card-footer {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 4px;
+
+  margin-top: 25px;
+
+  padding-top: 8px;
+
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 15%, transparent);
+
+  color: var(--muted-foreground);
+
+  font-size: 9px;
+}
+
+.card-footer button {
+  display: inline-flex;
+
+  min-width: 25px;
+
+  min-height: 25px;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  padding: 4px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: inherit;
+
+  font-size: 9px;
+}
+
+.card-footer button svg {
+  width: 13px;
+
+  height: 13px;
+
+  stroke-width: 1.3;
+}
+
+.card-footer button.is-active {
+  color: var(--primary);
+}
+
+.tone-red .card-footer {
+  border-color: color-mix(in oklab, var(--primary-foreground) 30%, transparent);
+
+  color: var(--primary-foreground);
+}
+
+.tone-red .card-footer button.is-active {
+  color: var(--primary-foreground);
+}
+
+/* Photographic card */
+
+.card-photo-button {
+  display: block;
+
+  width: 100%;
+
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.card-photo {
+  display: block;
+
+  width: 100%;
+
+  height: 238px;
+
+  object-fit: cover;
+
+  object-position: center 58%;
+}
+
+.photo-content {
+  padding: 17px 21px 13px;
+}
+
+.tone-photo .card-read h2 {
+  margin-top: 18px;
+
+  font-size: 27px;
+}
+
+.tone-photo .card-excerpt {
+  font-size: 11px;
+
+  line-height: 1.8;
+}
+
+.tone-photo .card-footer {
+  margin-top: 17px;
+}
+
+.tone-plain .card-read h2 {
+  font-size: 31px;
+
+  font-style: italic;
+}

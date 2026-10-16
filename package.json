@@ -7,7 +7,8 @@
     "apps/varaq-frontend"
   ],
   "scripts": {
-      "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/src/generated/api",
+    "api:validate-spec": "openapi-generator-cli validate -i apps/varaq-backend/apispec/openapi.yaml",
+    "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/src/generated/api",
       "dev:web": "npm run dev --workspace=varaq-frontend",
       "build:web": "npm run build --workspace=varaq-frontend"
   },
