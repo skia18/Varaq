@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Bookmark, Heart } from 'lucide-react';
 import type { Writing } from '../../features/feed/writings';
+import { useSavedPages } from '../../features/saved/SavedPagesContext';
 
 type WritingCardProps = {
   writing: Writing;
@@ -9,7 +10,8 @@ type WritingCardProps = {
 
 export function WritingCard({ writing, onRead }: WritingCardProps) {
   const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { isSaved, toggleSaved } = useSavedPages();
+  const saved = isSaved(writing.id);
 
   const content = (
     <>
@@ -47,7 +49,7 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
         <button
           type="button"
           className={saved ? 'is-active' : ''}
-          onClick={() => setSaved((value) => !value)}
+          onClick={() => toggleSaved(writing.id)}
           aria-label={saved ? 'Remove saved page' : 'Save this page'}
           aria-pressed={saved}
         >

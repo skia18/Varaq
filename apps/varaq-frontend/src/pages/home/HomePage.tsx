@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownLeft, ArrowRight, Sprout } from 'lucide-react';
 import { WritingCard } from '../../components/literary/WritingCard';
 import { writings, type Writing, type WritingForm } from '../../features/feed/writings';
@@ -11,6 +12,31 @@ export function HomePage() {
   const [filter, setFilter] = useState<FeedFilter>('All pages');
   const [sort, setSort] = useState<'recent' | 'loved'>('recent');
   const [reading, setReading] = useState<Writing | null>(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Open a writing when another page navigates here with its ID.
+  // Collections and Saved Pages can use this to open the reading modal.
+  useEffect(() => {
+    const state = location.state as { openWritingId?: string } | null;
+
+    if (!state?.openWritingId) {
+      return;
+    }
+
+    const writing = writings.find((item) => item.id === state.openWritingId);
+
+    if (writing) {
+      setReading(writing);
+    }
+
+    // Clear the navigation state to prevent reopening on refresh.
+    navigate(location.pathname, {
+      replace: true,
+      state: null,
+    });
+  }, [location.key, location.pathname, location.state, navigate]);
 
   const filtered = useMemo(() => {
     const result = writings.filter(
@@ -121,7 +147,9 @@ export function HomePage() {
         <div
           className="reading-backdrop"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setReading(null);
+            if (event.target === event.currentTarget) {
+              setReading(null);
+            }
           }}
           role="presentation"
         >

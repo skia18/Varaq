@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { BookOpen, Bookmark, Feather, Library, Search, Sprout, UserRound } from 'lucide-react';
 import { Link, NavLink } from 'react-router-dom';
+import { SearchDialog } from './SearchDialog';
 
 const navigation = [
   { label: 'The commons', to: '/', icon: BookOpen, end: true },
@@ -18,6 +20,7 @@ export function SiteHeader() {
             ورق
           </span>
         </Link>
+
         <p className="brand-caption">a place for your words.</p>
       </div>
 
@@ -75,35 +78,42 @@ export function SiteHeader() {
 }
 
 export function Topbar() {
+  const [searchOpen, setSearchOpen] = useState(false);
+
   return (
-    <header className="topbar">
-      <Link to="/" className="brand mobile-brand" aria-label="Varaq home">
-        <span className="brand-name">varaq</span>
-        <span className="brand-urdu" lang="ur">
-          ورق
-        </span>
-      </Link>
-
-      <p className="topbar-note">
-        <span aria-hidden="true">✳</span>
-        Leave a page of yourself behind.
-      </p>
-
-      <div className="topbar-actions">
-        <Link
-          to="/discover"
-          className="icon-button"
-          aria-label="Discover and search writing"
-          title="Discover writing"
-        >
-          <Search aria-hidden="true" />
+    <>
+      <header className="topbar">
+        <Link to="/" className="brand mobile-brand" aria-label="Varaq home">
+          <span className="brand-name">varaq</span>
+          <span className="brand-urdu" lang="ur">
+            ورق
+          </span>
         </Link>
 
-        <Link to="/write" className="literary-button write-button">
-          <Feather aria-hidden="true" />
-          Leave a page
-        </Link>
-      </div>
-    </header>
+        <p className="topbar-note">
+          <span aria-hidden="true">✳</span>
+          Leave a page of yourself behind.
+        </p>
+
+        <div className="topbar-actions">
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Search writing"
+            title="Search writing"
+            onClick={() => setSearchOpen(true)}
+          >
+            <Search aria-hidden="true" />
+          </button>
+
+          <Link to="/write" className="literary-button write-button">
+            <Feather aria-hidden="true" />
+            Leave a page
+          </Link>
+        </div>
+      </header>
+
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }
