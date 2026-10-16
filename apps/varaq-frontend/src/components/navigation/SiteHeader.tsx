@@ -85,7 +85,7 @@ export function Topbar() {
       </Link>
 
       <p className="topbar-note">
-        <span>✳</span>
+        <span aria-hidden="true">✳</span>
         Leave a page of yourself behind.
       </p>
 

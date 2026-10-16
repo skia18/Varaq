@@ -110,7 +110,9 @@
   background: transparent;
   color: var(--muted-foreground);
   font-size: 10px;
-  transition: background 160ms ease, color 160ms ease;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
 }
 
 .filter-list button:hover,
