@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/skia18/varaq/apps/varaq-backend/internal/auth"
 	"github.com/skia18/varaq/apps/varaq-backend/internal/config"
 	"github.com/skia18/varaq/apps/varaq-backend/internal/httpapi"
 	"github.com/skia18/varaq/apps/varaq-backend/internal/store"
@@ -33,9 +34,14 @@ func main() {
 	}
 	defer db.Close()
 
+	verifier := auth.NewSupabaseVerifier(
+		cfg.SupabaseURL,
+		cfg.SupabasePublishableKey,
+	)
+
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           httpapi.NewRouter(db),
+		Handler:           httpapi.NewRouter(db, verifier),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
