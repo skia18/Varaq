@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   BookOpen,
   Bookmark,
-  Feather,
   Library,
   Search,
   Sprout,
@@ -10,6 +9,7 @@ import {
   LogIn,
   LogOut,
   ChevronUp,
+  RefreshCw,
 } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,9 @@ const navigation = [
 ];
 
 export function SiteHeader() {
-  const { user, isLoading, signOut } = useAuth();
+  const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
+    useAuth();
+
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -112,15 +114,27 @@ export function SiteHeader() {
               className="side-user w-full text-left"
               aria-haspopup="menu"
               aria-expanded={profileMenuOpen}
+              aria-label="Open account menu"
               onClick={() => setProfileMenuOpen((open) => !open)}
             >
-              <span className="avatar-mark">{(user.email?.[0] ?? 'v').toLowerCase()}</span>
+              <span className="avatar-mark">
+                {(persona?.displayName?.[0] ?? user.email?.[0] ?? 'v').toLowerCase()}
+              </span>
+
               <span className="min-w-0 flex-1">
                 <strong className="block truncate">
-                  {user.user_metadata?.display_name || 'Your profile'}
+                  {isPersonaLoading ? 'Loading persona…' : (persona?.displayName ?? 'Your profile')}
                 </strong>
-                <small className="block truncate">{user.email}</small>
+
+                <small className="block truncate">
+                  {persona
+                    ? `@${persona.handle}`
+                    : personaError
+                      ? 'Profile unavailable'
+                      : user.email}
+                </small>
               </span>
+
               <ChevronUp
                 aria-hidden="true"
                 className={`shrink-0 transition-transform ${profileMenuOpen ? '' : 'rotate-180'}`}
@@ -134,6 +148,21 @@ export function SiteHeader() {
                 aria-label="Account menu"
                 className="absolute bottom-full left-0 z-50 mb-2 w-full rounded-lg border border-border bg-background p-1 shadow-lg"
               >
+                {personaError && (
+                  <div className="px-3 py-2">
+                    <p className="text-xs text-destructive">Could not load your profile.</p>
+
+                    <button
+                      type="button"
+                      className="mt-1 flex items-center gap-2 text-xs underline"
+                      onClick={() => void refreshPersona()}
+                    >
+                      <RefreshCw size={12} aria-hidden="true" />
+                      Try again
+                    </button>
+                  </div>
+                )}
+
                 <Link
                   to="/wall/you"
                   role="menuitem"
@@ -148,7 +177,7 @@ export function SiteHeader() {
                   type="button"
                   role="menuitem"
                   className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                  onClick={handleSignOut}
+                  onClick={() => void handleSignOut()}
                 >
                   <LogOut size={16} aria-hidden="true" />
                   Sign out
@@ -165,6 +194,7 @@ export function SiteHeader() {
             <span className="avatar-mark">
               <LogIn size={18} aria-hidden="true" />
             </span>
+
             <span>
               <strong>Sign in</strong>
               <small>Access your profile</small>
@@ -205,10 +235,7 @@ export function Topbar() {
             <Search aria-hidden="true" />
           </button>
 
-          <Link to="/write" className="literary-button write-button">
-            <Feather aria-hidden="true" />
-            Leave a page
-          </Link>
+          {/* Writing Room is not implemented yet. */}
         </div>
       </header>
 
