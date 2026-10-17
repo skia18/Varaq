@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   BookOpen,
@@ -19,15 +18,8 @@ import { SearchDialog } from './SearchDialog';
 import { useAuth } from '@/auth/AuthProvider';
 
 export function SiteHeader() {
-  const {
-    user,
-    persona,
-    isLoading,
-    isPersonaLoading,
-    personaError,
-    refreshPersona,
-    signOut,
-  } = useAuth();
+  const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
+    useAuth();
 
   const navigation = [
     { label: 'The commons', to: '/', icon: BookOpen, end: true },
@@ -137,9 +129,7 @@ export function SiteHeader() {
 
               <span className="min-w-0 flex-1">
                 <strong className="block truncate">
-                  {isPersonaLoading
-                    ? 'Loading persona…'
-                    : (persona?.displayName ?? 'Your profile')}
+                  {isPersonaLoading ? 'Loading persona…' : (persona?.displayName ?? 'Your profile')}
                 </strong>
 
                 <small className="block truncate">
@@ -166,9 +156,7 @@ export function SiteHeader() {
               >
                 {personaError && (
                   <div className="px-3 py-2">
-                    <p className="text-xs text-destructive">
-                      Could not load your profile.
-                    </p>
+                    <p className="text-xs text-destructive">Could not load your profile.</p>
 
                     <button
                       type="button"
@@ -214,9 +202,7 @@ export function SiteHeader() {
                 </button>
 
                 {signOutError && (
-                  <p className="px-3 py-2 text-xs text-destructive">
-                    {signOutError}
-                  </p>
+                  <p className="px-3 py-2 text-xs text-destructive">{signOutError}</p>
                 )}
               </div>
             )}

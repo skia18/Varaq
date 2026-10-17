@@ -144,9 +144,18 @@ export async function updateOwnerPiece(pieceId: string, input: UpdatePieceInput)
   });
 }
 
+export async function publishOwnerPiece(pieceId: string): Promise<Piece> {
+  return apiRequest<Piece>(`/api/v1/owner/pieces/${encodeURIComponent(pieceId)}/publish`, {
+    method: 'POST',
+  });
+}
+
+export async function deleteOwnerPiece(pieceId: string): Promise<void> {
+  return apiRequest<void>(`/api/v1/owner/pieces/${encodeURIComponent(pieceId)}`, {
+    method: 'DELETE',
+  });
+}
 
 export function getPublicPersona(handle: string): Promise<Persona> {
-  return apiRequest<Persona>(
-    `/api/v1/personas/${encodeURIComponent(handle)}`,
-  );
+  return apiRequest<Persona>(`/api/v1/personas/${encodeURIComponent(handle)}`);
 }

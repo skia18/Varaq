@@ -1,5 +1,4 @@
-
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 
 import { PublicLayout } from '../layouts/PublicLayout';
 import { DiscoverPage } from '../pages/discover/DiscoverPage';

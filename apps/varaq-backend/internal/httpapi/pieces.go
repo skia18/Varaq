@@ -505,8 +505,7 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		 FROM public.pieces p
 		 JOIN public.personas persona ON persona.id = p.persona_id
 		 WHERE p.id = $1::uuid
-		   AND persona.user_id = $2::uuid
-		   AND p.status = 'draft'`,
+		   AND persona.user_id = $2::uuid`,
 		pieceID,
 		user.ID,
 	).Scan(
@@ -527,8 +526,8 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSON(w, http.StatusNotFound, map[string]any{
 				"error": map[string]string{
-					"code":    "draft_not_found",
-					"message": "Draft not found.",
+					"code":    "piece_not_found",
+					"message": "Piece not found.",
 				},
 			})
 			return
@@ -609,7 +608,6 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		 WHERE p.id = $1::uuid
 		   AND persona.id = p.persona_id
 		   AND persona.user_id = $2::uuid
-		   AND p.status = 'draft'
 		 RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
 		           p.type, p.status, p.visibility, p.published_at,
 		           p.created_at, p.updated_at`,
@@ -636,8 +634,8 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeJSON(w, http.StatusNotFound, map[string]any{
 				"error": map[string]string{
-					"code":    "draft_not_found",
-					"message": "Draft not found or no longer editable.",
+					"code":    "piece_not_found",
+					"message": "Piece not found or no longer editable.",
 				},
 			})
 			return
@@ -654,4 +652,123 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, piece)
+}
+
+func (h PieceHandler) PublishOwnerPiece(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{
+			"error": map[string]string{
+				"code":    "unauthorized",
+				"message": "A valid access token is required.",
+			},
+		})
+		return
+	}
+
+	pieceID := chi.URLParam(r, "pieceID")
+
+	var piece Piece
+	err := h.DB.QueryRow(
+		r.Context(),
+		`UPDATE public.pieces AS p
+         SET status = 'published',
+             visibility = 'public',
+             published_at = COALESCE(p.published_at, NOW()),
+             updated_at = NOW()
+         FROM public.personas AS persona
+         WHERE p.id = $1::uuid
+           AND persona.id = p.persona_id
+           AND persona.user_id = $2::uuid
+           AND p.status = 'draft'
+         RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
+                   p.type, p.status, p.visibility, p.published_at,
+                   p.created_at, p.updated_at`,
+		pieceID,
+		user.ID,
+	).Scan(
+		&piece.ID,
+		&piece.PersonaID,
+		&piece.Slug,
+		&piece.Title,
+		&piece.Body,
+		&piece.Type,
+		&piece.Status,
+		&piece.Visibility,
+		&piece.PublishedAt,
+		&piece.CreatedAt,
+		&piece.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeJSON(w, http.StatusNotFound, map[string]any{
+				"error": map[string]string{
+					"code":    "piece_not_found",
+					"message": "Draft not found or already published.",
+				},
+			})
+			return
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
+			writeBadRequest(w, "pieceID must be a valid UUID.")
+			return
+		}
+
+		writeInternalError(w)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, piece)
+}
+
+func (h PieceHandler) DeleteOwnerPiece(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{
+			"error": map[string]string{
+				"code":    "unauthorized",
+				"message": "A valid access token is required.",
+			},
+		})
+		return
+	}
+
+	pieceID := chi.URLParam(r, "pieceID")
+
+	tag, err := h.DB.Exec(
+		r.Context(),
+		`DELETE FROM public.pieces AS p
+         USING public.personas AS persona
+         WHERE p.id = $1::uuid
+           AND persona.id = p.persona_id
+           AND persona.user_id = $2::uuid`,
+		pieceID,
+		user.ID,
+	)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
+			writeBadRequest(w, "pieceID must be a valid UUID.")
+			return
+		}
+
+		writeInternalError(w)
+		return
+	}
+
+	if tag.RowsAffected() == 0 {
+		writeJSON(w, http.StatusNotFound, map[string]any{
+			"error": map[string]string{
+				"code":    "piece_not_found",
+				"message": "Piece not found.",
+			},
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

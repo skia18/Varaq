@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
+import { ArrowRight, Feather, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
-import { getOwnerPieces, type Piece } from '@/lib/api';
+import { deleteOwnerPiece, getOwnerPieces, publishOwnerPiece, type Piece } from '@/lib/api';
 
 const PAGE_SIZE = 20;
 
@@ -38,9 +38,14 @@ export function ProfilePage() {
   const [piecesError, setPiecesError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  const [pieceActionId, setPieceActionId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (!persona?.handle) {
       setPieces([]);
+      setIsPiecesLoading(false);
       return;
     }
 
@@ -52,9 +57,7 @@ export function ProfilePage() {
       setPieces([]);
 
       try {
-        const page = await getOwnerPieces({
-          limit: PAGE_SIZE,
-        });
+        const page = await getOwnerPieces({ limit: PAGE_SIZE });
 
         if (cancelled) return;
 
@@ -76,6 +79,50 @@ export function ProfilePage() {
       cancelled = true;
     };
   }, [persona?.handle, reloadKey]);
+
+  async function handlePublish(piece: Piece) {
+    const confirmed = window.confirm(
+      `Publish "${piece.title}"? It will become visible on your public wall.`,
+    );
+
+    if (!confirmed) return;
+
+    setPieceActionId(piece.id);
+    setActionError(null);
+    setActionMessage(null);
+
+    try {
+      await publishOwnerPiece(piece.id);
+
+      setActionMessage(`"${piece.title}" has been published.`);
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Could not publish this page.');
+    } finally {
+      setPieceActionId(null);
+    }
+  }
+
+  async function handleDelete(piece: Piece) {
+    const confirmed = window.confirm(`Permanently delete "${piece.title}"? This cannot be undone.`);
+
+    if (!confirmed) return;
+
+    setPieceActionId(piece.id);
+    setActionError(null);
+    setActionMessage(null);
+
+    try {
+      await deleteOwnerPiece(piece.id);
+
+      setPieces((current) => current.filter((item) => item.id !== piece.id));
+      setActionMessage(`"${piece.title}" has been deleted.`);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Could not delete this page.');
+    } finally {
+      setPieceActionId(null);
+    }
+  }
 
   if (isLoading || isPersonaLoading) {
     return (
@@ -150,8 +197,12 @@ export function ProfilePage() {
 
         <button
           type="button"
-          onClick={() => setReloadKey((key) => key + 1)}
-          disabled={isPiecesLoading}
+          onClick={() => {
+            setActionError(null);
+            setActionMessage(null);
+            setReloadKey((key) => key + 1);
+          }}
+          disabled={isPiecesLoading || pieceActionId !== null}
           className="wall-refresh"
           aria-label="Refresh your pages"
         >
@@ -159,6 +210,18 @@ export function ProfilePage() {
           Refresh
         </button>
       </div>
+
+      {actionError && (
+        <p className="wall-inline-error" role="alert">
+          {actionError}
+        </p>
+      )}
+
+      {actionMessage && (
+        <p className="wall-status" role="status">
+          {actionMessage}
+        </p>
+      )}
 
       {isPiecesLoading && (
         <p className="wall-status" role="status">
@@ -209,8 +272,8 @@ export function ProfilePage() {
                       ? (piece.publishedAt ?? piece.createdAt)
                       : piece.updatedAt;
 
-                  const card = (
-                    <article className={`writing-card tone-${tone}`}>
+                  return (
+                    <article key={piece.id} className={`writing-card tone-${tone}`}>
                       <div className="card-meta">
                         <span>{formatDate(displayDate)}</span>
                         <span className="card-type">{formatType(piece.type)}</span>
@@ -225,23 +288,41 @@ export function ProfilePage() {
                         <span>{getReadTime(piece.body)} min read</span>
                         <span>{piece.status === 'draft' ? 'Draft' : 'Published'}</span>
                       </div>
+
+                      <div className="vault-card-actions">
+                        <Link
+                          to={`/write?pieceId=${encodeURIComponent(piece.id)}`}
+                          className="vault-card-action"
+                          aria-label={`Edit ${piece.title}`}
+                        >
+                          <Pencil size={14} />
+                          Edit
+                        </Link>
+
+                        {piece.status === 'draft' && (
+                          <button
+                            type="button"
+                            className="vault-card-action"
+                            onClick={() => void handlePublish(piece)}
+                            disabled={pieceActionId !== null}
+                          >
+                            <Send size={14} />
+                            {pieceActionId === piece.id ? 'Publishing…' : 'Publish'}
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          className="vault-card-action vault-card-delete"
+                          onClick={() => void handleDelete(piece)}
+                          disabled={pieceActionId !== null}
+                        >
+                          <Trash2 size={14} />
+                          {pieceActionId === piece.id ? 'Working…' : 'Delete'}
+                        </button>
+                      </div>
                     </article>
                   );
-
-                  if (piece.status === 'draft') {
-                    return (
-                      <Link
-                        key={piece.id}
-                        to={`/write?pieceId=${encodeURIComponent(piece.id)}`}
-                        className="block"
-                        aria-label={`Edit draft: ${piece.title}`}
-                      >
-                        {card}
-                      </Link>
-                    );
-                  }
-
-                  return <div key={piece.id}>{card}</div>;
                 })}
               </div>
             );

@@ -52,10 +52,6 @@ export function WritingRoomPage() {
 
         if (cancelled) return;
 
-        if (piece.status !== 'draft') {
-          setError('Only drafts can be edited in the Writing Room.');
-          return;
-        }
 
         setTitle(piece.title);
         setBody(piece.body);
