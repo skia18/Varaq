@@ -13,6 +13,8 @@ export type Persona = {
   createdAt: string;
 };
 
+export type PieceType = 'poem' | 'fragment' | 'story' | 'letter' | 'essay';
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const supabase = createClient();
   const {
@@ -70,7 +72,7 @@ export type Piece = {
   slug: string;
   title: string;
   body: string;
-  type: 'poem' | 'fragment' | 'essay';
+  type: PieceType;
   status: 'draft' | 'published';
   visibility: 'public' | 'unlisted' | 'private';
   publishedAt?: string | null;
@@ -103,9 +105,6 @@ export async function getPublicPieces(
   );
 }
 
-
-export type PieceType = 'poem' | 'fragment' | 'story' | 'letter' | 'essay';
-
 export type CreatePieceInput = {
   personaId: string;
   title: string;
@@ -119,4 +118,35 @@ export async function createPiece(input: CreatePieceInput): Promise<Piece> {
     method: 'POST',
     body: JSON.stringify(input),
   });
+}
+
+export async function getOwnerPieces(options: { limit?: number } = {}): Promise<PiecePage> {
+  const params = new URLSearchParams();
+  params.set('limit', String(options.limit ?? 20));
+
+  return apiRequest<PiecePage>(`/api/v1/owner/pieces?${params.toString()}`);
+}
+
+export async function getOwnerPiece(pieceId: string): Promise<Piece> {
+  return apiRequest<Piece>(`/api/v1/owner/pieces/${encodeURIComponent(pieceId)}`);
+}
+
+export type UpdatePieceInput = {
+  title: string;
+  body: string;
+  type: PieceType;
+};
+
+export async function updateOwnerPiece(pieceId: string, input: UpdatePieceInput): Promise<Piece> {
+  return apiRequest<Piece>(`/api/v1/owner/pieces/${encodeURIComponent(pieceId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(input),
+  });
+}
+
+
+export function getPublicPersona(handle: string): Promise<Persona> {
+  return apiRequest<Persona>(
+    `/api/v1/personas/${encodeURIComponent(handle)}`,
+  );
 }

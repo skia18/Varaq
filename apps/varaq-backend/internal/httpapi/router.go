@@ -48,6 +48,16 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 
 		api.With(authmiddleware.RequireAuth(verifier)).
 			Get("/me/persona", personas.GetMine)
+
+		api.With(authmiddleware.RequireAuth(verifier)).
+			Get("/owner/pieces", pieces.ListOwnerPieces)
+
+		api.With(authmiddleware.RequireAuth(verifier)).
+			Get("/owner/pieces/{pieceID}", pieces.GetOwnerPiece)
+
+		api.With(authmiddleware.RequireAuth(verifier)).
+			Put("/owner/pieces/{pieceID}", pieces.UpdateOwnerPiece)
+
 	})
 
 	return r

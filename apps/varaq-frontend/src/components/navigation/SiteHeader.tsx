@@ -18,13 +18,6 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { SearchDialog } from './SearchDialog';
 import { useAuth } from '@/auth/AuthProvider';
 
-const navigation = [
-  { label: 'The commons', to: '/', icon: BookOpen, end: true },
-  { label: 'Collections', to: '/collections', icon: Library },
-  { label: 'Saved pages', to: '/saved', icon: Bookmark },
-  { label: 'My wall', to: '/wall/you', icon: UserRound },
-];
-
 export function SiteHeader() {
   const {
     user,
@@ -35,6 +28,18 @@ export function SiteHeader() {
     refreshPersona,
     signOut,
   } = useAuth();
+
+  const navigation = [
+    { label: 'The commons', to: '/', icon: BookOpen, end: true },
+    { label: 'Collections', to: '/collections', icon: Library },
+    { label: 'Saved pages', to: '/saved', icon: Bookmark },
+    {
+      label: 'My Wall',
+      to: persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/wall/you',
+      icon: UserRound,
+    },
+    { label: 'My Vault', to: '/vault', icon: BookOpen },
+  ];
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -71,9 +76,7 @@ export function SiteHeader() {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) =>
-              `nav-item${isActive ? ' active' : ''}`
-            }
+            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             <Icon aria-hidden="true" />
             <span>{label}</span>
@@ -129,11 +132,7 @@ export function SiteHeader() {
               onClick={() => setProfileMenuOpen((open) => !open)}
             >
               <span className="avatar-mark">
-                {(
-                  persona?.displayName?.[0] ??
-                  user.email?.[0] ??
-                  'v'
-                ).toLowerCase()}
+                {(persona?.displayName?.[0] ?? user.email?.[0] ?? 'v').toLowerCase()}
               </span>
 
               <span className="min-w-0 flex-1">
@@ -154,9 +153,7 @@ export function SiteHeader() {
 
               <ChevronUp
                 aria-hidden="true"
-                className={`shrink-0 transition-transform ${
-                  profileMenuOpen ? '' : 'rotate-180'
-                }`}
+                className={`shrink-0 transition-transform ${profileMenuOpen ? '' : 'rotate-180'}`}
                 size={16}
               />
             </button>
@@ -184,14 +181,26 @@ export function SiteHeader() {
                   </div>
                 )}
 
+                {persona && (
+                  <Link
+                    to={`/wall/${encodeURIComponent(persona.handle)}`}
+                    role="menuitem"
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    <UserRound size={16} aria-hidden="true" />
+                    View public profile
+                  </Link>
+                )}
+
                 <Link
-                  to="/wall/you"
+                  to="/vault"
                   role="menuitem"
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setProfileMenuOpen(false)}
                 >
-                  <UserRound size={16} aria-hidden="true" />
-                  Go to profile
+                  <BookOpen size={16} aria-hidden="true" />
+                  Vault
                 </Link>
 
                 <button
@@ -258,19 +267,14 @@ export function Topbar() {
             <Search aria-hidden="true" />
           </button>
 
-
-        <Link to="/write" className="literary-button write-button">
-          <Feather aria-hidden="true" size={16} strokeWidth={1.7} />
-          <span>Leave a page</span>
-        </Link>
-
+          <Link to="/write" className="literary-button write-button">
+            <Feather aria-hidden="true" size={16} strokeWidth={1.7} />
+            <span>Leave a page</span>
+          </Link>
         </div>
       </header>
 
-      <SearchDialog
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
+      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

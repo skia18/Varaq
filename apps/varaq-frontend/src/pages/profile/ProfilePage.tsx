@@ -1,10 +1,9 @@
-
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
-import { getPublicPieces, type Piece } from '@/lib/api';
+import { getOwnerPieces, type Piece } from '@/lib/api';
 
 const PAGE_SIZE = 20;
 
@@ -18,11 +17,9 @@ function formatDate(date: string) {
   }).format(new Date(date));
 }
 
-
 function formatType(type: Piece['type']) {
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
-
 
 function getExcerpt(body: string, maxLength = 500) {
   if (body.length <= maxLength) return body;
@@ -34,26 +31,16 @@ function getReadTime(body: string) {
 }
 
 export function ProfilePage() {
-  const {
-    user,
-    persona,
-    isLoading,
-    isPersonaLoading,
-    personaError,
-    refreshPersona,
-  } = useAuth();
+  const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
 
   const [pieces, setPieces] = useState<Piece[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isPiecesLoading, setIsPiecesLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [piecesError, setPiecesError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!persona?.handle) {
       setPieces([]);
-      setNextCursor(null);
       return;
     }
 
@@ -63,27 +50,23 @@ export function ProfilePage() {
       setIsPiecesLoading(true);
       setPiecesError(null);
       setPieces([]);
-      setNextCursor(null);
 
       try {
-        const page = await getPublicPieces(persona!.handle, {
+        const page = await getOwnerPieces({
           limit: PAGE_SIZE,
         });
 
         if (cancelled) return;
 
         setPieces(page.items);
-        setNextCursor(page.nextCursor);
       } catch (error) {
         if (cancelled) return;
 
-        setPiecesError(
-          error instanceof Error
-            ? error.message
-            : 'Could not load your published pages.',
-        );
+        setPiecesError(error instanceof Error ? error.message : 'Could not load your pages.');
       } finally {
-        if (!cancelled) setIsPiecesLoading(false);
+        if (!cancelled) {
+          setIsPiecesLoading(false);
+        }
       }
     }
 
@@ -94,46 +77,12 @@ export function ProfilePage() {
     };
   }, [persona?.handle, reloadKey]);
 
-  const loadMore = useCallback(async () => {
-    if (!persona?.handle || !nextCursor || isLoadingMore) return;
-
-    setIsLoadingMore(true);
-    setPiecesError(null);
-
-    try {
-      const page = await getPublicPieces(persona.handle, {
-        limit: PAGE_SIZE,
-        cursor: nextCursor,
-      });
-
-      setPieces((current) => {
-        const existingIds = new Set(current.map((piece) => piece.id));
-        return [
-          ...current,
-          ...page.items.filter((piece) => !existingIds.has(piece.id)),
-        ];
-      });
-
-      setNextCursor(page.nextCursor);
-    } catch (error) {
-      setPiecesError(
-        error instanceof Error
-          ? error.message
-          : 'Could not load more pages.',
-      );
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [persona?.handle, nextCursor, isLoadingMore]);
-
   if (isLoading || isPersonaLoading) {
     return (
       <section className="page-section">
         <p className="eyebrow">A writer’s wall</p>
         <h1 className="font-heading text-4xl">A moment, please…</h1>
-        <p className="mt-4 text-muted-foreground">
-          Gathering your little corner of Varaq.
-        </p>
+        <p className="mt-4 text-muted-foreground">Gathering your little corner of Varaq.</p>
       </section>
     );
   }
@@ -173,9 +122,7 @@ export function ProfilePage() {
       <section className="page-section">
         <p className="eyebrow">A writer’s wall</p>
         <h1 className="font-heading text-4xl">A page of your own.</h1>
-        <p className="mt-4 text-muted-foreground">
-          Your writing wall is not set up yet.
-        </p>
+        <p className="mt-4 text-muted-foreground">Your writing wall is not set up yet.</p>
       </section>
     );
   }
@@ -206,12 +153,9 @@ export function ProfilePage() {
           onClick={() => setReloadKey((key) => key + 1)}
           disabled={isPiecesLoading}
           className="wall-refresh"
-          aria-label="Refresh published pages"
+          aria-label="Refresh your pages"
         >
-          <RefreshCw
-            size={14}
-            className={isPiecesLoading ? 'animate-spin' : ''}
-          />
+          <RefreshCw size={14} className={isPiecesLoading ? 'animate-spin' : ''} />
           Refresh
         </button>
       </div>
@@ -252,39 +196,52 @@ export function ProfilePage() {
       {pieces.length > 0 && (
         <div className="writing-grid wall-writing-grid">
           {[0, 1, 2].map((column) => {
-            const columnPieces = pieces.filter(
-              (_, index) => index % 3 === column,
-            );
+            const columnPieces = pieces.filter((_, index) => index % 3 === column);
 
             return (
               <div className="writing-column" key={column}>
                 {columnPieces.map((piece) => {
-                  const tone =
-                    CARD_TONES[pieces.findIndex((item) => item.id === piece.id) % CARD_TONES.length];
+                  const pieceIndex = pieces.findIndex((item) => item.id === piece.id);
+                  const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
 
-                  return (
-                    <article
-                      key={piece.id}
-                      className={`writing-card tone-${tone}`}
-                    >
+                  const displayDate =
+                    piece.status === 'published'
+                      ? (piece.publishedAt ?? piece.createdAt)
+                      : piece.updatedAt;
+
+                  const card = (
+                    <article className={`writing-card tone-${tone}`}>
                       <div className="card-meta">
-                        <span>{formatDate(piece.publishedAt ?? piece.createdAt)}</span>
+                        <span>{formatDate(displayDate)}</span>
                         <span className="card-type">{formatType(piece.type)}</span>
                       </div>
 
                       <div className="card-read wall-card-content">
                         <h2>{piece.title}</h2>
-                        <p className="card-excerpt">
-                          {getExcerpt(piece.body)}
-                        </p>
+                        <p className="card-excerpt">{getExcerpt(piece.body)}</p>
                       </div>
 
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
-                        <span>Published</span>
+                        <span>{piece.status === 'draft' ? 'Draft' : 'Published'}</span>
                       </div>
                     </article>
                   );
+
+                  if (piece.status === 'draft') {
+                    return (
+                      <Link
+                        key={piece.id}
+                        to={`/write?pieceId=${encodeURIComponent(piece.id)}`}
+                        className="block"
+                        aria-label={`Edit draft: ${piece.title}`}
+                      >
+                        {card}
+                      </Link>
+                    );
+                  }
+
+                  return <div key={piece.id}>{card}</div>;
                 })}
               </div>
             );
@@ -296,29 +253,6 @@ export function ProfilePage() {
         <p className="wall-inline-error" role="status">
           {piecesError}
         </p>
-      )}
-
-      {nextCursor && !isPiecesLoading && (
-        <div className="wall-load-more">
-          <button
-            type="button"
-            onClick={() => void loadMore()}
-            disabled={isLoadingMore}
-            className="wall-load-button"
-          >
-            {isLoadingMore ? (
-              <>
-                <RefreshCw size={14} className="animate-spin" />
-                Loading…
-              </>
-            ) : (
-              <>
-                Load more pages
-                <ArrowRight size={14} />
-              </>
-            )}
-          </button>
-        </div>
       )}
 
       <footer className="page-footer">

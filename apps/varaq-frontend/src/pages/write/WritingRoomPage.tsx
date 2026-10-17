@@ -1,10 +1,9 @@
-
-import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Check, Feather, Lock, Save } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
-import { createPiece, type PieceType } from '@/lib/api';
+import { createPiece, getOwnerPiece, updateOwnerPiece, type PieceType } from '@/lib/api';
 
 const pieceTypes: { value: PieceType; label: string }[] = [
   { value: 'poem', label: 'Poem' },
@@ -16,19 +15,82 @@ const pieceTypes: { value: PieceType; label: string }[] = [
 
 export function WritingRoomPage() {
   const { persona, isLoading, isPersonaLoading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const pieceId = searchParams.get('pieceId');
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [type, setType] = useState<PieceType>('fragment');
+  const [isLoadingPiece, setIsLoadingPiece] = useState(false);
+  const [isPieceLoaded, setIsPieceLoaded] = useState(!pieceId);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!pieceId) {
+      setTitle('');
+      setBody('');
+      setType('fragment');
+      setError(null);
+      setSavedMessage(null);
+      setIsPieceLoaded(true);
+      setIsLoadingPiece(false);
+      return;
+    }
+
+    setIsPieceLoaded(false);
+    setIsLoadingPiece(true);
+    setError(null);
+    setSavedMessage(null);
+
+    async function loadPiece() {
+      try {
+        const piece = await getOwnerPiece(pieceId!);
+
+        if (cancelled) return;
+
+        if (piece.status !== 'draft') {
+          setError('Only drafts can be edited in the Writing Room.');
+          return;
+        }
+
+        setTitle(piece.title);
+        setBody(piece.body);
+        setType(piece.type);
+        setIsPieceLoaded(true);
+      } catch (err) {
+        if (cancelled) return;
+
+        setError(
+          err instanceof Error ? err.message : 'Could not open this draft. Please try again.',
+        );
+      } finally {
+        if (!cancelled) {
+          setIsLoadingPiece(false);
+        }
+      }
+    }
+
+    void loadPiece();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pieceId]);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!persona) {
       setError('Your writing identity is not available yet.');
+      return;
+    }
+
+    if (pieceId && !isPieceLoaded) {
+      setError('Wait for the draft to finish loading before saving.');
       return;
     }
 
@@ -42,20 +104,28 @@ export function WritingRoomPage() {
     setSavedMessage(null);
 
     try {
-      await createPiece({
-        personaId: persona.id,
-        title: title.trim(),
-        body: body.trim(),
-        type,
-        visibility: 'private',
-      });
+      if (pieceId) {
+        await updateOwnerPiece(pieceId, {
+          title: title.trim(),
+          body: body.trim(),
+          type,
+        });
 
-      setSavedMessage('Your draft has been saved privately.');
+        setSavedMessage('Your draft changes have been saved.');
+      } else {
+        await createPiece({
+          personaId: persona.id,
+          title: title.trim(),
+          body: body.trim(),
+          type,
+          visibility: 'private',
+        });
+
+        setSavedMessage('Your draft has been saved privately.');
+      }
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Your draft could not be saved. Please try again.',
+        err instanceof Error ? err.message : 'Your draft could not be saved. Please try again.',
       );
     } finally {
       setIsSaving(false);
@@ -79,7 +149,10 @@ export function WritingRoomPage() {
         <p className="mt-3 text-muted-foreground">
           Set up your writing identity before creating a piece.
         </p>
-        <Link to="/wall/you" className="mt-6 inline-flex items-center gap-2 text-sm underline underline-offset-4">
+        <Link
+          to="/vault"
+          className="mt-6 inline-flex items-center gap-2 text-sm underline underline-offset-4"
+        >
           <ArrowLeft size={15} />
           Return to your wall
         </Link>
@@ -91,7 +164,7 @@ export function WritingRoomPage() {
     <section className="page-section">
       <div className="mx-auto max-w-3xl">
         <Link
-          to="/wall/you"
+          to="/vault"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft size={15} />
@@ -104,13 +177,18 @@ export function WritingRoomPage() {
             The writing room
           </p>
           <h1 className="mt-3 font-heading text-4xl leading-tight sm:text-5xl">
-            Begin anywhere.
+            {pieceId ? 'Return to your words.' : 'Begin anywhere.'}
           </h1>
           <p className="mt-4 max-w-xl font-serif text-lg leading-relaxed text-muted-foreground">
-            A thought, a half-remembered afternoon, a sentence that stayed.
-            Give it a little room.
+            A thought, a half-remembered afternoon, a sentence that stayed. Give it a little room.
           </p>
         </header>
+
+        {isLoadingPiece && (
+          <p className="mb-5 text-sm text-muted-foreground" role="status">
+            Opening your draft…
+          </p>
+        )}
 
         <form onSubmit={handleSave}>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-y border-border/70 py-4">
@@ -131,7 +209,11 @@ export function WritingRoomPage() {
           <select
             id="piece-type"
             value={type}
-            onChange={(event) => setType(event.target.value as PieceType)}
+            onChange={(event) => {
+              setType(event.target.value as PieceType);
+              setSavedMessage(null);
+            }}
+            disabled={!isPieceLoaded || isLoadingPiece}
             className="mb-8 w-full max-w-xs rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
           >
             {pieceTypes.map((pieceType) => (
@@ -154,6 +236,7 @@ export function WritingRoomPage() {
             maxLength={200}
             placeholder="Give this piece a title…"
             required
+            disabled={!isPieceLoaded || isLoadingPiece}
             className="w-full border-0 border-b border-border/70 bg-transparent pb-5 font-heading text-3xl outline-none placeholder:text-muted-foreground/50 focus:border-primary sm:text-4xl"
           />
 
@@ -169,6 +252,7 @@ export function WritingRoomPage() {
             }}
             maxLength={50000}
             required
+            disabled={!isPieceLoaded || isLoadingPiece}
             placeholder="Let the words arrive in their own time…"
             className="mt-7 min-h-[380px] w-full resize-y border-0 bg-transparent font-serif text-lg leading-8 text-foreground outline-none placeholder:text-muted-foreground/50 sm:min-h-[480px]"
           />
@@ -179,7 +263,10 @@ export function WritingRoomPage() {
           </div>
 
           {error && (
-            <p role="alert" className="mt-5 rounded-lg border border-destructive/30 p-3 text-sm text-destructive">
+            <p
+              role="alert"
+              className="mt-5 rounded-lg border border-destructive/30 p-3 text-sm text-destructive"
+            >
               {error}
             </p>
           )}
@@ -192,17 +279,17 @@ export function WritingRoomPage() {
           )}
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border/70 pt-6">
-            <p className="text-xs text-muted-foreground">
-              Saved drafts are private by default.
-            </p>
+            <p className="text-xs text-muted-foreground">Saved drafts are private by default.</p>
 
             <button
               type="submit"
-              disabled={isSaving || !title.trim() || !body.trim()}
+              disabled={
+                isSaving || isLoadingPiece || !isPieceLoaded || !title.trim() || !body.trim()
+              }
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save size={16} />
-              {isSaving ? 'Saving…' : 'Save draft'}
+              {isSaving ? 'Saving…' : pieceId ? 'Save changes' : 'Save draft'}
             </button>
           </div>
         </form>
