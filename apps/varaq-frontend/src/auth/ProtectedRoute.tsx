@@ -16,12 +16,7 @@ export function ProtectedRoute() {
   if (!user) {
     const next = `${location.pathname}${location.search}${location.hash}`;
 
-    return (
-      <Navigate
-        to={`/login?next=${encodeURIComponent(next)}`}
-        replace
-      />
-    );
+    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />;
   }
 
   return <Outlet />;

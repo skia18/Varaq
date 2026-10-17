@@ -1,7 +1,20 @@
 import { useState } from 'react';
-import { BookOpen, Bookmark, Feather, Library, Search, Sprout, UserRound } from 'lucide-react';
-import { Link, NavLink } from 'react-router-dom';
+import {
+  BookOpen,
+  Bookmark,
+  Feather,
+  Library,
+  Search,
+  Sprout,
+  UserRound,
+  LogIn,
+  LogOut,
+  ChevronUp,
+} from 'lucide-react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+
 import { SearchDialog } from './SearchDialog';
+import { useAuth } from '@/auth/AuthProvider';
 
 const navigation = [
   { label: 'The commons', to: '/', icon: BookOpen, end: true },
@@ -11,6 +24,23 @@ const navigation = [
 ];
 
 export function SiteHeader() {
+  const { user, isLoading, signOut } = useAuth();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    setSignOutError(null);
+
+    try {
+      await signOut();
+      setProfileMenuOpen(false);
+      navigate('/', { replace: true });
+    } catch {
+      setSignOutError('Could not sign out. Please try again.');
+    }
+  }
+
   return (
     <aside className="sidebar">
       <div>
@@ -66,13 +96,82 @@ export function SiteHeader() {
         <Sprout aria-hidden="true" />
       </div>
 
-      <Link to="/wall/you" className="side-user">
-        <span className="avatar-mark">q</span>
-        <span>
-          <strong>a quiet stranger</strong>
-          <small>@aquietstranger</small>
-        </span>
-      </Link>
+      <div className="relative mt-auto">
+        {isLoading ? (
+          <div className="side-user" aria-label="Loading account">
+            <span className="avatar-mark">·</span>
+            <span>
+              <strong>One moment</strong>
+              <small>Loading your account…</small>
+            </span>
+          </div>
+        ) : user ? (
+          <>
+            <button
+              type="button"
+              className="side-user w-full text-left"
+              aria-haspopup="menu"
+              aria-expanded={profileMenuOpen}
+              onClick={() => setProfileMenuOpen((open) => !open)}
+            >
+              <span className="avatar-mark">{(user.email?.[0] ?? 'v').toLowerCase()}</span>
+              <span className="min-w-0 flex-1">
+                <strong className="block truncate">
+                  {user.user_metadata?.display_name || 'Your profile'}
+                </strong>
+                <small className="block truncate">{user.email}</small>
+              </span>
+              <ChevronUp
+                aria-hidden="true"
+                className={`shrink-0 transition-transform ${profileMenuOpen ? '' : 'rotate-180'}`}
+                size={16}
+              />
+            </button>
+
+            {profileMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Account menu"
+                className="absolute bottom-full left-0 z-50 mb-2 w-full rounded-lg border border-border bg-background p-1 shadow-lg"
+              >
+                <Link
+                  to="/wall/you"
+                  role="menuitem"
+                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => setProfileMenuOpen(false)}
+                >
+                  <UserRound size={16} aria-hidden="true" />
+                  Go to profile
+                </Link>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                  onClick={handleSignOut}
+                >
+                  <LogOut size={16} aria-hidden="true" />
+                  Sign out
+                </button>
+
+                {signOutError && (
+                  <p className="px-3 py-2 text-xs text-destructive">{signOutError}</p>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <Link to="/login" className="side-user">
+            <span className="avatar-mark">
+              <LogIn size={18} aria-hidden="true" />
+            </span>
+            <span>
+              <strong>Sign in</strong>
+              <small>Access your profile</small>
+            </span>
+          </Link>
+        )}
+      </div>
     </aside>
   );
 }
