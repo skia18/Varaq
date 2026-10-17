@@ -25,12 +25,16 @@ export function SiteHeader() {
     { label: 'The commons', to: '/', icon: BookOpen, end: true },
     { label: 'Collections', to: '/collections', icon: Library },
     { label: 'Saved pages', to: '/saved', icon: Bookmark },
-    {
-      label: 'My Wall',
-      to: persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/wall/you',
-      icon: UserRound,
-    },
-    { label: 'My Vault', to: '/vault', icon: BookOpen },
+    ...(user && persona
+      ? [
+          {
+            label: 'My Wall',
+            to: `/wall/${encodeURIComponent(persona.handle)}`,
+            icon: UserRound,
+          },
+        ]
+      : []),
+    ...(user ? [{ label: 'My Vault', to: '/vault', icon: BookOpen }] : []),
   ];
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -226,6 +230,23 @@ export function SiteHeader() {
 
 export function Topbar() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+
+  const { user, persona, isLoading, isPersonaLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    setSignOutError(null);
+
+    try {
+      await signOut();
+      setAccountMenuOpen(false);
+      navigate('/', { replace: true });
+    } catch {
+      setSignOutError('Could not sign out. Please try again.');
+    }
+  }
 
   return (
     <>
@@ -252,6 +273,93 @@ export function Topbar() {
           >
             <Search aria-hidden="true" />
           </button>
+
+          <div className="relative">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Account menu"
+              title="Account"
+              aria-haspopup="menu"
+              aria-expanded={accountMenuOpen}
+              onClick={() => setAccountMenuOpen((open) => !open)}
+            >
+              <UserRound aria-hidden="true" />
+            </button>
+
+            {accountMenuOpen && (
+              <div
+                role="menu"
+                aria-label="Account menu"
+                className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-border bg-background p-1 shadow-lg"
+              >
+                {isLoading ? (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">Loading account…</p>
+                ) : user ? (
+                  <>
+                    <div className="px-3 py-2">
+                      <p className="truncate text-sm font-medium">
+                        {persona?.displayName ?? user.email ?? 'Your account'}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {isPersonaLoading
+                          ? 'Loading profile…'
+                          : persona
+                            ? `@${persona.handle}`
+                            : 'No public profile yet'}
+                      </p>
+                    </div>
+
+                    {persona && (
+                      <Link
+                        to={`/wall/${encodeURIComponent(persona.handle)}`}
+                        role="menuitem"
+                        className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                        onClick={() => setAccountMenuOpen(false)}
+                      >
+                        <UserRound size={16} aria-hidden="true" />
+                        My Wall
+                      </Link>
+                    )}
+
+                    <Link
+                      to="/vault"
+                      role="menuitem"
+                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => setAccountMenuOpen(false)}
+                    >
+                      <BookOpen size={16} aria-hidden="true" />
+                      My Vault
+                    </Link>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                      onClick={() => void handleSignOut()}
+                    >
+                      <LogOut size={16} aria-hidden="true" />
+                      Sign out
+                    </button>
+
+                    {signOutError && (
+                      <p className="px-3 py-2 text-xs text-destructive">{signOutError}</p>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    role="menuitem"
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => setAccountMenuOpen(false)}
+                  >
+                    <LogIn size={16} aria-hidden="true" />
+                    Sign in
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
 
           <Link to="/write" className="literary-button write-button">
             <Feather aria-hidden="true" size={16} strokeWidth={1.7} />
