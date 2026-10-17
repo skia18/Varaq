@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
@@ -16,8 +18,18 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 	r := chi.NewRouter()
 
 	// Allow the Vite development frontend to call the Go API.
+	// Allow the local frontend and the configured production frontend.
+	allowedOrigins := []string{"http://localhost:5173"}
+
+	if origin := strings.TrimRight(
+		strings.TrimSpace(os.Getenv("FRONTEND_ORIGIN")),
+		"/",
+	); origin != "" {
+		allowedOrigins = append(allowedOrigins, origin)
+	}
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: false,
