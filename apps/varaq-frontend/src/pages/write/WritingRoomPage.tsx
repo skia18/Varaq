@@ -52,7 +52,6 @@ export function WritingRoomPage() {
 
         if (cancelled) return;
 
-
         setTitle(piece.title);
         setBody(piece.body);
         setType(piece.type);
