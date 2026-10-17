@@ -34,10 +34,14 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 	r.Get("/readyz", health.Readiness)
 
 	personas := PersonaHandler{DB: db}
+	pieces := PieceHandler{DB: db}
 
 	r.Route("/api/v1", func(api chi.Router) {
 		api.With(authmiddleware.RequireAuth(verifier)).
 			Post("/personas", personas.Create)
+
+		api.With(authmiddleware.RequireAuth(verifier)).
+			Post("/pieces", pieces.Create)
 
 		api.Get("/personas/{handle}", personas.GetByHandle)
 		api.Get("/personas/{handle}/pieces", personas.ListPublicPieces)

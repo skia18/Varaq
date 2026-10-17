@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   BookOpen,
@@ -10,6 +11,7 @@ import {
   LogOut,
   ChevronUp,
   RefreshCw,
+  Feather,
 } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 
@@ -24,8 +26,15 @@ const navigation = [
 ];
 
 export function SiteHeader() {
-  const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
-    useAuth();
+  const {
+    user,
+    persona,
+    isLoading,
+    isPersonaLoading,
+    personaError,
+    refreshPersona,
+    signOut,
+  } = useAuth();
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -62,7 +71,9 @@ export function SiteHeader() {
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+            className={({ isActive }) =>
+              `nav-item${isActive ? ' active' : ''}`
+            }
           >
             <Icon aria-hidden="true" />
             <span>{label}</span>
@@ -118,12 +129,18 @@ export function SiteHeader() {
               onClick={() => setProfileMenuOpen((open) => !open)}
             >
               <span className="avatar-mark">
-                {(persona?.displayName?.[0] ?? user.email?.[0] ?? 'v').toLowerCase()}
+                {(
+                  persona?.displayName?.[0] ??
+                  user.email?.[0] ??
+                  'v'
+                ).toLowerCase()}
               </span>
 
               <span className="min-w-0 flex-1">
                 <strong className="block truncate">
-                  {isPersonaLoading ? 'Loading persona…' : (persona?.displayName ?? 'Your profile')}
+                  {isPersonaLoading
+                    ? 'Loading persona…'
+                    : (persona?.displayName ?? 'Your profile')}
                 </strong>
 
                 <small className="block truncate">
@@ -137,7 +154,9 @@ export function SiteHeader() {
 
               <ChevronUp
                 aria-hidden="true"
-                className={`shrink-0 transition-transform ${profileMenuOpen ? '' : 'rotate-180'}`}
+                className={`shrink-0 transition-transform ${
+                  profileMenuOpen ? '' : 'rotate-180'
+                }`}
                 size={16}
               />
             </button>
@@ -150,7 +169,9 @@ export function SiteHeader() {
               >
                 {personaError && (
                   <div className="px-3 py-2">
-                    <p className="text-xs text-destructive">Could not load your profile.</p>
+                    <p className="text-xs text-destructive">
+                      Could not load your profile.
+                    </p>
 
                     <button
                       type="button"
@@ -184,7 +205,9 @@ export function SiteHeader() {
                 </button>
 
                 {signOutError && (
-                  <p className="px-3 py-2 text-xs text-destructive">{signOutError}</p>
+                  <p className="px-3 py-2 text-xs text-destructive">
+                    {signOutError}
+                  </p>
                 )}
               </div>
             )}
@@ -235,11 +258,19 @@ export function Topbar() {
             <Search aria-hidden="true" />
           </button>
 
-          {/* Writing Room is not implemented yet. */}
+
+        <Link to="/write" className="literary-button write-button">
+          <Feather aria-hidden="true" size={16} strokeWidth={1.7} />
+          <span>Leave a page</span>
+        </Link>
+
         </div>
       </header>
 
-      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchDialog
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
     </>
   );
 }

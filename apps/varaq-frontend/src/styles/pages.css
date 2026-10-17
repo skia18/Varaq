@@ -171,3 +171,191 @@
     min-height: 240px;
   }
 }
+
+
+
+/* Writer's wall — adapted from the original Lovable design */
+
+.writer-profile {
+  border-bottom: 1px solid var(--border);
+  padding: 25px 0 35px;
+  margin-bottom: 30px;
+}
+
+.writer-profile .avatar-mark {
+  float: right;
+  width: 61px;
+  height: 61px;
+  font-size: 42px;
+  background: var(--secondary);
+}
+
+.writer-profile h1 {
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1.1;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.writer-profile .bio {
+  max-width: 480px;
+  margin: 18px 0;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.wall-handle {
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.writer-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.wall-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 7px 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.wall-refresh:hover {
+  color: var(--primary);
+}
+
+.wall-refresh:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.wall-writing-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wall-card-content {
+  width: 100%;
+  margin-top: 0;
+}
+
+.wall-card-content h2 {
+  overflow-wrap: anywhere;
+}
+
+.wall-card-footer {
+  flex-wrap: wrap;
+}
+
+.wall-status,
+.wall-inline-error {
+  margin: 24px 0;
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.wall-inline-error {
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+}
+
+.wall-retry,
+.wall-write-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  text-decoration: none;
+}
+
+.wall-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.wall-load-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.wall-load-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.wall-load-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+@media (max-width: 1000px) {
+  .wall-writing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wall-writing-grid .writing-column:last-child {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .writer-profile h1 {
+    font-size: 50px;
+  }
+
+  .writer-profile .bio {
+    font-size: 14px;
+  }
+
+  .wall-writing-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 23px;
+  }
+
+  .wall-writing-grid .writing-column:last-child {
+    grid-column: auto;
+    display: flex;
+  }
+
+  .wall-writing-grid .writing-column {
+    gap: 23px;
+  }
+
+  .page-footer {
+    flex-wrap: wrap;
+    line-height: 1.7;
+  }
+}

@@ -7,7 +7,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { CollectionsPage } from '../pages/collections/CollectionsPage';
 import { SavedPagesPage } from '../pages/saved/SavedPagesPage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
-
+import { WritingRoomPage } from '../pages/write/WritingRoomPage';
 import { LoginForm } from '@/components/login/login-form';
 import { SignUpForm } from '@/components/login/sign-up-form';
 import { ForgotPasswordForm } from '@/components/login/forgot-password-form';
@@ -31,6 +31,7 @@ export const router = createBrowserRouter([
         children: [
           { path: '/saved', element: <SavedPagesPage /> },
           { path: '/wall/you', element: <ProfilePage /> },
+          { path: '/write', element: <WritingRoomPage /> },
         ],
       },
 

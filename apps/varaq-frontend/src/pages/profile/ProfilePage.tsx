@@ -1,17 +1,139 @@
+
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, Feather, RefreshCw, Sparkles } from 'lucide-react';
+import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
+import { getPublicPieces, type Piece } from '@/lib/api';
+
+const PAGE_SIZE = 20;
+
+const CARD_TONES = ['paper', 'sage', 'plain', 'red'] as const;
+
+function formatDate(date: string) {
+  return new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(date));
+}
+
+
+function formatType(type: Piece['type']) {
+  return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+
+function getExcerpt(body: string, maxLength = 500) {
+  if (body.length <= maxLength) return body;
+  return `${body.slice(0, maxLength).trimEnd()}…`;
+}
+
+function getReadTime(body: string) {
+  return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
+}
 
 export function ProfilePage() {
-  const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
+  const {
+    user,
+    persona,
+    isLoading,
+    isPersonaLoading,
+    personaError,
+    refreshPersona,
+  } = useAuth();
+
+  const [pieces, setPieces] = useState<Piece[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isPiecesLoading, setIsPiecesLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [piecesError, setPiecesError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (!persona?.handle) {
+      setPieces([]);
+      setNextCursor(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadPieces() {
+      setIsPiecesLoading(true);
+      setPiecesError(null);
+      setPieces([]);
+      setNextCursor(null);
+
+      try {
+        const page = await getPublicPieces(persona!.handle, {
+          limit: PAGE_SIZE,
+        });
+
+        if (cancelled) return;
+
+        setPieces(page.items);
+        setNextCursor(page.nextCursor);
+      } catch (error) {
+        if (cancelled) return;
+
+        setPiecesError(
+          error instanceof Error
+            ? error.message
+            : 'Could not load your published pages.',
+        );
+      } finally {
+        if (!cancelled) setIsPiecesLoading(false);
+      }
+    }
+
+    void loadPieces();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [persona?.handle, reloadKey]);
+
+  const loadMore = useCallback(async () => {
+    if (!persona?.handle || !nextCursor || isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    setPiecesError(null);
+
+    try {
+      const page = await getPublicPieces(persona.handle, {
+        limit: PAGE_SIZE,
+        cursor: nextCursor,
+      });
+
+      setPieces((current) => {
+        const existingIds = new Set(current.map((piece) => piece.id));
+        return [
+          ...current,
+          ...page.items.filter((piece) => !existingIds.has(piece.id)),
+        ];
+      });
+
+      setNextCursor(page.nextCursor);
+    } catch (error) {
+      setPiecesError(
+        error instanceof Error
+          ? error.message
+          : 'Could not load more pages.',
+      );
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [persona?.handle, nextCursor, isLoadingMore]);
 
   if (isLoading || isPersonaLoading) {
     return (
       <section className="page-section">
-        <p className="eyebrow">Your wall</p>
-        <h1 className="font-heading text-4xl">A moment, please.</h1>
-        <p className="mt-4 text-muted-foreground">Gathering your pages…</p>
+        <p className="eyebrow">A writer’s wall</p>
+        <h1 className="font-heading text-4xl">A moment, please…</h1>
+        <p className="mt-4 text-muted-foreground">
+          Gathering your little corner of Varaq.
+        </p>
       </section>
     );
   }
@@ -19,130 +141,190 @@ export function ProfilePage() {
   if (!user) {
     return (
       <section className="page-section">
-        <p className="eyebrow">Your wall</p>
-        <h1 className="font-heading text-4xl">A place for your words.</h1>
-        <p className="mt-4 text-muted-foreground">Sign in to visit your personal wall.</p>
-        <Link to="/login" className="literary-button mt-6 inline-flex items-center gap-2">
-          Sign in <ArrowRight size={16} aria-hidden="true" />
+        <p className="eyebrow">A writer’s wall</p>
+        <h1 className="font-heading text-4xl">Your wall awaits.</h1>
+        <Link to="/login" className="mt-6 inline-flex items-center gap-2">
+          Sign in <ArrowRight size={16} />
         </Link>
       </section>
     );
   }
 
-  if (personaError || !persona) {
+  if (personaError) {
     return (
       <section className="page-section">
-        <p className="eyebrow">Your wall</p>
-        <h1 className="font-heading text-4xl">Your page is waiting.</h1>
-        <p className="mt-4 text-muted-foreground">
-          {personaError
-            ? 'We could not load your persona. Please try again.'
-            : 'Your writing identity has not been set up yet.'}
-        </p>
-
-        {personaError && (
-          <button
-            type="button"
-            className="literary-button mt-6 inline-flex items-center gap-2"
-            onClick={() => void refreshPersona()}
-          >
-            <RefreshCw size={16} aria-hidden="true" />
-            Try again
-          </button>
-        )}
+        <p className="eyebrow">A writer’s wall</p>
+        <h1 className="font-heading text-4xl">Your wall, almost there.</h1>
+        <p className="mt-4 text-muted-foreground">{personaError}</p>
+        <button
+          type="button"
+          onClick={() => void refreshPersona()}
+          className="mt-6 inline-flex items-center gap-2 text-sm underline underline-offset-4"
+        >
+          <RefreshCw size={15} />
+          Try again
+        </button>
       </section>
     );
   }
 
-  const joinedDate = new Intl.DateTimeFormat('en', {
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(persona.createdAt));
+  if (!persona) {
+    return (
+      <section className="page-section">
+        <p className="eyebrow">A writer’s wall</p>
+        <h1 className="font-heading text-4xl">A page of your own.</h1>
+        <p className="mt-4 text-muted-foreground">
+          Your writing wall is not set up yet.
+        </p>
+      </section>
+    );
+  }
 
   return (
-    <main className="page-section">
-      <header className="mb-10">
-        <p className="eyebrow">A little corner of the commons</p>
-        <h1 className="font-heading text-4xl md:text-5xl">Your wall</h1>
-        <p className="mt-3 max-w-xl text-muted-foreground">
-          A place to leave pieces of yourself, one page at a time.
-        </p>
-      </header>
+    <div className="page-content">
+      <section className="writer-profile">
+        <span className="eyebrow">A writer’s wall</span>
 
-      <section
-        aria-labelledby="profile-name"
-        className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 md:p-10"
-      >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-10 -top-12 h-48 w-48 rounded-full border border-border/70"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-2 -top-4 h-32 w-32 rounded-full border border-border/70"
-        />
+        <span className="avatar-mark" aria-hidden="true">
+          {persona.displayName.trim().charAt(0).toLowerCase() || 'v'}
+        </span>
 
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-start">
-          <div
-            aria-hidden="true"
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-border bg-muted"
-          >
-            <Feather className="h-8 w-8 text-oxide" />
-          </div>
+        <h1>{persona.displayName}</h1>
 
-          <div className="min-w-0 flex-1">
-            <p className="eyebrow">The writer behind the words</p>
+        {persona.bio && <p className="bio">{persona.bio}</p>}
 
-            <h2 id="profile-name" className="mt-2 font-heading text-3xl md:text-4xl">
-              {persona.displayName}
-            </h2>
-
-            <p className="mt-2 text-sm text-oxide">@{persona.handle}</p>
-
-            <p className="mt-5 max-w-2xl whitespace-pre-wrap font-serif text-lg leading-relaxed text-muted-foreground">
-              {persona.bio || 'Still finding the words.'}
-            </p>
-
-            <p className="mt-5 text-xs text-muted-foreground">A wall since {joinedDate}</p>
-          </div>
-        </div>
+        <p className="wall-handle">@{persona.handle}</p>
       </section>
 
-      <section className="mt-12">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="eyebrow">Collected thoughts</p>
-            <h2 className="mt-2 font-heading text-3xl">Your pages</h2>
-          </div>
+      <div className="writer-tabs">
+        <span className="eyebrow">
+          {pieces.length === 1 ? '1 page loaded' : `${pieces.length} pages loaded`}
+        </span>
 
-          <span className="text-sm text-muted-foreground">A work in progress</span>
+        <button
+          type="button"
+          onClick={() => setReloadKey((key) => key + 1)}
+          disabled={isPiecesLoading}
+          className="wall-refresh"
+          aria-label="Refresh published pages"
+        >
+          <RefreshCw
+            size={14}
+            className={isPiecesLoading ? 'animate-spin' : ''}
+          />
+          Refresh
+        </button>
+      </div>
+
+      {isPiecesLoading && (
+        <p className="wall-status" role="status">
+          Turning the pages…
+        </p>
+      )}
+
+      {!isPiecesLoading && piecesError && pieces.length === 0 && (
+        <div className="empty-page">
+          <Feather />
+          <h2>These pages are out of reach.</h2>
+          <p>{piecesError}</p>
+          <button
+            type="button"
+            className="literary-button wall-retry"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
+            Try again <ArrowRight size={14} />
+          </button>
         </div>
+      )}
 
-        <div className="mt-6 rounded-2xl border border-dashed border-border px-6 py-12 text-center md:px-12 md:py-16">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <BookOpen className="h-6 w-6 text-oxide" aria-hidden="true" />
-          </div>
-
-          <h3 className="mt-5 font-heading text-2xl">Every wall begins with a blank page.</h3>
-
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Your published poems, fragments, letters, stories, and essays will find their home here.
-            For now, there is room for what comes next.
-          </p>
-
-          <Link to="/discover" className="literary-button mt-7 inline-flex items-center gap-2">
-            <Sparkles size={16} aria-hidden="true" />
-            Explore the commons
-            <ArrowRight size={16} aria-hidden="true" />
+      {!isPiecesLoading && !piecesError && pieces.length === 0 && (
+        <div className="empty-page">
+          <Feather />
+          <h2>Every wall begins with a word.</h2>
+          <p>This page is still becoming.</p>
+          <Link to="/write" className="literary-button wall-write-link">
+            <Feather size={14} />
+            Write your first page
           </Link>
         </div>
-      </section>
+      )}
 
-      <footer className="mt-12 border-t border-border pt-6">
-        <p className="font-serif text-sm italic text-muted-foreground">
-          Some things are better left on a page.
+      {pieces.length > 0 && (
+        <div className="writing-grid wall-writing-grid">
+          {[0, 1, 2].map((column) => {
+            const columnPieces = pieces.filter(
+              (_, index) => index % 3 === column,
+            );
+
+            return (
+              <div className="writing-column" key={column}>
+                {columnPieces.map((piece) => {
+                  const tone =
+                    CARD_TONES[pieces.findIndex((item) => item.id === piece.id) % CARD_TONES.length];
+
+                  return (
+                    <article
+                      key={piece.id}
+                      className={`writing-card tone-${tone}`}
+                    >
+                      <div className="card-meta">
+                        <span>{formatDate(piece.publishedAt ?? piece.createdAt)}</span>
+                        <span className="card-type">{formatType(piece.type)}</span>
+                      </div>
+
+                      <div className="card-read wall-card-content">
+                        <h2>{piece.title}</h2>
+                        <p className="card-excerpt">
+                          {getExcerpt(piece.body)}
+                        </p>
+                      </div>
+
+                      <div className="card-footer wall-card-footer">
+                        <span>{getReadTime(piece.body)} min read</span>
+                        <span>Published</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {piecesError && pieces.length > 0 && (
+        <p className="wall-inline-error" role="status">
+          {piecesError}
         </p>
+      )}
+
+      {nextCursor && !isPiecesLoading && (
+        <div className="wall-load-more">
+          <button
+            type="button"
+            onClick={() => void loadMore()}
+            disabled={isLoadingMore}
+            className="wall-load-button"
+          >
+            {isLoadingMore ? (
+              <>
+                <RefreshCw size={14} className="animate-spin" />
+                Loading…
+              </>
+            ) : (
+              <>
+                Load more pages
+                <ArrowRight size={14} />
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      <footer className="page-footer">
+        <span>A little less noise. A little more meaning.</span>
+        <span>Varaq · Words belong to their writers.</span>
       </footer>
-    </main>
+    </div>
   );
 }

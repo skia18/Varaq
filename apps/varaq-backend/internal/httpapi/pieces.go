@@ -1,16 +1,24 @@
 package httpapi
 
 import (
+	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/skia18/varaq/apps/varaq-backend/internal/auth"
 )
 
 type Piece struct {
@@ -35,6 +43,227 @@ type PiecePage struct {
 type pieceCursor struct {
 	PublishedAt time.Time `json:"publishedAt"`
 	ID          string    `json:"id"`
+}
+
+type PieceHandler struct {
+	DB *pgxpool.Pool
+}
+
+type createPieceRequest struct {
+	PersonaID  string  `json:"personaId"`
+	Title      string  `json:"title"`
+	Body       string  `json:"body"`
+	Type       string  `json:"type"`
+	Visibility *string `json:"visibility"`
+}
+
+var pieceSlugPattern = regexp.MustCompile(`[^a-z0-9]+`)
+
+var allowedPieceTypes = map[string]bool{
+	"poem":     true,
+	"fragment": true,
+	"story":    true,
+	"letter":   true,
+	"essay":    true,
+}
+
+var allowedPieceVisibilities = map[string]bool{
+	"private":  true,
+	"unlisted": true,
+	"public":   true,
+}
+
+func (h PieceHandler) Create(w http.ResponseWriter, r *http.Request) {
+	user, ok := auth.UserFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]any{
+			"error": map[string]string{
+				"code":    "unauthorized",
+				"message": "A valid access token is required.",
+			},
+		})
+		return
+	}
+
+	var req createPieceRequest
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(&req); err != nil {
+		writeBadRequest(w, "Invalid JSON request body.")
+		return
+	}
+
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		writeBadRequest(w, "Request body must contain a single JSON object.")
+		return
+	}
+
+	req.PersonaID = strings.TrimSpace(req.PersonaID)
+	req.Title = strings.TrimSpace(req.Title)
+
+	if req.PersonaID == "" {
+		writeBadRequest(w, "personaId is required.")
+		return
+	}
+
+	titleLength := utf8.RuneCountInString(req.Title)
+	if titleLength < 1 || titleLength > 200 {
+		writeBadRequest(w, "Title must contain 1–200 characters.")
+		return
+	}
+
+	bodyLength := utf8.RuneCountInString(req.Body)
+	if utf8.RuneCountInString(strings.TrimSpace(req.Body)) < 1 ||
+		bodyLength > 50000 {
+		writeBadRequest(w, "Body must contain 1–50000 characters and cannot be blank.")
+		return
+	}
+
+	if !allowedPieceTypes[req.Type] {
+		writeBadRequest(w, "Type must be poem, fragment, story, letter, or essay.")
+		return
+	}
+
+	visibility := "private"
+	if req.Visibility != nil {
+		visibility = *req.Visibility
+
+		if !allowedPieceVisibilities[visibility] {
+			writeBadRequest(w, "Visibility must be private, unlisted, or public.")
+			return
+		}
+	}
+
+	// Only allow users to create pieces under personas they own.
+	var ownsPersona bool
+	err := h.DB.QueryRow(
+		r.Context(),
+		`SELECT EXISTS (
+			SELECT 1
+			FROM public.personas
+			WHERE id = $1::uuid
+			  AND user_id = $2::uuid
+		)`,
+		req.PersonaID,
+		user.ID,
+	).Scan(&ownsPersona)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
+			writeBadRequest(w, "personaId must be a valid UUID.")
+			return
+		}
+
+		writeInternalError(w)
+		return
+	}
+
+	if !ownsPersona {
+		writeJSON(w, http.StatusNotFound, map[string]any{
+			"error": map[string]string{
+				"code":    "persona_not_found",
+				"message": "Persona not found.",
+			},
+		})
+		return
+	}
+
+	slugBase := makePieceSlug(req.Title)
+	if slugBase == "" {
+		slugBase = "piece"
+	}
+
+	// Keep enough room for the collision suffix within varchar(220).
+	if len(slugBase) > 200 {
+		slugBase = slugBase[:200]
+	}
+
+	// Retry if another piece under this persona already uses the slug.
+	for attempt := 0; attempt < 5; attempt++ {
+		slug := slugBase
+
+		if attempt > 0 {
+			suffix, err := randomPieceSlugSuffix()
+			if err != nil {
+				writeInternalError(w)
+				return
+			}
+
+			slug = slugBase + "-" + suffix
+		}
+
+		var piece Piece
+
+		err := h.DB.QueryRow(
+			r.Context(),
+			`INSERT INTO public.pieces
+				(persona_id, slug, title, body, type, status, visibility, published_at)
+			VALUES ($1::uuid, $2, $3, $4, $5, 'draft', $6, NULL)
+			RETURNING
+				id, persona_id, slug, title, body, type, status,
+				visibility, published_at, created_at, updated_at`,
+			req.PersonaID,
+			slug,
+			req.Title,
+			req.Body,
+			req.Type,
+			visibility,
+		).Scan(
+			&piece.ID,
+			&piece.PersonaID,
+			&piece.Slug,
+			&piece.Title,
+			&piece.Body,
+			&piece.Type,
+			&piece.Status,
+			&piece.Visibility,
+			&piece.PublishedAt,
+			&piece.CreatedAt,
+			&piece.UpdatedAt,
+		)
+
+		if err == nil {
+			writeJSON(w, http.StatusCreated, piece)
+			return
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) &&
+			pgErr.Code == "23505" &&
+			pgErr.ConstraintName == "pieces_persona_slug_unique" {
+			continue
+		}
+
+		writeInternalError(w)
+		return
+	}
+
+	writeJSON(w, http.StatusConflict, map[string]any{
+		"error": map[string]string{
+			"code":    "slug_conflict",
+			"message": "Could not generate a unique slug. Please try again.",
+		},
+	})
+}
+
+func makePieceSlug(title string) string {
+	title = strings.ToLower(strings.TrimSpace(title))
+	slug := pieceSlugPattern.ReplaceAllString(title, "-")
+	return strings.Trim(slug, "-")
+}
+
+func randomPieceSlugSuffix() (string, error) {
+	var value [4]byte
+
+	if _, err := rand.Read(value[:]); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(value[:]), nil
 }
 
 func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request) {
@@ -68,8 +297,7 @@ func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request)
 		cursor = &parsed
 	}
 
-	// Verify the persona exists so an unknown handle returns 404,
-	// even when that persona has no published pieces.
+	// Verify the persona exists even when it has no published pieces.
 	var personaID string
 	err := h.DB.QueryRow(
 		r.Context(),

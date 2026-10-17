@@ -63,3 +63,60 @@ export function createPersona(input: { handle: string; displayName: string; bio?
     body: JSON.stringify(input),
   });
 }
+
+export type Piece = {
+  id: string;
+  personaId: string;
+  slug: string;
+  title: string;
+  body: string;
+  type: 'poem' | 'fragment' | 'essay';
+  status: 'draft' | 'published';
+  visibility: 'public' | 'unlisted' | 'private';
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PiecePage = {
+  items: Piece[];
+  nextCursor: string | null;
+};
+
+export async function getPublicPieces(
+  handle: string,
+  options: {
+    limit?: number;
+    cursor?: string | null;
+  } = {},
+): Promise<PiecePage> {
+  const params = new URLSearchParams();
+
+  params.set('limit', String(options.limit ?? 20));
+
+  if (options.cursor) {
+    params.set('cursor', options.cursor);
+  }
+
+  return apiRequest<PiecePage>(
+    `/api/v1/personas/${encodeURIComponent(handle)}/pieces?${params.toString()}`,
+  );
+}
+
+
+export type PieceType = 'poem' | 'fragment' | 'story' | 'letter' | 'essay';
+
+export type CreatePieceInput = {
+  personaId: string;
+  title: string;
+  body: string;
+  type: PieceType;
+  visibility: 'private' | 'unlisted' | 'public';
+};
+
+export async function createPiece(input: CreatePieceInput): Promise<Piece> {
+  return apiRequest<Piece>('/api/v1/pieces', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
