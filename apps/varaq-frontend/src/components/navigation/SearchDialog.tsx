@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Search, X } from 'lucide-react';
-import { writings } from '../../features/feed/writings';
+import { Search, X } from 'lucide-react';
+import { toWriting, type Writing } from '../../features/feed/writings';
+import { getFeed } from '@/lib/api';
+import { SearchResults } from './SearchResults';
 
 type SearchDialogProps = {
   open: boolean;
@@ -14,18 +16,37 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const navigate = useNavigate();
 
   const normalizedQuery = query.trim().toLowerCase();
-  const matches = writings.filter((writing) => {
-    if (!normalizedQuery) return true;
-
-    return [
-      writing.title,
-      writing.author,
-      writing.handle,
-      writing.form,
-      writing.excerpt,
-      writing.body,
-    ].some((value) => value.toLowerCase().includes(normalizedQuery));
-  });
+  const [matches, setMatches] = useState<Writing[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    setMatches([]);
+    setHasMore(false);
+    const timer = window.setTimeout(() => {
+      void getFeed({ query: normalizedQuery, limit: 10, signal: controller.signal })
+        .then((page) => {
+          if (!controller.signal.aborted) {
+            setMatches(page.items.map(toWriting));
+            setHasMore(Boolean(page.nextCursor));
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setError('Could not search pages. Please try again.');
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, 300);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [open, normalizedQuery]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,6 +110,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
           <input
             ref={inputRef}
             type="search"
+            maxLength={75}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="A word, a feeling, a writer…"
@@ -101,38 +123,15 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
           )}
         </label>
 
-        <div className="search-results" aria-live="polite">
-          <div className="search-results-meta">
-            {normalizedQuery ? 'Pages that might be yours' : 'Pages to wander into'}
-            <span>{matches.length}</span>
-          </div>
-
-          {matches.length ? (
-            matches.map((writing) => (
-              <button
-                type="button"
-                className="search-result"
-                key={writing.id}
-                onClick={() => openWriting(writing.id)}
-              >
-                <span className={`search-result-mark tone-${writing.tone}`} />
-                <span className="search-result-copy">
-                  <strong>{writing.title}</strong>
-                  <small>
-                    {writing.author} <span aria-hidden="true">·</span> {writing.form}
-                  </small>
-                  <span className="search-result-excerpt">{writing.excerpt}</span>
-                </span>
-                <ArrowRight aria-hidden="true" className="search-result-arrow" />
-              </button>
-            ))
-          ) : (
-            <div className="search-empty">
-              <h3>No pages found, just yet.</h3>
-              <p>Try another word, or search for a writer.</p>
-            </div>
-          )}
-        </div>
+        <SearchResults
+          matches={matches}
+          hasMore={hasMore}
+          query={normalizedQuery}
+          loading={loading}
+          error={error}
+          onRead={openWriting}
+          onClose={onClose}
+        />
         <p className="search-hint">
           <kbd>ESC</kbd> to close
         </p>

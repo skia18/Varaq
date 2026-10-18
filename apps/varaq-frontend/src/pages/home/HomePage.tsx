@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowDownLeft, ArrowRight, Sprout } from 'lucide-react';
-import { WritingCard } from '../../components/literary/WritingCard';
-import { writings, type Writing, type WritingForm } from '../../features/feed/writings';
+import { ArrowDownLeft } from 'lucide-react';
+import { FeedGrid } from '@/features/feed/FeedGrid';
+import { toWriting, forms, type Writing } from '../../features/feed/writings';
+
+import { getFeed, type PieceType } from '@/lib/api';
+import { usePublicFeed } from '@/features/feed/usePublicFeed';
+import { FeedStatus } from '@/features/feed/FeedStatus';
 
 const filters = ['All pages', 'Poems', 'Short stories', 'Essays', 'Letters', 'Fragments'] as const;
 
@@ -10,45 +14,36 @@ type FeedFilter = (typeof filters)[number];
 
 export function HomePage() {
   const [filter, setFilter] = useState<FeedFilter>('All pages');
-  const [sort, setSort] = useState<'recent' | 'loved'>('recent');
+  const type = Object.entries(forms).find(([, label]) => label === filter)?.[0] as
+    | PieceType
+    | undefined;
+  const feed = usePublicFeed({ type });
+  const writings = feed.items.map(toWriting);
+  const [readingError, setReadingError] = useState<string | null>(null);
   const [reading, setReading] = useState<Writing | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Open a writing when another page navigates here with its ID.
-  // Collections and Saved Pages can use this to open the reading modal.
+  // Saved pages and search may open a piece outside the first feed page.
   useEffect(() => {
-    const state = location.state as { openWritingId?: string } | null;
-
-    if (!state?.openWritingId) {
-      return;
-    }
-
-    const writing = writings.find((item) => item.id === state.openWritingId);
-
-    if (writing) {
-      setReading(writing);
-    }
-
-    // Clear the navigation state to prevent reopening on refresh.
-    navigate(location.pathname, {
-      replace: true,
-      state: null,
-    });
-  }, [location.key, location.pathname, location.state, navigate]);
-
-  const filtered = useMemo(() => {
-    const result = writings.filter(
-      (writing) => filter === 'All pages' || writing.form === (filter as WritingForm),
-    );
-
-    return sort === 'loved'
-      ? [...result].sort((a, b) => b.appreciations - a.appreciations)
-      : result;
-  }, [filter, sort]);
-
-  const columns = [0, 1, 2].map((column) => filtered.filter((_, index) => index % 3 === column));
+    const id = (location.state as { openWritingId?: string } | null)?.openWritingId;
+    if (!id) return;
+    const controller = new AbortController();
+    setReadingError(null);
+    void getFeed({ ids: [id], limit: 1, signal: controller.signal })
+      .then((page) => {
+        if (controller.signal.aborted) return;
+        if (page.items[0]) setReading(toWriting(page.items[0]));
+        else setReadingError('This page is no longer publicly available.');
+        navigate(location.pathname + location.search, { replace: true, state: null });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setReadingError('Could not open this page. Please try again.');
+      });
+    return () => controller.abort();
+  }, [location.key, location.pathname, location.search, location.state, navigate]);
 
   return (
     <div className="page-content">
@@ -83,60 +78,13 @@ export function HomePage() {
           ))}
         </div>
 
-        <select
-          className="sort-control"
-          aria-label="Sort pages"
-          value={sort}
-          onChange={(event) => setSort(event.target.value as typeof sort)}
-        >
-          <option value="recent">Recently left here</option>
-          <option value="loved">Most appreciated</option>
-        </select>
+        <span className="sort-control">Most recently published</span>
       </div>
 
-      <div className="feed-layout">
-        <section aria-label="Recent writing" className="writing-grid">
-          {columns.map((column, index) => (
-            <div className="writing-column" key={index}>
-              {column.map((writing) => (
-                <WritingCard key={writing.id} writing={writing} onRead={setReading} />
-              ))}
-            </div>
-          ))}
-        </section>
+      <FeedGrid writings={writings} onRead={setReading} loading={feed.isLoading} />
 
-        <aside className="field-notes">
-          <h2 className="notes-heading">
-            <Sprout aria-hidden="true" />
-            In the margins
-          </h2>
-
-          <div className="daily-line">
-            <span className="eyebrow">A line to live with</span>
-            <blockquote>
-              “Let everything happen to you: beauty and terror. Just keep going. No feeling is
-              final.”
-            </blockquote>
-            <cite>— Rainer Maria Rilke</cite>
-          </div>
-
-          <div className="prompt-note">
-            <span className="eyebrow">A small invitation</span>
-            <p>
-              Write about a place
-              <br />
-              that no longer exists,
-              <br />
-              except in you.
-            </p>
-            <a href="/write">
-              Take this to your page <ArrowRight aria-hidden="true" />
-            </a>
-          </div>
-
-          <p className="notes-bottom">No rush. Stay a little.</p>
-        </aside>
-      </div>
+      <FeedStatus feed={feed} />
+      {readingError && <p role="alert">{readingError}</p>}
 
       <footer className="page-footer">
         <span>A little less noise. A little more meaning.</span>

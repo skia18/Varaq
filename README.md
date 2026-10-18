@@ -11,7 +11,9 @@ The repository contains a React frontend, a Go REST API, and a version-controlle
 - Supabase Auth handles sign-up, login, sessions, and password recovery.
 - The API supports persona creation and lookup, draft creation and editing, publishing, deletion, and public listings for a writer's wall.
 - The frontend includes a writing room, a private vault, public writer walls, and discovery, collection, and saved-page screens.
-- The Commons feed, collections, and saved-page views currently use bundled sample writing. Their presence does not imply a complete database-backed implementation.
+- The Commons loads the 10 most recently published public pieces from `GET /api/v1/feed`. Each subsequent page loads only on a new downward scroll near the end. When the page does not overflow, downward wheel, touch, or keyboard scroll gestures can request the next batch. There is no automatic viewport filling or background prefetch.
+- Discovery and search use the public feed API. Saved IDs remain in browser storage; their piece content is fetched from the API. Collections currently show an empty state until a collections data model is implemented.
+- Private drafts and unlisted pieces do not appear in the public feed. Deploy both the API and frontend changes together when updating the feed.
 
 Semantic discovery with pgvector, MCP integration, and expanded moderation and library features remain planned.
 
@@ -162,9 +164,16 @@ Run these from the repository root:
 | `npm run dev:web` | Start the frontend development server |
 | `npm run dev:go` | Start the Go API |
 | `npm run build:web` | Type-check and build the frontend |
+| `npm test` | Run frontend and Go tests |
+| `npm run test:web` | Run frontend tests with Vitest |
+| `npm run test:watch` | Run frontend tests in Vitest watch mode |
 | `npm run test:go` | Run Go tests |
+| `npm run format` | Format frontend and backend source |
+| `npm run format:web` | Format frontend source |
 | `npm run format:go` | Format backend Go source |
-| `npm run lint --workspace=varaq-frontend` | Lint frontend code |
+| `npm run lint` | Run frontend lint and Go vet |
+| `npm run lint:web` | Lint frontend code |
+| `npm run lint:go` | Run Go vet |
 | `npm run format:check --workspace=varaq-frontend` | Check frontend formatting |
 | `npm run api:validate-spec` | Validate the OpenAPI specification |
 | `npm run api:generate:web` | Generate a TypeScript Fetch client from OpenAPI |
@@ -212,3 +221,17 @@ Contributions should keep frontend presentation, backend business logic, and dat
 ## License
 
 The root package metadata declares ISC, while the frontend has a separate [LICENSE](apps/varaq-frontend/LICENSE). There is currently no root license file; repository-wide licensing needs clarification.
+
+## Feed verification
+
+```bash
+npm test --workspace=varaq-frontend
+npm run build:web
+npm run lint --workspace=varaq-frontend
+cd apps/varaq-backend
+go test ./...
+```
+
+Frontend tests run with Vitest using the shared Vite configuration and aliases. Use Node 20.19+, 22.12+, or 24+ from Vitest’s supported release lines; Node 23 is not supported by Vitest 4. The suite uses Node for unit and server-rendered component tests; API calls are mocked in rendering tests so no Supabase credentials are required.
+
+The frontend tests cover scroll-only loading, non-overflowing viewports, concurrent scroll events, exhaustion, retry cursors, stale responses, ordered card rendering and search-to-discovery links. Backend tests cover feed visibility predicates, ordering, parameter validation and cursor filtering. Browser scrolling and database-backed end-to-end checks require the running API and published public pieces.

@@ -314,7 +314,7 @@ paths:
             type: integer
             minimum: 1
             maximum: 50
-            default: 20
+            default: 10
 
         - name: cursor
           in: query
@@ -330,13 +330,32 @@ paths:
           schema:
             $ref: "#/components/schemas/PieceType"
 
+        - name: q
+          in: query
+          description: Literal text search across title, body and writer (maximum 300 UTF-8 bytes)
+          schema:
+            type: string
+            maxLength: 300
+
+        - name: ids
+          in: query
+          description: Comma-separated piece UUIDs (maximum 50); only public published pieces are returned
+          style: form
+          explode: false
+          schema:
+            type: array
+            maxItems: 50
+            items:
+              type: string
+              format: uuid
+
       responses:
         "200":
           description: Public feed page
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PiecePage"
+                $ref: "#/components/schemas/FeedPage"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -583,6 +602,28 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    FeedPiece:
+      allOf:
+        - $ref: "#/components/schemas/Piece"
+        - type: object
+          required: [author, handle]
+          properties:
+            author:
+              type: string
+            handle:
+              type: string
+
+    FeedPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedPiece"
+        nextCursor:
+          type: [string, "null"]
 
     PiecePage:
       type: object

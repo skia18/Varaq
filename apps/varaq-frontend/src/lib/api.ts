@@ -159,3 +159,23 @@ export async function deleteOwnerPiece(pieceId: string): Promise<void> {
 export function getPublicPersona(handle: string): Promise<Persona> {
   return apiRequest<Persona>(`/api/v1/personas/${encodeURIComponent(handle)}`);
 }
+
+export type FeedPiece = Piece & { author: string; handle: string };
+export type FeedPage = { items: FeedPiece[]; nextCursor: string | null };
+export function getFeed(
+  options: {
+    limit?: number;
+    cursor?: string | null;
+    type?: PieceType;
+    query?: string;
+    ids?: string[];
+    signal?: AbortSignal;
+  } = {},
+): Promise<FeedPage> {
+  const params = new URLSearchParams({ limit: String(options.limit ?? 10) });
+  if (options.cursor) params.set('cursor', options.cursor);
+  if (options.type) params.set('type', options.type);
+  if (options.query) params.set('q', options.query);
+  if (options.ids?.length) params.set('ids', options.ids.join(','));
+  return apiRequest<FeedPage>(`/api/v1/feed?${params}`, { signal: options.signal });
+}

@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Bookmark, Heart } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 import type { Writing } from '../../features/feed/writings';
 import { useSavedPages } from '../../features/saved/SavedPagesContext';
 
@@ -9,7 +8,6 @@ type WritingCardProps = {
 };
 
 export function WritingCard({ writing, onRead }: WritingCardProps) {
-  const [liked, setLiked] = useState(false);
   const { isSaved, toggleSaved } = useSavedPages();
   const saved = isSaved(writing.id);
 
@@ -33,17 +31,6 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
       </button>
 
       <div className="card-footer">
-        <button
-          type="button"
-          className={liked ? 'is-active' : ''}
-          onClick={() => setLiked((value) => !value)}
-          aria-label={liked ? 'Remove appreciation' : 'Appreciate this writing'}
-          aria-pressed={liked}
-        >
-          <Heart fill={liked ? 'currentColor' : 'none'} />
-          {writing.appreciations + Number(liked)}
-        </button>
-
         <span>{writing.minutes} min read</span>
 
         <button
@@ -59,24 +46,5 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
     </>
   );
 
-  return (
-    <article className={`writing-card tone-${writing.tone}`}>
-      {writing.tone === 'photo' && (
-        <button
-          type="button"
-          className="card-photo-button"
-          onClick={() => onRead(writing)}
-          aria-label={`Read ${writing.title}`}
-        >
-          <img
-            src="/quiet-window.jpg"
-            alt="A quiet window with soft natural light"
-            className="card-photo"
-          />
-        </button>
-      )}
-
-      {writing.tone === 'photo' ? <div className="photo-content">{content}</div> : content}
-    </article>
-  );
+  return <article className={`writing-card tone-${writing.tone}`}>{content}</article>;
 }

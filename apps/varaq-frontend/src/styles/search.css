@@ -274,3 +274,14 @@
     transition: none;
   }
 }
+
+.search-view-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
