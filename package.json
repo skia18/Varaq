@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/skia18/Varaq#readme",
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.14.0"
+    "@openapitools/openapi-generator-cli": "^2.14.0",
+    "supabase": "^2.121.0"
   }
 }
