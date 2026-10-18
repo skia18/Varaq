@@ -2,267 +2,236 @@
 
 **Leave a page of yourself behind.**
 
-Varaq is a literary writing platform built around personal expression, thoughtful reading, and the discovery of writing that resonates. Writers can publish poems, fragments, short stories, letters, and essays under pseudonymous identities, creating personal literary walls that reflect their voices.
+Varaq is a literary writing platform for poems, fragments, stories, letters, and essays published under pseudonymous identities. Its design draws on paper, ink, annotations, and literary scrapbooks.
 
-The experience draws inspiration from paper, ink, annotations, and literary scrapbooks. Rather than optimizing for follower counts and engagement metrics, Varaq aims to make writing feel personal, intimate, and discoverable.
+## Current implementation
 
-## Vision
+The repository contains a React frontend, a Go REST API, and a version-controlled Supabase PostgreSQL schema.
 
-Create a public space where people can leave pieces of themselves through writing and discover meaningful connections between words, ideas, and experiences.
+- Supabase Auth handles sign-up, login, sessions, and password recovery.
+- The API supports persona creation and lookup, draft creation and editing, publishing, deletion, and public listings for a writer's wall.
+- The frontend includes a writing room, a private vault, public writer walls, and discovery, collection, and saved-page screens.
+- The Commons loads the 10 most recently published public pieces from `GET /api/v1/feed`. Each subsequent page loads only on a new downward scroll near the end. When the page does not overflow, downward wheel, touch, or keyboard scroll gestures can request the next batch. There is no automatic viewport filling or background prefetch.
+- Discovery and search use the public feed API. Saved IDs remain in browser storage; their piece content is fetched from the API. Collections currently show an empty state until a collections data model is implemented.
+- Private drafts and unlisted pieces do not appear in the public feed. Deploy both the API and frontend changes together when updating the feed.
 
-## Core Features
+Semantic discovery with pgvector, MCP integration, and expanded moderation and library features remain planned.
 
-- **Commons:** A public feed of literary writing.
-- **Discover:** Explore writing through themes, tags, and related pieces.
-- **Personal Walls:** Individual literary spaces for pseudonymous writers.
-- **Piece Reader:** A focused reading experience for poems, stories, essays, and fragments.
-- **Writing Room:** A distraction-free environment for drafting and publishing.
-- **Library:** Save writing and organize pieces into collections.
-- **Persona Studio:** Create and manage a literary identity.
-- **Privacy Controls:** Support public, unlisted, and private writing.
-- **Semantic Discovery (planned):** Find related writing using meaning rather than exact keywords.
-- **MCP Integration (planned):** Enable AI tools to discover and retrieve public writing through controlled interfaces.
-
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|---|---|
-| Frontend | React, Vite, TypeScript |
-| Routing | React Router |
-| Styling | Tailwind CSS |
-| Backend | Go |
-| HTTP Router | Chi |
-| Database | Supabase PostgreSQL |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, React Router |
+| UI | Tailwind CSS, Base UI, shadcn tooling |
+| Backend | Go, Chi |
+| Database | Supabase PostgreSQL, accessed through pgx |
 | Authentication | Supabase Auth |
-| Database Access | pgx and sqlc |
-| API Specification | OpenAPI |
-| Semantic Search (planned) | PostgreSQL with pgvector |
-| Version Control | Git and GitHub |
+| Database migrations | Supabase CLI and SQL files |
+| API specification | OpenAPI |
 
-## Architecture
-
-Varaq uses a monorepo containing two independently runnable applications.
+## Repository layout
 
 ```text
-varaq/
-├── frontend/                 # React + Vite application
-│   ├── src/
-│   │   ├── pages/            # Application pages
-│   │   ├── components/       # Reusable UI components
-│   │   ├── layouts/          # Shared page layouts
-│   │   ├── routes/           # React Router configuration
-│   │   ├── services/         # Backend API client
-│   │   ├── hooks/            # Custom React hooks
-│   │   └── types/            # TypeScript types
-│   ├── public/
-│   └── package.json
-│
-├── backend/                  # Go REST API
-│   ├── cmd/
-│   │   └── api/
-│   │       └── main.go
-│   ├── internal/
-│   │   ├── config/
-│   │   ├── db/
-│   │   ├── httpapi/
-│   │   ├── personas/
-│   │   └── pieces/
-│   ├── db/
-│   │   ├── migrations/
-│   │   └── queries/
-│   ├── api/
-│   │   └── openapi.yaml
-│   └── go.mod
-│
-├── infra/                    # Local infrastructure configuration
-├── .gitignore
-└── README.md
+Varaq/
+├── apps/
+│   ├── varaq-frontend/
+│   │   ├── src/
+│   │   │   ├── app/             # Router and app entry
+│   │   │   ├── auth/            # Sessions and protected routes
+│   │   │   ├── components/      # Shared UI and login forms
+│   │   │   ├── features/        # Feed and feature state
+│   │   │   ├── lib/             # API and Supabase clients
+│   │   │   ├── pages/
+│   │   │   └── styles/
+│   │   └── .env.local.example
+│   └── varaq-backend/
+│       ├── cmd/api/             # API entry point
+│       ├── internal/
+│       │   ├── auth/            # Supabase token verification
+│       │   ├── config/          # Environment configuration
+│       │   ├── httpapi/         # Routes, handlers, middleware
+│       │   └── store/           # PostgreSQL connection helpers
+│       ├── apispec/openapi.yaml
+│       └── .env.example
+├── documentation/
+│   └── database-workflow.md
+├── supabase/
+│   ├── config.toml
+│   └── migrations/              # Application schema history
+├── package.json                # Workspace scripts and CLI tools
+└── package-lock.json
 ```
 
-The directory structure may evolve as implementation progresses.
+## Getting started
 
-### Request Flow
+### 1. Install prerequisites and dependencies
 
-1. The React frontend renders pages and handles user interactions.
-2. The frontend calls the Go REST API over HTTP using JSON.
-3. The Go backend validates requests, enforces authorization, and executes business logic.
-4. The backend accesses PostgreSQL through its database layer.
-5. Responses return to the frontend for rendering.
-
-The frontend and backend are separate applications. They can be developed and deployed independently while remaining in the same Git repository.
-
-## Getting Started
-
-For database setup, Docker, and the SQL migration workflow, read [Database setup and migrations](documentation/database-workflow.md). The current database migrations live in the root `supabase/migrations/` directory; use that guide for database setup rather than the older database paths below.
-
-### Prerequisites
-
-Install the following tools:
-
-- Node.js and npm
-- Go
-- Git
-- A Supabase project, or a compatible local PostgreSQL environment
-
-### 1. Clone the repository
+You need Git, Node.js 20.19 or newer with npm, and the Go toolchain specified by [go.mod](apps/varaq-backend/go.mod), currently Go 1.27.2. Docker Desktop is needed when running local Supabase or database commands that use containers. It does not need to run while the application uses hosted Supabase.
 
 ```bash
-git clone <your-repository-url>
-cd varaq
+git clone https://github.com/skia18/Varaq.git
+cd Varaq
+npm ci
 ```
 
-### 2. Start the frontend
+Run the remaining commands from this repository root unless a step explicitly changes directory. The root npm workspace installs the frontend dependencies and the Supabase CLI; a separate frontend npm installation is unnecessary.
+
+### 2. Choose the database environment
+
+For access to the existing hosted environment, obtain the project's Supabase URL, publishable key, and database connection string privately from a maintainer. Do not push schema changes merely to start the application.
+
+For an isolated local environment, follow [Database setup and migrations](documentation/database-workflow.md). That guide covers Docker installation, creating the local database from migrations, linking a hosted project, and the original schema import. A fresh clone already has the configuration and baseline; do not repeat `supabase init` or pull another baseline.
+
+Use the same Supabase instance for the frontend Auth client, backend Auth verification, and database connection. The `personas` table references `auth.users`, so plain PostgreSQL without an equivalent Auth setup is insufficient.
+
+### 3. Configure environment files
+
+Copy the templates:
 
 ```bash
-cd frontend
-npm install
+cp apps/varaq-frontend/.env.local.example apps/varaq-frontend/.env.local
+cp apps/varaq-backend/.env.example apps/varaq-backend/.env
 ```
 
-Create a `.env.local` file in `frontend/`:
+Edit `apps/varaq-frontend/.env.local`:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8080/api/v1
+VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
-Start the development server:
+`VITE_API_BASE_URL` is optional and defaults to `http://localhost:8080`. Do not append `/api/v1`: the frontend request paths already include it. Restart Vite after editing its environment variables.
 
-```bash
-npm run dev
-```
-
-The Vite development server typically runs at `http://localhost:5173`.
-
-### 3. Configure the backend
-
-Open a separate terminal:
-
-```bash
-cd backend
-```
-
-Create a `.env` file based on the backend's environment configuration template. Configure the database connection, server port, and authentication settings.
-
-Example configuration:
+Edit `apps/varaq-backend/.env`:
 
 ```env
 PORT=8080
-DATABASE_URL=<your-postgresql-connection-string>
-SUPABASE_URL=<your-supabase-project-url>
-SUPABASE_JWT_ISSUER=<your-supabase-jwt-issuer>
+DATABASE_URL=YOUR_POSTGRESQL_CONNECTION_STRING
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
 ```
 
-The exact variables depend on the backend implementation. Do not commit secrets or production credentials.
+Use the actual database connection string for your chosen environment. For local Supabase, run `npx supabase status` to get local connection details and client keys, and use its local API URL in place of the hosted URL above.
 
-Install dependencies and start the API:
+For hosted Auth, configure the Supabase Auth Site URL and allowed redirect URLs for your frontend origin. Password recovery returns to `/update-password`, so allow `http://localhost:5173/update-password` during local development and the corresponding URL for any deployed frontend.
+
+Environment files are ignored by Git. Frontend `VITE_` values are exposed to the browser: use the publishable client key there, never a database password, secret key, or service-role key.
+
+### 4. Start the API
+
+In one terminal at the repository root:
 
 ```bash
-go mod download
-go run ./cmd/api
+npm run dev:go
 ```
 
-The API should be available at `http://localhost:8080`, assuming the default port is configured.
+This starts Go from `apps/varaq-backend`, where it reads `.env`. Go downloads missing modules when needed. By default, the API listens on `http://localhost:8080`.
 
-### 4. Configure the database
+Check it with:
 
-Apply the version-controlled SQL migrations in `backend/db/migrations/` using the project's migration workflow.
+```bash
+curl http://localhost:8080/healthz
+curl http://localhost:8080/readyz
+```
 
-When using Supabase, ensure the schema is compatible with Supabase Auth and its `auth.users` table. A vanilla PostgreSQL instance will not have Supabase's authentication schema automatically.
+`/healthz` checks that the server responds. `/readyz` also checks database connectivity; neither verifies the complete schema or Auth configuration.
 
-Keep migrations version-controlled so that local, staging, and production environments can be updated consistently.
+### 5. Start the frontend
 
-## Application Routes
+In a second terminal at the repository root:
 
-| Route | Purpose |
-|---|---|
-| `/` | Commons — public literary feed |
-| `/discover` | Discover writing and themes |
-| `/u/:handle` | Personal literary wall |
-| `/p/:slug` | Individual piece reader |
-| `/write` | Writing room |
-| `/library` | Saved pieces and collections |
-| `/settings/persona` | Persona management |
+```bash
+npm run dev:web
+```
 
-These routes are intended to be implemented using React Router.
+Open the URL printed by Vite, normally `http://localhost:5173`. The API allows that origin by default. To allow another frontend origin, set `FRONTEND_ORIGIN` in the backend environment and restart the API.
 
-## API Design
+## Database changes
 
-The backend exposes a versioned REST API under `/api/v1`.
+Keep each schema change in a new file under `supabase/migrations/`. Preserve migrations that have already been applied or shared.
 
-Planned resource groups include:
+The normal flow is to create a migration, write SQL, test it against local Supabase, review and commit it, then deploy it deliberately to the intended hosted project. **`supabase db push` changes the linked hosted database.** A local reset deletes local records; it does not copy production data.
 
-- **Personas:** Create, retrieve, and update literary identities.
-- **Pieces:** Draft, publish, retrieve, update, and delete writing.
-- **Feed:** Retrieve published public writing.
-- **Tags:** Categorize and discover writing.
-- **Collections:** Organize related pieces.
-- **Library:** Save and retrieve bookmarked writing.
-- **Responses:** Support reader responses where enabled.
-- **Moderation:** Handle reports, blocks, and content restrictions.
+See [Database setup and migrations](documentation/database-workflow.md) for the complete commands, target selection, data handling, and troubleshooting.
 
-The OpenAPI specification in `backend/api/openapi.yaml` serves as the API contract.
+## Development commands
 
-## Privacy and Security
+Run these from the repository root:
 
-Privacy is a core product requirement.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev:web` | Start the frontend development server |
+| `npm run dev:go` | Start the Go API |
+| `npm run build:web` | Type-check and build the frontend |
+| `npm test` | Run frontend and Go tests |
+| `npm run test:web` | Run frontend tests with Vitest |
+| `npm run test:watch` | Run frontend tests in Vitest watch mode |
+| `npm run test:go` | Run Go tests |
+| `npm run format` | Format frontend and backend source |
+| `npm run format:web` | Format frontend source |
+| `npm run format:go` | Format backend Go source |
+| `npm run lint` | Run frontend lint and Go vet |
+| `npm run lint:web` | Lint frontend code |
+| `npm run lint:go` | Run Go vet |
+| `npm run format:check --workspace=varaq-frontend` | Check frontend formatting |
+| `npm run api:validate-spec` | Validate the OpenAPI specification |
+| `npm run api:generate:web` | Generate a TypeScript Fetch client from OpenAPI |
 
-- **Public:** Discoverable and accessible to readers.
-- **Unlisted:** Accessible through a direct link, but excluded from public discovery.
-- **Private:** Accessible only to the author and explicitly authorized systems.
+The OpenAPI Generator commands require Java. The current frontend uses the hand-written client at `apps/varaq-frontend/src/lib/api.ts`; generating a client does not automatically switch the application to it.
 
-The backend must enforce visibility and ownership rules on every relevant request. Frontend controls alone are not sufficient.
+## Frontend routes
 
-Additional requirements:
+| Route | Purpose | Requires login |
+| --- | --- | --- |
+| `/` | Commons feed | No |
+| `/discover` | Discovery screen | No |
+| `/collections` | Collection browsing | No |
+| `/wall/:handle` | Public writer wall | No |
+| `/saved` | Saved pages | Yes |
+| `/vault` | Writer's private workspace | Yes |
+| `/write` | Writing room | Yes |
+| `/login`, `/signup` | Account access | No |
+| `/forgot-password`, `/update-password` | Password recovery screens | No route guard |
 
-- Verify authentication tokens on the server.
-- Never expose database credentials, service-role keys, or private API secrets in frontend code.
-- Apply rate limits to publishing, responses, and other abuse-prone endpoints.
-- Support reporting, blocking, and moderation.
-- Ensure private or unlisted writing is excluded from public semantic-search indexes.
-- Propagate deletion and visibility changes to any derived search indexes.
+Password updates still require a valid Auth recovery/session flow. Frontend route guards improve navigation; backend authorization enforces access to private resources.
 
-## Development Roadmap
+## API and request flow
 
-### Phase 1 — Core Platform
-- Establish the frontend and backend foundations.
-- Implement personas and literary walls.
-- Implement drafting, publishing, and public piece retrieval.
-- Build the Commons feed and Piece Reader.
-- Add visibility controls and authorization.
+The frontend authenticates through Supabase Auth and sends the session's bearer token with API requests. The Go API verifies protected requests through Supabase's `/auth/v1/user` endpoint, then queries PostgreSQL through pgx.
 
-### Phase 2 — Reading and Organization
-- Implement Discover and tag-based browsing.
-- Add saved pieces and collections.
-- Improve the writing and reading experience.
-- Introduce reporting and blocking workflows.
+Current route groups under `/api/v1` include:
 
-### Phase 3 — Semantic Discovery
-- Generate embeddings for eligible public writing.
-- Store vectors using PostgreSQL with pgvector.
-- Support semantic search and related-piece recommendations.
-- Evaluate retrieval quality and enforce privacy boundaries.
+- `POST /personas` and `GET /me/persona` for the signed-in writer's persona.
+- `GET /personas/{handle}` and `GET /personas/{handle}/pieces` for public walls.
+- `POST /pieces` for creating writing.
+- `GET /owner/pieces` and `GET`, `PUT`, or `DELETE /owner/pieces/{pieceID}` for owner access.
+- `POST /owner/pieces/{pieceID}/publish` for publishing.
 
-### Phase 4 — MCP and AI Integration
-- Introduce controlled MCP tools for public writing discovery.
-- Support semantic queries over eligible public pieces.
-- Add authenticated access to the user's own archive where appropriate.
-- Require explicit confirmation for write operations such as creating drafts.
-- Test authorization, privacy, and deletion behavior across all AI interfaces.
+Public wall lookups are unauthenticated; the other operations listed require authentication. The API specification lives at [apps/varaq-backend/apispec/openapi.yaml](apps/varaq-backend/apispec/openapi.yaml). Keep it aligned with route and payload changes.
 
-## Design Principles
+## Privacy and development direction
 
-- **Literary first:** Prioritize the writing and reading experience.
-- **Pseudonymity:** Support expression without requiring a public real-world identity.
-- **Intentional discovery:** Help readers find writing that resonates.
-- **Quiet visual design:** Use warm paper tones, ink-black typography, muted sage, and oxide-red accents.
-- **Privacy by design:** Enforce visibility rules throughout the application and its integrations.
-- **Modular architecture:** Start with a Go modular monolith and avoid unnecessary microservices.
+Varaq models public, unlisted, and private writing. Ownership and visibility checks belong in the backend as well as any database access policies. Keep database credentials and privileged keys out of browser code and Git. SQL migrations describe structure; production records and backups belong in separate private storage.
 
-## Contributing
+Future work includes database-backed discovery and library features, reporting and moderation, semantic search over eligible public writing, and controlled MCP access. Search and derived indexes must respect visibility changes and deletions.
 
-Varaq is currently under active development.
-
-As the project evolves, contributions should preserve the separation between frontend presentation, backend business logic, and database access. API changes should be reflected in the OpenAPI specification.
+Contributions should keep frontend presentation, backend business logic, and database changes coordinated. Include relevant validation and update the API specification and documentation when behavior changes.
 
 ## License
 
-License to be determined.
+The root package metadata declares ISC, while the frontend has a separate [LICENSE](apps/varaq-frontend/LICENSE). There is currently no root license file; repository-wide licensing needs clarification.
+
+## Feed verification
+
+```bash
+npm test --workspace=varaq-frontend
+npm run build:web
+npm run lint --workspace=varaq-frontend
+cd apps/varaq-backend
+go test ./...
+```
+
+Frontend tests run with Vitest using the shared Vite configuration and aliases. Use Node 20.19+, 22.12+, or 24+ from Vitest’s supported release lines; Node 23 is not supported by Vitest 4. The suite uses Node for unit and server-rendered component tests; API calls are mocked in rendering tests so no Supabase credentials are required.
+
+The frontend tests cover scroll-only loading, non-overflowing viewports, concurrent scroll events, exhaustion, retry cursors, stale responses, ordered card rendering and search-to-discovery links. Backend tests cover feed visibility predicates, ordering, parameter validation and cursor filtering. Browser scrolling and database-backed end-to-end checks require the running API and published public pieces.

@@ -4,7 +4,6 @@ import {
   Bookmark,
   Library,
   Search,
-  Sprout,
   UserRound,
   LogIn,
   LogOut,
@@ -79,34 +78,6 @@ export function SiteHeader() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="side-section">
-        <p className="eyebrow">Your little shelves</p>
-
-        <Link to="/collections" className="side-collection">
-          <span className="collection-dot red" />
-          Things that linger
-        </Link>
-
-        <Link to="/collections" className="side-collection">
-          <span className="collection-dot sage" />
-          Between the lines
-        </Link>
-
-        <Link to="/collections" className="side-collection">
-          <span className="collection-dot" />
-          Rainy day reading
-        </Link>
-      </div>
-
-      <div className="side-note">
-        <p>
-          Some things are better
-          <br />
-          left on a page.
-        </p>
-        <Sprout aria-hidden="true" />
-      </div>
 
       <div className="relative mt-auto">
         {isLoading ? (
