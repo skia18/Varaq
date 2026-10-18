@@ -93,6 +93,8 @@ The frontend and backend are separate applications. They can be developed and de
 
 ## Getting Started
 
+For database setup, Docker, and the SQL migration workflow, read [Database setup and migrations](documentation/database-workflow.md). The current database migrations live in the root `supabase/migrations/` directory; use that guide for database setup rather than the older database paths below.
+
 ### Prerequisites
 
 Install the following tools:
