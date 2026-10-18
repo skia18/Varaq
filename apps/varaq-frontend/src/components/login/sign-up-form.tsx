@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
@@ -45,23 +46,36 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="font-medium text-lg tracking-normal">
+            <CardTitle
+              role="heading"
+              aria-level={1}
+              className="font-medium text-lg tracking-normal"
+            >
               Thank you for signing up!
             </CardTitle>
             <CardDescription>Check your email to confirm</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent role="status">
             <p className="text-sm text-muted-foreground">
               You&apos;ve successfully signed up. Please check your email to confirm your account
               before signing in.
             </p>
+            <Link to="/login" className="mt-4 block underline">
+              Back to sign in
+            </Link>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="font-medium text-lg tracking-normal">Sign up</CardTitle>
-            <CardDescription>Create a new account</CardDescription>
+            <CardTitle
+              role="heading"
+              aria-level={1}
+              className="font-medium text-lg tracking-normal"
+            >
+              A page of your own.
+            </CardTitle>
+            <CardDescription>Every voice begins somewhere. Start here.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignUp}>
@@ -71,7 +85,8 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="you@example.com"
+                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -84,6 +99,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   <Input
                     id="password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -96,21 +112,26 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   <Input
                     id="repeat-password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     value={repeatPassword}
                     onChange={(e) => setRepeatPassword(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && (
+                  <p role="alert" className="text-sm text-red-500">
+                    {error}
+                  </p>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Creating an account...' : 'Sign up'}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
                 Already have an account?{' '}
-                <a href="/login" className="underline underline-offset-4">
+                <Link to="/login" className="underline underline-offset-4">
                   Sign in
-                </a>
+                </Link>
               </div>
             </form>
           </CardContent>

@@ -1,0 +1,166 @@
+/* Standalone auth composition adapted from the supplied visual reference. */
+.account-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 88px 24px 42px;
+  overflow: hidden;
+}
+.account-landscape {
+  position: absolute;
+  inset: -18px;
+  width: calc(100% + 36px);
+  height: calc(100% + 36px);
+  max-width: none;
+  object-fit: cover;
+  filter: blur(6px);
+  z-index: -3;
+}
+.account-scene-wash {
+  position: absolute;
+  inset: 0;
+  background: rgb(38 32 27 / 20%);
+  z-index: -2;
+}
+.account-back {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fffaf0;
+  font-size: 12px;
+}
+.account-back:hover {
+  text-decoration: underline;
+}
+.account-box {
+  width: 100%;
+  max-width: 450px;
+  padding: 35px 42px 25px;
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--card-foreground);
+  box-shadow: 0 18px 65px rgb(30 25 20 / 22%);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.account-brand {
+  justify-content: center;
+}
+.account-brand .brand-name {
+  font-size: 56px;
+}
+.account-brand .brand-urdu {
+  font-size: 29px;
+}
+.account-tagline {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted-foreground);
+  margin-top: 10px;
+}
+.account-rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 17px;
+  margin: 25px 0 22px;
+  color: var(--primary);
+}
+.account-rule span {
+  height: 1px;
+  width: 58px;
+  background: var(--border);
+}
+.account-rule svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.2;
+}
+.account-box [data-slot='card'] {
+  padding: 0;
+  gap: 24px;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.account-box [data-slot='card-header'],
+.account-box [data-slot='card-content'] {
+  padding: 0;
+}
+.account-box [data-slot='card-title'] {
+  font-family: var(--font-heading);
+  font-size: 38px;
+  line-height: 1.15;
+  font-weight: 500;
+}
+.account-box [data-slot='card-description'] {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  margin-top: 10px;
+  line-height: 1.7;
+}
+.account-box form {
+  text-align: left;
+}
+.account-box label {
+  font-size: 12px;
+}
+.account-box input {
+  height: 44px;
+  font-size: 16px;
+  border-radius: 5px;
+  background: var(--background);
+}
+.account-box button[type='submit'] {
+  height: 44px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+.account-box a:not(.brand) {
+  color: var(--primary);
+}
+.account-box [role='status'] {
+  line-height: 1.8;
+}
+.account-scene-note {
+  color: #fffaf0;
+  font-family: 'Caveat', cursive;
+  font-size: 24px;
+  margin-top: 26px;
+}
+@media (min-width: 768px) {
+  .account-box input {
+    font-size: 14px;
+  }
+}
+@media (max-width: 480px) {
+  .account-scene {
+    padding: 74px 18px 26px;
+  }
+  .account-back {
+    left: 18px;
+    top: 17px;
+  }
+  .account-box {
+    padding: 28px 25px 22px;
+  }
+  .account-box [data-slot='card-title'] {
+    font-size: 35px;
+  }
+  .account-rule {
+    margin: 22px 0 20px;
+  }
+  .account-scene-note {
+    margin-top: 20px;
+    font-size: 22px;
+  }
+}
