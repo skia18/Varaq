@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
@@ -38,21 +39,34 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="font-medium text-lg tracking-normal">Check Your Email</CardTitle>
+            <CardTitle
+              role="heading"
+              aria-level={1}
+              className="font-medium text-lg tracking-normal"
+            >
+              Check Your Email
+            </CardTitle>
             <CardDescription>Password reset instructions sent</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent role="status">
             <p className="text-sm text-muted-foreground">
               If you registered using your email and password, you will receive a password reset
               email.
             </p>
+            <Link to="/login" className="mt-4 block underline">
+              Back to sign in
+            </Link>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="font-medium text-lg tracking-normal">
-              Reset Your Password
+            <CardTitle
+              role="heading"
+              aria-level={1}
+              className="font-medium text-lg tracking-normal"
+            >
+              Lost your way?
             </CardTitle>
             <CardDescription>
               Type in your email and we&apos;ll send you a link to reset your password
@@ -66,22 +80,27 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="you@example.com"
+                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && (
+                  <p role="alert" className="text-sm text-red-500">
+                    {error}
+                  </p>
+                )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? 'Sending...' : 'Send reset email'}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
                 Already have an account?{' '}
-                <a href="/login" className="underline underline-offset-4">
+                <Link to="/login" className="underline underline-offset-4">
                   Sign in
-                </a>
+                </Link>
               </div>
             </form>
           </CardContent>

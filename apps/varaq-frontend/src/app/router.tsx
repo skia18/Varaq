@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 
+import { AuthLayout } from '../layouts/AuthLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
 import { DiscoverPage } from '../pages/discover/DiscoverPage';
 import { HomePage } from '../pages/home/HomePage';
@@ -17,13 +18,18 @@ import { ProtectedRoute } from '@/auth/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
-    element: <PublicLayout />,
+    element: <AuthLayout />,
     children: [
-      { path: '/', element: <HomePage /> },
       { path: '/login', element: <LoginForm /> },
       { path: '/signup', element: <SignUpForm /> },
       { path: '/forgot-password', element: <ForgotPasswordForm /> },
       { path: '/update-password', element: <UpdatePasswordForm /> },
+    ],
+  },
+  {
+    element: <PublicLayout />,
+    children: [
+      { path: '/', element: <HomePage /> },
       { path: '/discover', element: <DiscoverPage /> },
       { path: '/collections', element: <CollectionsPage /> },
 
