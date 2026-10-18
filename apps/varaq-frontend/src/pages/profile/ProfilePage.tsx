@@ -1,3 +1,5 @@
+import { ReadingDialog } from '@/components/literary/ReadingDialog';
+import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Feather, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react';
@@ -34,6 +36,12 @@ export function ProfilePage() {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
 
   const [pieces, setPieces] = useState<Piece[]>([]);
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const readingPiece = pieces.find((piece) => piece.id === readingId);
+  const reading =
+    readingPiece && persona
+      ? toWriting({ ...readingPiece, author: persona.displayName, handle: persona.handle })
+      : null;
   const [isPiecesLoading, setIsPiecesLoading] = useState(false);
   const [piecesError, setPiecesError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -41,6 +49,10 @@ export function ProfilePage() {
   const [pieceActionId, setPieceActionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReadingId(null);
+  }, [persona?.handle]);
 
   useEffect(() => {
     if (!persona?.handle) {
@@ -279,10 +291,15 @@ export function ProfilePage() {
                         <span className="card-type">{formatType(piece.type)}</span>
                       </div>
 
-                      <div className="card-read wall-card-content">
+                      <button
+                        type="button"
+                        className="card-read wall-card-content"
+                        aria-label={`Read ${piece.title}`}
+                        onClick={() => setReadingId(piece.id)}
+                      >
                         <h2>{piece.title}</h2>
                         <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                      </div>
+                      </button>
 
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
@@ -335,6 +352,8 @@ export function ProfilePage() {
           {piecesError}
         </p>
       )}
+
+      <ReadingDialog reading={reading} onClose={() => setReadingId(null)} />
 
       <footer className="page-footer">
         <span>A little less noise. A little more meaning.</span>

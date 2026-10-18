@@ -1,3 +1,5 @@
+import { ReadingDialog } from '@/components/literary/ReadingDialog';
+import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
@@ -34,11 +36,21 @@ export function PublicWallPage() {
 
   const [persona, setPersona] = useState<Persona | null>(null);
   const [pieces, setPieces] = useState<Piece[]>([]);
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const readingPiece = pieces.find((piece) => piece.id === readingId);
+  const reading =
+    readingPiece && persona
+      ? toWriting({ ...readingPiece, author: persona.displayName, handle: persona.handle })
+      : null;
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [piecesError, setPiecesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReadingId(null);
+  }, [handle]);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,10 +203,15 @@ export function PublicWallPage() {
                         <span className="card-type">{formatType(piece.type)}</span>
                       </div>
 
-                      <div className="card-read wall-card-content">
+                      <button
+                        type="button"
+                        className="card-read wall-card-content"
+                        aria-label={`Read ${piece.title}`}
+                        onClick={() => setReadingId(piece.id)}
+                      >
                         <h2>{piece.title}</h2>
                         <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                      </div>
+                      </button>
 
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
@@ -237,6 +254,8 @@ export function PublicWallPage() {
           </button>
         </div>
       )}
+
+      <ReadingDialog reading={reading} onClose={() => setReadingId(null)} />
 
       <footer className="page-footer">
         <span>A little less noise. A little more meaning.</span>
