@@ -47,12 +47,23 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 
 	personas := PersonaHandler{DB: db}
 	pieces := PieceHandler{DB: db}
+	collections := CollectionHandler{DB: db}
 
 	r.Route("/api/v1", func(api chi.Router) {
 		api.With(authmiddleware.RequireAuth(verifier)).
 			Post("/personas", personas.Create)
 
 		api.Get("/feed", pieces.ListFeed)
+		api.Get("/collections/{collectionID}/public", collections.Public)
+		api.Group(func(c chi.Router) {
+			c.Use(authmiddleware.RequireAuth(verifier))
+			c.Get("/collections", collections.List)
+			c.Post("/collections", collections.Create)
+			c.Put("/collections/{collectionID}", collections.Update)
+			c.Delete("/collections/{collectionID}", collections.Delete)
+			c.Put("/collections/{collectionID}/pieces/{pieceID}", collections.Membership)
+			c.Delete("/collections/{collectionID}/pieces/{pieceID}", collections.Membership)
+		})
 		api.Get("/pieces/{pieceID}", pieces.GetPublishedPiece)
 		api.Group(func(v chi.Router) {
 			v.Use(authmiddleware.RequireAuth(verifier))

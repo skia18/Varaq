@@ -1,10 +1,10 @@
 import { Outlet } from 'react-router-dom';
 import { SiteHeader, Topbar } from '../components/navigation/SiteHeader';
-import { SavedPagesProvider } from '../features/saved/SavedPagesContext';
+import { CollectionsProvider } from '../features/collections/CollectionsContext';
 
 export function PublicLayout() {
   return (
-    <SavedPagesProvider>
+    <CollectionsProvider>
       <div className="varaq-shell">
         <SiteHeader />
         <main className="main-shell">
@@ -12,6 +12,6 @@ export function PublicLayout() {
           <Outlet />
         </main>
       </div>
-    </SavedPagesProvider>
+    </CollectionsProvider>
   );
 }

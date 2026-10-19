@@ -1,6 +1,5 @@
-import { Bookmark } from 'lucide-react';
+import { BookmarkPicker } from '../../features/collections/BookmarkPicker';
 import type { Writing } from '../../features/feed/writings';
-import { useSavedPages } from '../../features/saved/SavedPagesContext';
 
 type WritingCardProps = {
   writing: Writing;
@@ -8,9 +7,6 @@ type WritingCardProps = {
 };
 
 export function WritingCard({ writing, onRead }: WritingCardProps) {
-  const { isSaved, toggleSaved } = useSavedPages();
-  const saved = isSaved(writing.id);
-
   const content = (
     <>
       <div className="card-meta">
@@ -33,15 +29,7 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
       <div className="card-footer">
         <span>{writing.minutes} min read</span>
 
-        <button
-          type="button"
-          className={saved ? 'is-active' : ''}
-          onClick={() => toggleSaved(writing.id)}
-          aria-label={saved ? 'Remove saved page' : 'Save this page'}
-          aria-pressed={saved}
-        >
-          <Bookmark fill={saved ? 'currentColor' : 'none'} />
-        </button>
+        <BookmarkPicker pieceId={writing.id} />
       </div>
     </>
   );

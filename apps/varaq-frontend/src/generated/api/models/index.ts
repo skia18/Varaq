@@ -35,3 +35,5 @@ export * from './VaultReturnStage';
 export * from './VaultRevision';
 export * from './VaultTransfer';
 export * from './Visibility';
+export * from './Collection';
+export * from './CollectionInput';

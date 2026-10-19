@@ -5,9 +5,10 @@ import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { PublicWallPage } from '@/pages/profile/PublicWallPage';
 import { HomePage } from '@/pages/home/HomePage';
-import { SavedPagesProvider } from '@/features/saved/SavedPagesContext';
+import { CollectionsProvider } from '@/features/collections/CollectionsContext';
 
 const mocks = vi.hoisted(() => ({
+  apiRequest: vi.fn().mockResolvedValue([]),
   getPublicPersona: vi.fn(),
   getPublicPieces: vi.fn(),
   getOwnerPieces: vi.fn(),
@@ -94,7 +95,7 @@ async function mount(page, path) {
         MemoryRouter,
         { initialEntries: [path] },
         React.createElement(
-          SavedPagesProvider,
+          CollectionsProvider,
           null,
           React.createElement(
             Routes,

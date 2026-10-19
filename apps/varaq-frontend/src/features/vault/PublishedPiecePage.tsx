@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BookmarkPicker } from '@/features/collections/BookmarkPicker';
 import { useParams } from 'react-router-dom';
 import { apiRequest, type Piece } from '@/lib/api';
 export function PublishedPiecePage() {
@@ -27,6 +28,7 @@ export function PublishedPiecePage() {
       ) : piece ? (
         <article>
           <h1>{piece.title}</h1>
+          {piece.visibility === 'public' && <BookmarkPicker pieceId={piece.id} />}
           <div style={{ whiteSpace: 'pre-wrap' }}>{piece.body}</div>
         </article>
       ) : (

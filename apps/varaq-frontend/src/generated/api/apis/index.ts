@@ -5,3 +5,4 @@ export * from './FeedApi';
 export * from './HealthApi';
 export * from './PersonasApi';
 export * from './PiecesApi';
+export * from './CollectionsApi';

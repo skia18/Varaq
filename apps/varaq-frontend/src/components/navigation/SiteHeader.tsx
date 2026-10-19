@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   BookOpen,
-  Bookmark,
   Library,
   Search,
   UserRound,
@@ -25,7 +24,6 @@ export function SiteHeader() {
   const navigation = [
     { label: 'The commons', to: '/', icon: BookOpen, end: true },
     { label: 'Collections', to: '/collections', icon: Library },
-    { label: 'Saved pages', to: '/saved', icon: Bookmark },
     ...(user && persona
       ? [
           {
