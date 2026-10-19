@@ -50,3 +50,33 @@ VARAQ_TEST_DATABASE_URL=<isolated-database-url> go test ./internal/httpapi -run 
 ```
 
 The migration has not been applied to a live database. No test database was configured, and the local Docker daemon was unavailable. Database lifecycle and browser visual verification remain outstanding. The production frontend build reports its existing large-bundle warning.
+
+## Public discovery
+
+Search and Discover offer Pages and Writers categories. Writer results link to
+`/wall/:handle`; the wall's Collections tab is addressable with `?tab=collections`.
+It lists only custom public collections, including empty collections. Public
+collection details identify the curator when a persona exists and link back to
+their wall. Accounts without a persona can still share public collection URLs.
+
+`GET /api/v1/personas?q=...` searches literal, case-insensitive display names and
+handles (optional leading `@`), including personas with no published pieces.
+Exact handles rank first, followed by prefixes, then partial matches. Empty
+queries browse personas by handle. `GET /api/v1/personas/:handle/collections`
+returns collection summaries newest first, counting only currently public
+published pieces. Both endpoints support `limit` (1–50, default 20) and opaque
+`cursor` pagination. Cursors are scoped to the search query or wall handle.
+Neither endpoint returns account IDs, private collections, or Saved memberships.
+
+`TestPublicDiscoveryDatabaseLifecycle` verifies search ordering/pagination,
+collection visibility/pagination, curator attribution, and public-to-private
+changes against an isolated migrated database. Frontend discovery tests cover
+links, counts, pagination, stale search responses, and retry/empty states.
+
+Docker database verification (2026-10-19): started the existing
+`varaq-vault-test-20261019` container on localhost port 55432, applied the collections
+and one-persona migrations, and ran `go test ./... -race -count=1` with
+`VARAQ_TEST_DATABASE_URL` set to that database. The suite passed, including the
+collections, discovery, and one-persona database lifecycle tests. No database reset
+was performed. Connection credentials were read from the container without
+printing them or saving them to the repository.

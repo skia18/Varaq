@@ -168,3 +168,32 @@ export function getFeed(
   if (options.ids?.length) params.set('ids', options.ids.join(','));
   return apiRequest<FeedPage>(`/api/v1/feed?${params}`, { signal: options.signal });
 }
+
+export type PersonaPage = { items: Persona[]; nextCursor: string | null };
+export type PublicCollectionSummary = {
+  id: string;
+  name: string;
+  description: string;
+  pieceCount: number;
+  createdAt: string;
+};
+export type PublicCollectionPage = { items: PublicCollectionSummary[]; nextCursor: string | null };
+export function searchPersonas(
+  query: string,
+  options: { cursor?: string | null; limit?: number; signal?: AbortSignal } = {},
+) {
+  const params = new URLSearchParams({ q: query, limit: String(options.limit ?? 20) });
+  if (options.cursor) params.set('cursor', options.cursor);
+  return apiRequest<PersonaPage>(`/api/v1/personas?${params}`, { signal: options.signal });
+}
+export function getPersonaCollections(
+  handle: string,
+  options: { cursor?: string | null; signal?: AbortSignal } = {},
+) {
+  const params = new URLSearchParams({ limit: '20' });
+  if (options.cursor) params.set('cursor', options.cursor);
+  return apiRequest<PublicCollectionPage>(
+    `/api/v1/personas/${encodeURIComponent(handle)}/collections?${params}`,
+    { signal: options.signal },
+  );
+}

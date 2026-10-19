@@ -81,6 +81,8 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 			v.Post("/owner/vault/transfers/{pieceID}/finalize", pieces.VaultTransfer)
 		})
 
+		api.Get("/personas", personas.Search)
+		api.Get("/personas/{handle}/collections", collections.ListPublicByPersona)
 		api.Get("/personas/{handle}", personas.GetByHandle)
 		api.Get("/personas/{handle}/pieces", personas.ListPublicPieces)
 

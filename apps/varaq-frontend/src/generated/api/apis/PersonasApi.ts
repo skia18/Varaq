@@ -14,7 +14,13 @@
  */
 
 import * as runtime from '../runtime';
-import type { CreatePersona, InternalError, Persona, PiecePage } from '../models/index';
+import type {
+  CreatePersona,
+  InternalError,
+  Persona,
+  PersonaPage,
+  PiecePage,
+} from '../models/index';
 import {
   CreatePersonaFromJSON,
   CreatePersonaToJSON,
@@ -22,6 +28,8 @@ import {
   InternalErrorToJSON,
   PersonaFromJSON,
   PersonaToJSON,
+  PersonaPageFromJSON,
+  PersonaPageToJSON,
   PiecePageFromJSON,
   PiecePageToJSON,
 } from '../models/index';
@@ -40,12 +48,18 @@ export interface ListPersonaPiecesRequest {
   cursor?: string;
 }
 
+export interface SearchPersonasRequest {
+  q?: string;
+  limit?: number;
+  cursor?: string;
+}
+
 /**
  *
  */
 export class PersonasApi extends runtime.BaseAPI {
   /**
-   * Creates a persona owned by the authenticated Supabase user. The owner is derived from the verified access token.
+   * Creates a persona owned by the authenticated Supabase user. The owner is derived from the verified access token. Each account can have at most one persona. Creating another returns 409 with code persona_already_exists; an unavailable handle returns 409 with code handle_unavailable.
    * Create a literary persona
    */
   async createPersonaRaw(
@@ -91,7 +105,7 @@ export class PersonasApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates a persona owned by the authenticated Supabase user. The owner is derived from the verified access token.
+   * Creates a persona owned by the authenticated Supabase user. The owner is derived from the verified access token. Each account can have at most one persona. Creating another returns 409 with code persona_already_exists; an unavailable handle returns 409 with code handle_unavailable.
    * Create a literary persona
    */
   async createPersona(
@@ -205,6 +219,57 @@ export class PersonasApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<PiecePage> {
     const response = await this.listPersonaPiecesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Case-insensitive literal matching, including personas without writing. Exact handles rank first, then name or handle prefixes, then partial matches. A leading @ is optional. Empty searches browse by handle. Cursors belong to the normalized query.
+   * Search public personas by display name or handle
+   */
+  async searchPersonasRaw(
+    requestParameters: SearchPersonasRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<PersonaPage>> {
+    const queryParameters: any = {};
+
+    if (requestParameters['q'] != null) {
+      queryParameters['q'] = requestParameters['q'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/personas`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => PersonaPageFromJSON(jsonValue));
+  }
+
+  /**
+   * Case-insensitive literal matching, including personas without writing. Exact handles rank first, then name or handle prefixes, then partial matches. A leading @ is optional. Empty searches browse by handle. Cursors belong to the normalized query.
+   * Search public personas by display name or handle
+   */
+  async searchPersonas(
+    requestParameters: SearchPersonasRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<PersonaPage> {
+    const response = await this.searchPersonasRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

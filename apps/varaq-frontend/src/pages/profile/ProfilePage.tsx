@@ -228,7 +228,13 @@ export function ProfilePage() {
         <p className="wall-handle">@{persona.handle}</p>
       </section>
 
-      <div className="writer-tabs">
+      <div className="writer-tabs discovery-tabs">
+        <span className="varaq-action" aria-current="page">
+          Pages
+        </span>
+        <Link className="varaq-action" to={`?tab=collections`}>
+          Collections
+        </Link>
         <span className="eyebrow">
           {pieces.length === 1 ? '1 page loaded' : `${pieces.length} pages loaded`}
         </span>

@@ -1,3 +1,4 @@
+import { PublicDirectory } from '@/features/discovery/PublicDirectory';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
@@ -12,6 +13,7 @@ type SearchDialogProps = {
 
 export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [query, setQuery] = useState('');
+  const [tab, setTab] = useState<'pages' | 'writers'>('pages');
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -21,7 +23,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    if (!open) return;
+    if (!open || tab !== 'pages') return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
@@ -46,7 +48,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [open, normalizedQuery]);
+  }, [open, normalizedQuery, tab]);
 
   useEffect(() => {
     if (!open) return;
@@ -89,7 +91,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
         <div className="search-modal-heading">
           <div>
             <span className="eyebrow">A little searching</span>
-            <h2 id="search-title">Find a page</h2>
+            <h2 id="search-title">Find a page or writer</h2>
           </div>
           <button
             type="button"
@@ -114,7 +116,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="A word, a feeling, a writer…"
-            aria-label="Search published writing"
+            aria-label={tab === 'writers' ? 'Search writers' : 'Search published writing'}
           />
           {query && (
             <button type="button" className="search-clear" onClick={() => setQuery('')}>
@@ -123,15 +125,40 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
           )}
         </label>
 
-        <SearchResults
-          matches={matches}
-          hasMore={hasMore}
-          query={normalizedQuery}
-          loading={loading}
-          error={error}
-          onRead={openWriting}
-          onClose={onClose}
-        />
+        <div className="discovery-tabs" aria-label="Search category">
+          <button
+            className="varaq-action"
+            aria-pressed={tab === 'pages'}
+            onClick={() => setTab('pages')}
+          >
+            Pages
+          </button>
+          <button
+            className="varaq-action"
+            aria-pressed={tab === 'writers'}
+            onClick={() => setTab('writers')}
+          >
+            Writers
+          </button>
+        </div>
+        {tab === 'writers' ? (
+          <PublicDirectory
+            key={normalizedQuery}
+            query={normalizedQuery}
+            compact
+            onNavigate={onClose}
+          />
+        ) : (
+          <SearchResults
+            matches={matches}
+            hasMore={hasMore}
+            query={normalizedQuery}
+            loading={loading}
+            error={error}
+            onRead={openWriting}
+            onClose={onClose}
+          />
+        )}
         <p className="search-hint">
           <kbd>ESC</kbd> to close
         </p>
