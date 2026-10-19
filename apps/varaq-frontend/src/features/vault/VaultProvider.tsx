@@ -1,4 +1,4 @@
-import { Lock, KeyRound } from 'lucide-react';
+import { Lock, KeyRound, LoaderCircle } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -208,108 +208,164 @@ function VaultUnlock() {
     }
   }
   return (
-    <section className="page-section">
-      <h1>
-        {kit
-          ? 'Save your recovery key'
-          : config
-            ? 'Unlock your Vault'
-            : 'Create your encrypted Vault'}
-      </h1>
-      <p>
-        Your Vault passphrase is separate from your account password. Writing is decrypted in this
-        tab until you lock it or sign out. Refreshing keeps it unlocked.
-      </p>
-      {config === undefined && !error ? (
-        <p>Loading…</p>
-      ) : (
-        <form onSubmit={submit}>
-          {kit ? (
-            <>
-              <p>
-                Keep this key somewhere safe. Account password resets cannot recover your Vault.
-              </p>
-              <code style={{ overflowWrap: 'anywhere', display: 'block' }}>{kit.recovery}</code>
-              <label>
-                <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> I
-                have saved my recovery key
-              </label>
-            </>
-          ) : (
-            <>
-              {recover && (
-                <label>
-                  Recovery key
+    <section className="page-content vault-unlock-page" aria-labelledby="vault-unlock-title">
+      <div className="vault-unlock-card">
+        <header className="vault-unlock-header">
+          <span className="vault-unlock-icon">
+            {recover || kit ? <KeyRound aria-hidden="true" /> : <Lock aria-hidden="true" />}
+          </span>
+          <p className="eyebrow">Your private notebook</p>
+          <h1 id="vault-unlock-title">
+            {kit
+              ? 'Save your recovery key'
+              : recover
+                ? 'Recover your Vault'
+                : config
+                  ? 'Unlock your Vault'
+                  : 'A place for your words.'}
+          </h1>
+          <p className="vault-unlock-intro">
+            {kit
+              ? 'Keep a way back to your words.'
+              : recover
+                ? 'Use your recovery key to choose a new Vault passphrase.'
+                : config
+                  ? 'Your words are waiting. Enter your Vault passphrase to open your private pages.'
+                  : 'Create a separate Vault passphrase to keep your personal writing encrypted.'}
+          </p>
+        </header>
+        {config === undefined && !error ? (
+          <p className="vault-unlock-loading" role="status">
+            <LoaderCircle aria-hidden="true" className="animate-spin" />
+            Preparing your Vault…
+          </p>
+        ) : (
+          <form onSubmit={submit} className="vault-unlock-form" aria-busy={busy}>
+            {kit ? (
+              <>
+                <div className="vault-recovery-notice">
+                  <KeyRound aria-hidden="true" />
+                  <p>
+                    Keep this key somewhere safe. Account password resets cannot recover your Vault.
+                  </p>
+                </div>
+                <code className="vault-recovery-key">{kit.recovery}</code>
+                <label className="vault-recovery-ack">
                   <input
-                    className="w-full"
-                    autoComplete="off"
-                    value={recovery}
-                    onChange={(e) => setRecovery(e.target.value)}
-                    required
+                    type="checkbox"
+                    checked={ack}
+                    disabled={busy}
+                    onChange={(e) => setAck(e.target.checked)}
                   />
+                  <span>I have saved my recovery key</span>
                 </label>
-              )}
-              <label>
-                {recover ? 'New Vault passphrase' : 'Vault passphrase'}
-                <input
-                  className="w-full"
-                  type="password"
-                  autoComplete={config && !recover ? 'current-password' : 'new-password'}
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  required
-                />
-              </label>
-              {(!config || recover) && (
-                <label>
-                  Confirm passphrase
+              </>
+            ) : (
+              <>
+                {recover && (
+                  <label className="vault-unlock-field" htmlFor="vault-recovery-key">
+                    <span>Recovery key</span>
+                    <input
+                      id="vault-recovery-key"
+                      autoComplete="off"
+                      value={recovery}
+                      disabled={busy}
+                      placeholder="varaq1.…"
+                      onChange={(e) => setRecovery(e.target.value)}
+                      required
+                    />
+                  </label>
+                )}
+                <label className="vault-unlock-field" htmlFor="vault-passphrase">
+                  <span>{recover ? 'New Vault passphrase' : 'Vault passphrase'}</span>
                   <input
-                    className="w-full"
+                    id="vault-passphrase"
                     type="password"
-                    autoComplete="new-password"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
+                    autoComplete={config && !recover ? 'current-password' : 'new-password'}
+                    value={pass}
+                    disabled={busy}
+                    placeholder={
+                      config && !recover
+                        ? 'Enter your Vault passphrase'
+                        : 'Choose your Vault passphrase'
+                    }
+                    onChange={(e) => setPass(e.target.value)}
+                    aria-describedby="vault-passphrase-help"
                     required
                   />
                 </label>
-              )}
-            </>
-          )}
-          <div className="varaq-actions">
-            <button
-              className="varaq-action varaq-action--primary"
-              disabled={busy || config === undefined || Boolean(kit && !ack)}
-            >
-              {busy
-                ? 'Working…'
-                : kit
-                  ? 'Finish setup'
-                  : recover
-                    ? 'Recover Vault'
-                    : config
-                      ? 'Unlock'
-                      : 'Create Vault'}
-            </button>
-            {config && !kit && (
-              <button
-                type="button"
-                className="varaq-action"
-                disabled={busy}
-                onClick={() => {
-                  setRecover(!recover);
-                  setPass('');
-                  setConfirm('');
-                  setRecovery('');
-                }}
-              >
-                <KeyRound aria-hidden="true" />
-                {recover ? 'Use passphrase' : 'Use recovery key'}
-              </button>
+                {(!config || recover) && (
+                  <label className="vault-unlock-field" htmlFor="vault-passphrase-confirm">
+                    <span>Confirm passphrase</span>
+                    <input
+                      id="vault-passphrase-confirm"
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirm}
+                      disabled={busy}
+                      placeholder="Enter it once more"
+                      onChange={(e) => setConfirm(e.target.value)}
+                      required
+                    />
+                  </label>
+                )}
+                <p className="vault-unlock-hint" id="vault-passphrase-help">
+                  Your Vault passphrase is separate from your account password.
+                </p>
+              </>
             )}
-          </div>
-        </form>
-      )}
-      {error && <p role="alert">{error}</p>}
+            <div className="vault-unlock-actions">
+              <button
+                className="varaq-action varaq-action--primary"
+                disabled={busy || config === undefined || Boolean(kit && !ack)}
+              >
+                {busy ? (
+                  <LoaderCircle aria-hidden="true" className="animate-spin" />
+                ) : (
+                  <Lock aria-hidden="true" />
+                )}
+                {busy
+                  ? 'Working…'
+                  : kit
+                    ? 'Finish setup'
+                    : recover
+                      ? 'Recover Vault'
+                      : config
+                        ? 'Unlock'
+                        : 'Create Vault'}
+              </button>
+              {config && !kit && (
+                <button
+                  type="button"
+                  className="varaq-action"
+                  disabled={busy}
+                  onClick={() => {
+                    setRecover(!recover);
+                    setPass('');
+                    setConfirm('');
+                    setRecovery('');
+                  }}
+                >
+                  <KeyRound aria-hidden="true" />
+                  {recover ? 'Use passphrase' : 'Use recovery key'}
+                </button>
+              )}
+            </div>
+          </form>
+        )}
+        {error && (
+          <p className="confirmation-error" role="alert">
+            {error}
+          </p>
+        )}
+        <footer className="vault-unlock-footer">
+          <Lock aria-hidden="true" />
+          <p>
+            Your writing opens in this browser. It stays unlocked across refreshes until you lock it
+            or sign out.
+          </p>
+        </footer>
+      </div>
     </section>
   );
 }
