@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 
 import { AuthLayout } from '../layouts/AuthLayout';
 import { PublicLayout } from '../layouts/PublicLayout';
@@ -6,7 +6,7 @@ import { DiscoverPage } from '../pages/discover/DiscoverPage';
 import { HomePage } from '../pages/home/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { CollectionsPage } from '../pages/collections/CollectionsPage';
-import { SavedPagesPage } from '../pages/saved/SavedPagesPage';
+import { CollectionDetailPage } from '../pages/collections/CollectionDetailPage';
 import { VaultGate } from '@/features/vault/VaultProvider';
 import { ReturnToVaultPage } from '@/features/vault/ReturnToVaultPage';
 import { VaultPage } from '@/features/vault/VaultPage';
@@ -35,7 +35,7 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/discover', element: <DiscoverPage /> },
-      { path: '/collections', element: <CollectionsPage /> },
+      { path: '/collections/:collectionId', element: <CollectionDetailPage /> },
 
       // Public writer wall.
       { path: '/wall/:handle', element: <PublicWallPage /> },
@@ -44,7 +44,8 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
-          { path: '/saved', element: <SavedPagesPage /> },
+          { path: '/collections', element: <CollectionsPage /> },
+          { path: '/saved', element: <Navigate to="/collections" replace /> },
 
           // Published-content management.
           { path: '/published', element: <MyWallRedirect /> },

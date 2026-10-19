@@ -4,12 +4,13 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { FeedGrid } from '@/features/feed/FeedGrid';
-import { SavedPagesProvider } from '@/features/saved/SavedPagesContext';
+import { CollectionsProvider } from '@/features/collections/CollectionsContext';
 import { SearchResults } from '@/components/navigation/SearchResults';
 import { DiscoverPage } from '@/pages/discover/DiscoverPage';
 
 // Rendering tests must not initialize a real Supabase client or call the API.
-vi.mock('@/lib/api', () => ({ getFeed: vi.fn() }));
+vi.mock('@/lib/api', () => ({ getFeed: vi.fn(), apiRequest: vi.fn().mockResolvedValue([]) }));
+vi.mock('@/auth/AuthProvider', () => ({ useAuth: () => ({user: null}) }));
 
 const writings = Array.from({ length: 10 }, (_, i) => ({
   id: String(i + 1),
@@ -27,7 +28,7 @@ const writings = Array.from({ length: 10 }, (_, i) => ({
 test('all ten commons cards remain in publication order without hidden column containers', () => {
   const html = renderToString(
     React.createElement(
-      SavedPagesProvider,
+      CollectionsProvider,
       null,
       React.createElement(FeedGrid, { writings, onRead() {} }),
     ),

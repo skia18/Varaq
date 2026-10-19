@@ -1,9 +1,12 @@
+apis/CollectionsApi.ts
 apis/FeedApi.ts
 apis/HealthApi.ts
 apis/PersonasApi.ts
 apis/PiecesApi.ts
 apis/index.ts
 index.ts
+models/Collection.ts
+models/CollectionInput.ts
 models/CreatePersona.ts
 models/ErrorError.ts
 models/FeedPage.ts

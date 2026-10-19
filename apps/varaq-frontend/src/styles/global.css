@@ -14,6 +14,7 @@
 @import './search.css';
 @import './pages.css';
 @import './actions.css';
+@import './collections.css';
 
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
