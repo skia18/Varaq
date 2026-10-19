@@ -8,10 +8,11 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { CollectionsPage } from '../pages/collections/CollectionsPage';
 import { SavedPagesPage } from '../pages/saved/SavedPagesPage';
 import { VaultGate } from '@/features/vault/VaultProvider';
+import { ReturnToVaultPage } from '@/features/vault/ReturnToVaultPage';
 import { VaultPage } from '@/features/vault/VaultPage';
 import { PublishedPiecePage } from '@/features/vault/PublishedPiecePage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
-import { PublicWallPage } from '../pages/profile/PublicWallPage';
+import { PublicWallPage, MyWallRedirect } from '../pages/profile/PublicWallPage';
 import { LegacyWritingRoomPage } from '../pages/write/LegacyWritingRoomPage';
 import { WritingRoomPage } from '../pages/write/WritingRoomPage';
 import { LoginForm } from '@/components/login/login-form';
@@ -47,12 +48,15 @@ export const router = createBrowserRouter([
           { path: '/saved', element: <SavedPagesPage /> },
 
           // Published-content management and legacy plaintext draft migration.
-          { path: '/published', element: <ProfilePage /> },
+          { path: '/published', element: <MyWallRedirect /> },
+          { path: '/wall/manage/edit', element: <LegacyWritingRoomPage /> },
           { path: '/published/edit', element: <LegacyWritingRoomPage /> },
           {
             element: <VaultGate />,
             children: [
               { path: '/vault', element: <VaultPage /> },
+              { path: '/vault/legacy', element: <ProfilePage mode="legacy" /> },
+              { path: '/vault/return/:pieceId', element: <ReturnToVaultPage /> },
 
               // Writing room.
               { path: '/write', element: <WritingRoomPage /> },

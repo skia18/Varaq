@@ -1,9 +1,12 @@
+import { WritingEditor } from './WritingEditor';
+import { useAuth } from '@/auth/AuthProvider';
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getOwnerPiece, updateOwnerPiece, type Piece } from '@/lib/api';
 
 // Published content is intentionally readable by Varaq and uses the existing editor API.
 export function LegacyWritingRoomPage() {
+  const { persona } = useAuth();
   const [params] = useSearchParams();
   const id = params.get('pieceId');
   const [piece, setPiece] = useState<Piece | null>(null);
@@ -47,53 +50,22 @@ export function LegacyWritingRoomPage() {
     }
   }
   return (
-    <section className="page-section">
-      <Link to="/published">← Published writing</Link>
-      <h1>Edit published writing</h1>
-      <p>This piece has left the encrypted Vault. Changes update the readable published content.</p>
-      {error && <p role="alert">{error}</p>}
-      {message && <p role="status">{message}</p>}
-      {piece && (
-        <form onSubmit={save}>
-          <fieldset disabled={busy}>
-            <label>
-              Type{' '}
-              <select
-                value={piece.type}
-                onChange={(e) => setPiece({ ...piece, type: e.target.value as Piece['type'] })}
-              >
-                {['poem', 'fragment', 'story', 'letter', 'essay'].map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Title
-              <input
-                className="w-full"
-                required
-                maxLength={200}
-                value={piece.title}
-                onChange={(e) => setPiece({ ...piece, title: e.target.value })}
-              />
-            </label>
-            <label>
-              Writing
-              <textarea
-                className="w-full"
-                style={{ minHeight: 400 }}
-                required
-                maxLength={50000}
-                value={piece.body}
-                onChange={(e) => setPiece({ ...piece, body: e.target.value })}
-              />
-            </label>
-            <button className="literary-button">
-              {busy ? 'Saving…' : 'Save published changes'}
-            </button>
-          </fieldset>
-        </form>
-      )}
-    </section>
+    <WritingEditor
+      content={piece || { title: '', body: '', type: 'fragment' }}
+      onChange={(content) => {
+        if (piece) {
+          setPiece({ ...piece, ...content });
+          setMessage('');
+        }
+      }}
+      onSave={save}
+      mode="published"
+      handle={persona?.handle}
+      backTo={persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/vault'}
+      loaded={!!piece}
+      busy={busy}
+      error={error}
+      message={message}
+    />
   );
 }

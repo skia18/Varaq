@@ -59,6 +59,9 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 		api.Get("/pieces/{pieceID}", pieces.GetPublishedPiece)
 		api.Group(func(v chi.Router) {
 			v.Use(authmiddleware.RequireAuth(verifier))
+			v.Get("/owner/pieces/{pieceID}/vault", pieces.ReturnToVault)
+			v.Post("/owner/pieces/{pieceID}/vault", pieces.ReturnToVault)
+			v.Post("/owner/pieces/{pieceID}/vault/finalize", pieces.FinalizeReturnToVault)
 			v.Post("/owner/vault/import", pieces.ImportVault)
 			v.Post("/owner/vault/import/{pieceID}/finalize", pieces.ImportVault)
 			v.Get("/owner/vault", pieces.VaultConfig)

@@ -1,7 +1,9 @@
+import { useAuth } from '@/auth/AuthProvider';
+import { ProfilePage } from './ProfilePage';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
@@ -31,7 +33,7 @@ function getReadTime(body: string) {
   return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
 }
 
-export function PublicWallPage() {
+function PublicWallContent() {
   const { handle } = useParams<{ handle: string }>();
 
   const [persona, setPersona] = useState<Persona | null>(null);
@@ -262,5 +264,31 @@ export function PublicWallPage() {
         <span>Varaq · Words belong to their writers.</span>
       </footer>
     </div>
+  );
+}
+
+export function PublicWallPage() {
+  const { handle } = useParams<{ handle: string }>();
+  const { user, persona, isLoading, isPersonaLoading } = useAuth();
+  if (isLoading || (user && isPersonaLoading))
+    return (
+      <section className="page-section">
+        <p role="status">Opening the wall…</p>
+      </section>
+    );
+  return user && persona && persona.handle === handle ? (
+    <ProfilePage key={`${user.id}:${persona.id}`} mode="wall" />
+  ) : (
+    <PublicWallContent key={`${user?.id || 'visitor'}:${handle}`} />
+  );
+}
+export function MyWallRedirect() {
+  const { user, persona, isLoading, isPersonaLoading } = useAuth();
+  if (isLoading || isPersonaLoading) return <p role="status">Opening your wall…</p>;
+  return (
+    <Navigate
+      replace
+      to={user && persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/vault'}
+    />
   );
 }

@@ -155,7 +155,7 @@ export function SiteHeader() {
                     onClick={() => setProfileMenuOpen(false)}
                   >
                     <UserRound size={16} aria-hidden="true" />
-                    View public profile
+                    My Wall
                   </Link>
                 )}
 

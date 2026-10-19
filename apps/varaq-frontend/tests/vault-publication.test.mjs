@@ -15,6 +15,11 @@ const mocks = vi.hoisted(() => ({
   session: { userId: 'owner', key: {} },
 }));
 vi.mock('@/features/vault/api', () => mocks);
+vi.mock('@/auth/AuthProvider', () => ({
+  useAuth: () => ({
+    persona: { displayName: 'Test Writer', handle: 'writer', bio: 'A private profile' },
+  }),
+}));
 vi.mock('@/features/vault/crypto', () => ({ decryptDraft: mocks.decryptDraft }));
 vi.mock('@/features/vault/VaultProvider', () => ({ useVault: () => ({ session: mocks.session }) }));
 let root, host;
@@ -26,7 +31,15 @@ beforeEach(() => {
     removeEventListener() {},
   }));
   mocks.drafts.mockResolvedValue({
-    items: [{ id: 'draft', personaId: 'persona', revision: 3, envelope: {} }],
+    items: [
+      {
+        id: 'draft',
+        personaId: 'persona',
+        revision: 3,
+        envelope: {},
+        updatedAt: '2026-10-19T00:00:00Z',
+      },
+    ],
   });
   mocks.pendingTransfers.mockResolvedValue({ ids: [] });
   mocks.decryptDraft.mockResolvedValue({
@@ -89,4 +102,13 @@ test('an uncertain outcome preserves the draft and does not request deletion', a
   expect(mocks.finalize).not.toHaveBeenCalled();
   expect(mocks.removeDraft).not.toHaveBeenCalled();
   expect(host.textContent).toContain('Secret title');
+});
+
+test('Vault keeps the private profile and original writing-card layout', async () => {
+  await mount();
+  expect(host.querySelector('.writer-profile h1').textContent).toBe('Test Writer');
+  expect(host.querySelector('.wall-handle').textContent).toBe('@writer');
+  expect(host.querySelector('.bio').textContent).toBe('A private profile');
+  expect(host.querySelector('.writing-grid .writing-card')).not.toBeNull();
+  expect(host.querySelector('button[aria-label="Read Secret title"]')).not.toBeNull();
 });

@@ -120,10 +120,20 @@ export async function createPiece(input: CreatePieceInput): Promise<Piece> {
   });
 }
 
-export async function getOwnerPieces(options: { limit?: number } = {}): Promise<PiecePage> {
+export async function getOwnerPieces(
+  options: {
+    limit?: number;
+    status?: 'published' | 'draft';
+    personaId?: string;
+    cursor?: string;
+  } = {},
+): Promise<PiecePage> {
   const params = new URLSearchParams();
   params.set('limit', String(options.limit ?? 20));
 
+  if (options.status) params.set('status', options.status);
+  if (options.personaId) params.set('personaId', options.personaId);
+  if (options.cursor) params.set('cursor', options.cursor);
   return apiRequest<PiecePage>(`/api/v1/owner/pieces?${params.toString()}`);
 }
 

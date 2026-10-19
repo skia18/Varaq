@@ -54,3 +54,13 @@ export const publish = (
     pieceID: id,
     vaultPublish: { operationId, sourceRevision, ...content, visibility },
   });
+
+export const returnStatus = (pieceID: string) => client.getVaultReturn({ pieceID });
+export const stageReturn = (
+  pieceID: string,
+  draftId: string,
+  updatedAt: string,
+  envelope: Envelope,
+) => client.stageVaultReturn({ pieceID, vaultReturnStage: { draftId, updatedAt, envelope } });
+export const finalizeReturn = (pieceID: string, draftId: string, updatedAt: string) =>
+  client.finalizeVaultReturn({ pieceID, vaultReturnFinalize: { draftId, updatedAt } });

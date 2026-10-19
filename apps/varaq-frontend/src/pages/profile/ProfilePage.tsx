@@ -32,7 +32,7 @@ function getReadTime(body: string) {
   return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
 }
 
-export function ProfilePage() {
+export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
 
   const [pieces, setPieces] = useState<Piece[]>([]);
@@ -45,6 +45,8 @@ export function ProfilePage() {
   const [isPiecesLoading, setIsPiecesLoading] = useState(false);
   const [piecesError, setPiecesError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const [pieceActionId, setPieceActionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -65,15 +67,29 @@ export function ProfilePage() {
 
     async function loadPieces() {
       setIsPiecesLoading(true);
+      setNextCursor(null);
       setPiecesError(null);
       setPieces([]);
 
       try {
-        const page = await getOwnerPieces({ limit: PAGE_SIZE });
+        const page = await getOwnerPieces({
+          limit: PAGE_SIZE,
+          status: mode === 'wall' ? 'published' : 'draft',
+          personaId: persona!.id,
+        });
 
         if (cancelled) return;
 
-        setPieces(page.items);
+        setPieces(
+          page.items.filter(
+            (p) =>
+              p.personaId === persona!.id &&
+              (mode === 'wall'
+                ? p.status === 'published' && p.visibility !== 'private'
+                : p.status === 'draft'),
+          ),
+        );
+        setNextCursor(page.nextCursor);
       } catch (error) {
         if (cancelled) return;
 
@@ -90,8 +106,40 @@ export function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [persona?.handle, reloadKey]);
+  }, [user?.id, persona?.id, persona?.handle, mode, reloadKey]);
 
+  async function loadMore() {
+    if (!nextCursor || !persona || loadingMore || isPiecesLoading) return;
+    setLoadingMore(true);
+    setPiecesError(null);
+    try {
+      const page = await getOwnerPieces({
+        limit: PAGE_SIZE,
+        status: mode === 'wall' ? 'published' : 'draft',
+        personaId: persona.id,
+        cursor: nextCursor,
+      });
+      setPieces((current) => {
+        const ids = new Set(current.map((p) => p.id));
+        return [
+          ...current,
+          ...page.items.filter(
+            (p) =>
+              !ids.has(p.id) &&
+              p.personaId === persona.id &&
+              (mode === 'wall'
+                ? p.status === 'published' && p.visibility !== 'private'
+                : p.status === 'draft'),
+          ),
+        ];
+      });
+      setNextCursor(page.nextCursor);
+    } catch {
+      setPiecesError('Could not load more pages. Please try again.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }
   async function handlePublish(piece: Piece) {
     const confirmed = window.confirm(
       `Publish "${piece.title}"? It will become visible on your public wall.`,
@@ -188,10 +236,17 @@ export function ProfilePage() {
 
   return (
     <div className="page-content">
-      <p>
-        <Link to="/vault">Open encrypted Vault</Link> · Published writing and legacy drafts. Legacy
-        drafts are not end-to-end encrypted.
-      </p>
+      {mode === 'wall' ? (
+        <p>
+          Your published writing. Unlisted pieces and management controls are visible only to you.{' '}
+          <Link to="/vault">My Vault</Link>
+        </p>
+      ) : (
+        <p>
+          Legacy drafts are not end-to-end encrypted. <Link to="/vault">Return to Vault</Link> and
+          move them into encrypted storage.
+        </p>
+      )}
       <section className="writer-profile">
         <span className="eyebrow">A writer’s wall</span>
 
@@ -218,7 +273,7 @@ export function ProfilePage() {
             setActionMessage(null);
             setReloadKey((key) => key + 1);
           }}
-          disabled={isPiecesLoading || pieceActionId !== null}
+          disabled={isPiecesLoading || loadingMore || pieceActionId !== null}
           className="wall-refresh"
           aria-label="Refresh your pages"
         >
@@ -307,7 +362,13 @@ export function ProfilePage() {
 
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
-                        <span>{piece.status === 'draft' ? 'Draft' : 'Published'}</span>
+                        <span>
+                          {piece.status === 'draft'
+                            ? 'Legacy draft'
+                            : piece.visibility === 'unlisted'
+                              ? 'Unlisted · only shown to you here'
+                              : 'Public'}
+                        </span>
                       </div>
 
                       <div className="vault-card-actions">
@@ -315,7 +376,7 @@ export function ProfilePage() {
                           to={
                             piece.status === 'draft'
                               ? `/write?importId=${encodeURIComponent(piece.id)}`
-                              : `/published/edit?pieceId=${encodeURIComponent(piece.id)}`
+                              : `/wall/manage/edit?pieceId=${encodeURIComponent(piece.id)}`
                           }
                           className="vault-card-action"
                           aria-label={`Edit ${piece.title}`}
@@ -324,6 +385,14 @@ export function ProfilePage() {
                           Edit
                         </Link>
 
+                        {piece.status === 'published' && (
+                          <Link
+                            className="vault-card-action"
+                            to={`/vault/return/${encodeURIComponent(piece.id)}`}
+                          >
+                            Move to Vault
+                          </Link>
+                        )}
                         {piece.status === 'draft' && (
                           <Link to={`/write?importId=${piece.id}`}>Move into encrypted Vault</Link>
                         )}
@@ -364,6 +433,17 @@ export function ProfilePage() {
         </p>
       )}
 
+      {nextCursor && (
+        <div className="wall-load-more">
+          <button
+            className="wall-load-button"
+            disabled={loadingMore || isPiecesLoading}
+            onClick={() => void loadMore()}
+          >
+            {loadingMore ? 'Loading…' : 'Load more pages'}
+          </button>
+        </div>
+      )}
       <ReadingDialog reading={reading} onClose={() => setReadingId(null)} />
 
       <footer className="page-footer">

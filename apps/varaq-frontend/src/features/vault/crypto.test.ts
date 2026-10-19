@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { encryptDraft, decryptDraft, setupVault, unlockVault, recoverVault } from './crypto';
+import {
+  encryptDraft,
+  decryptDraft,
+  setupVault,
+  unlockVault,
+  recoverVault,
+  restoreVaultSession,
+} from './crypto';
 const user = 'user-a',
   id = 'draft-a',
   persona = 'persona-a';
@@ -39,6 +46,10 @@ describe('Vault envelopes', () => {
     const v = await setupVault(user, 'a long first passphrase');
     expect(v.key.extractable).toBe(false);
     const encrypted = await encryptDraft(v.key, user, id, persona, 1, content);
+    const restored = await restoreVaultSession(v.sessionKey);
+    expect(restored.extractable).toBe(false);
+    expect(await decryptDraft(restored, user, id, persona, 1, encrypted)).toEqual(content);
+    await expect(restoreVaultSession('AA==')).rejects.toThrow();
     const unlocked = await unlockVault(user, v.config, 'a long first passphrase');
     expect(await decryptDraft(unlocked, user, id, persona, 1, encrypted)).toEqual(content);
     await expect(unlockVault(user, v.config, 'wrong passphrase')).rejects.toThrow();

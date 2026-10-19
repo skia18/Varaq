@@ -7,9 +7,15 @@ import {
   type ReactNode,
   type FormEvent,
 } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
-import { setupVault, unlockVault, recoverVault, type VaultConfig } from './crypto';
+import {
+  setupVault,
+  unlockVaultSession,
+  restoreVaultSession,
+  recoverVault,
+  type VaultConfig,
+} from './crypto';
 import { saveConfig, vaultConfig } from './api';
 
 type VaultSession = { userId: string; key: CryptoKey };
@@ -17,30 +23,93 @@ const Context = createContext<{ session: VaultSession | null; lock: () => void }
   session: null,
   lock: () => {},
 });
+const STORAGE_KEY = 'varaq.vault.session.v1';
+type UnlockedSession = VaultSession & { sessionKey: string };
 export function VaultProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [session, setSession] = useState<VaultSession | null>(null);
-  const lock = () => setSession(null);
-  useEffect(() => {
+  const [storageWarning, setStorageWarning] = useState(false);
+  const generation = useRef(0);
+  const clearStorage = () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* Storage may be disabled. */
+    }
+  };
+  const lock = () => {
+    generation.current++;
+    clearStorage();
     setSession(null);
-  }, [user?.id]);
-  // Account identity is checked during render too, before effects run.
+  };
+  useEffect(() => {
+    if (isLoading) return;
+    const epoch = ++generation.current;
+    setSession(null);
+    if (!user) {
+      clearStorage();
+      return;
+    }
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.userId !== user.id || typeof saved.sessionKey !== 'string') {
+          clearStorage();
+          return;
+        }
+        void restoreVaultSession(saved.sessionKey)
+          .then((key) => {
+            if (epoch === generation.current) setSession({ userId: user.id, key });
+          })
+          .catch(() => {
+            if (epoch === generation.current) clearStorage();
+          });
+      }
+    } catch {
+      clearStorage();
+    }
+    return () => {
+      generation.current++;
+    };
+  }, [user?.id, isLoading]);
+  const unlock = (value: UnlockedSession) => {
+    generation.current++;
+    try {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ userId: value.userId, sessionKey: value.sessionKey }),
+      );
+      setStorageWarning(false);
+    } catch {
+      setStorageWarning(true);
+    }
+    setSession({ userId: value.userId, key: value.key });
+  };
   return (
     <Context.Provider value={{ session: session?.userId === user?.id ? session : null, lock }}>
-      <UnlockContext.Provider value={setSession}>{children}</UnlockContext.Provider>
+      <UnlockContext.Provider value={unlock}>
+        {storageWarning && (
+          <p role="status">Tab storage is unavailable. Refreshing will lock your Vault.</p>
+        )}
+        {children}
+      </UnlockContext.Provider>
     </Context.Provider>
   );
 }
-const UnlockContext = createContext<(session: VaultSession) => void>(() => {});
+const UnlockContext = createContext<(session: UnlockedSession) => void>(() => {});
 export const useVault = () => useContext(Context);
 export function VaultGate() {
+  const { pathname } = useLocation();
   const { session, lock } = useVault();
   const { user } = useAuth();
   return session ? (
     <>
-      <button className="literary-button" onClick={lock}>
-        Lock Vault
-      </button>
+      {pathname !== '/write' && (
+        <button className="literary-button" onClick={lock}>
+          Lock Vault
+        </button>
+      )}
       <Outlet key={session.userId} />
     </>
   ) : (
@@ -101,22 +170,29 @@ function VaultUnlock() {
         return;
       }
       let key: CryptoKey;
+      let sessionKey: string;
       if (kit) {
         if (!ack) throw new Error('Save your recovery key first.');
         await saveConfig(kit.config, 0);
         key = kit.key;
+        sessionKey = kit.sessionKey;
       } else if (recover) {
         if (pass !== confirm) throw new Error('Passphrases do not match.');
         const result = await recoverVault(user.id, config!, recovery, pass);
         await saveConfig(result.config, revision);
         key = result.key;
-      } else key = await unlockVault(user.id, config!, pass);
+        sessionKey = result.sessionKey;
+      } else {
+        const result = await unlockVaultSession(user.id, config!, pass);
+        key = result.key;
+        sessionKey = result.sessionKey;
+      }
       if (epoch === generation.current) {
         setPass('');
         setConfirm('');
         setRecovery('');
         setKit(null);
-        setSession({ userId: user.id, key });
+        setSession({ userId: user.id, key, sessionKey });
       }
     } catch {
       if (epoch === generation.current)
@@ -138,7 +214,7 @@ function VaultUnlock() {
       </h1>
       <p>
         Your Vault passphrase is separate from your account password. Writing is decrypted in this
-        tab until you lock it, sign out, or refresh.
+        tab until you lock it or sign out. Refreshing keeps it unlocked.
       </p>
       {config === undefined && !error ? (
         <p>Loading…</p>

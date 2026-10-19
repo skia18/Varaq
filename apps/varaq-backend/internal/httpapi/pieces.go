@@ -314,6 +314,30 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 		limit = parsed
 	}
 
+	status, personaID := r.URL.Query().Get("status"), r.URL.Query().Get("personaId")
+	if status != "" && status != "published" && status != "draft" {
+		writeBadRequest(w, "Invalid status filter.")
+		return
+	}
+	if personaID != "" && !uuidPattern.MatchString(personaID) {
+		writeBadRequest(w, "Invalid personaId filter.")
+		return
+	}
+	var cursorTime *time.Time
+	var cursorID *string
+	if raw := r.URL.Query().Get("cursor"); raw != "" {
+		bytes, err := base64.RawURLEncoding.DecodeString(raw)
+		var cursor struct {
+			CreatedAt time.Time `json:"createdAt"`
+			ID        string    `json:"id"`
+		}
+		if err != nil || json.Unmarshal(bytes, &cursor) != nil || cursor.CreatedAt.IsZero() || !uuidPattern.MatchString(cursor.ID) {
+			writeBadRequest(w, "Invalid pagination cursor.")
+			return
+		}
+		cursorTime = &cursor.CreatedAt
+		cursorID = &cursor.ID
+	}
 	query := `
 		SELECT p.id, p.persona_id, p.slug, p.title, p.body,
 		       p.type, p.status, p.visibility, p.published_at,
@@ -321,11 +345,14 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 		FROM public.pieces p
 		JOIN public.personas persona ON persona.id = p.persona_id
 		WHERE persona.user_id = $1::uuid
+          AND ($3::text='' OR p.status=$3)
+          AND ($4::text='' OR p.persona_id=NULLIF($4,'')::uuid)
+          AND ($5::timestamptz IS NULL OR (p.created_at,p.id)<($5,$6::uuid))
 		ORDER BY p.created_at DESC, p.id DESC
 		LIMIT $2
 	`
 
-	rows, err := h.DB.Query(r.Context(), query, user.ID, limit)
+	rows, err := h.DB.Query(r.Context(), query, user.ID, limit+1, status, personaID, cursorTime, cursorID)
 	if err != nil {
 		writeInternalError(w)
 		return
@@ -361,10 +388,22 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, PiecePage{
-		Items:      items,
-		NextCursor: nil,
-	})
+	var next *string
+	if len(items) > limit {
+		items = items[:limit]
+		last := items[len(items)-1]
+		raw, err := json.Marshal(struct {
+			CreatedAt time.Time `json:"createdAt"`
+			ID        string    `json:"id"`
+		}{last.CreatedAt, last.ID})
+		if err != nil {
+			writeInternalError(w)
+			return
+		}
+		encoded := base64.RawURLEncoding.EncodeToString(raw)
+		next = &encoded
+	}
+	writeJSON(w, http.StatusOK, PiecePage{Items: items, NextCursor: next})
 }
 
 type updatePieceRequest struct {

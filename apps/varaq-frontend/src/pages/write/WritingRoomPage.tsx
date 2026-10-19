@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { WritingEditor } from './WritingEditor';
 import { useAuth } from '@/auth/AuthProvider';
 import { useVault } from '@/features/vault/VaultProvider';
 import { decryptDraft, encryptDraft, type DraftContent } from '@/features/vault/crypto';
@@ -8,7 +9,7 @@ import { apiRequest, getOwnerPiece } from '@/lib/api';
 
 export function WritingRoomPage() {
   const { persona } = useAuth();
-  const { session } = useVault();
+  const { session, lock } = useVault();
   const [params, setParams] = useSearchParams();
   const source = params.get('importId');
   const paramId = params.get('pieceId');
@@ -170,54 +171,18 @@ export function WritingRoomPage() {
     }
   }
   return (
-    <section className="page-section">
-      <Link to="/vault">← Vault</Link>
-      <h1>{source ? 'Encrypt a legacy draft' : 'Writing room'}</h1>
-      <p>Saved drafts are encrypted in your browser.</p>
-      <form onSubmit={save}>
-        <fieldset disabled={!loaded || busy}>
-          <label>
-            Type{' '}
-            <select
-              value={content.type}
-              onChange={(e) => edit({ ...content, type: e.target.value as DraftContent['type'] })}
-            >
-              {['poem', 'fragment', 'story', 'letter', 'essay'].map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Title
-            <input
-              className="w-full"
-              maxLength={200}
-              required
-              value={content.title}
-              onChange={(e) => edit({ ...content, title: e.target.value })}
-            />
-          </label>
-          <label>
-            Your writing
-            <textarea
-              className="w-full"
-              style={{ minHeight: 400, whiteSpace: 'pre-wrap' }}
-              maxLength={50000}
-              required
-              value={content.body}
-              onChange={(e) => edit({ ...content, body: e.target.value })}
-            />
-          </label>
-          <button
-            className="literary-button"
-            disabled={!content.title.trim() || !content.body.trim()}
-          >
-            {busy ? 'Saving…' : 'Save encrypted draft'}
-          </button>
-        </fieldset>
-      </form>
-      {error && <p role="alert">{error}</p>}
-      {message && <p role="status">{message}</p>}
-    </section>
+    <WritingEditor
+      content={content}
+      onChange={edit}
+      onSave={save}
+      mode={source ? 'import' : paramId ? 'draft' : 'new'}
+      handle={persona?.handle}
+      backTo="/vault"
+      loaded={loaded}
+      busy={busy}
+      error={error}
+      message={message}
+      onLock={lock}
+    />
   );
 }

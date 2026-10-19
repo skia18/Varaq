@@ -222,4 +222,130 @@ func TestVaultDatabaseLifecycle(t *testing.T) {
 		t.Fatal("changed legacy source was deleted")
 	}
 
+	// Returning both public and unlisted publications stages ciphertext without removing content.
+	for _, visibility := range []string{"public", "unlisted"} {
+		original, destination := testUUID(), testUUID()
+		require(call(h.VaultDraft, "PUT", original, user, save), 200)
+		publishing := publishVaultRequest{OperationID: testUUID(), SourceRevision: 1, Title: "Return me", Body: "Readable until move commits", Type: "poem", Visibility: visibility}
+		require(call(h.PublishVault, "POST", original, user, publishing), 200)
+		var sourceStamp time.Time
+		if err = db.QueryRow(ctx, `SELECT updated_at FROM public.pieces WHERE id=$1::uuid`, original).Scan(&sourceStamp); err != nil {
+			t.Fatal(err)
+		}
+		stage := map[string]any{"draftId": destination, "updatedAt": sourceStamp, "envelope": env}
+		finish := map[string]any{"draftId": destination, "updatedAt": sourceStamp}
+		require(call(h.ReturnToVault, "POST", original, other, stage), 409)
+		require(call(h.ReturnToVault, "POST", original, user, stage), 200)
+		require(call(h.ReturnToVault, "POST", original, user, stage), 200)
+		require(call(h.ReturnToVault, "GET", original, other, nil), 404)
+		receipt := call(h.ReturnToVault, "GET", original, user, nil)
+		require(receipt, 200)
+		if !strings.Contains(receipt.Body.String(), env.Content.Data) {
+			t.Fatal("staged ciphertext cannot be verified")
+		}
+		require(call(h.GetPublishedPiece, "GET", original, "", nil), 200)
+		require(call(h.VaultDraft, "GET", destination, user, nil), 404)
+		// A later edit makes finalize fail and leaves publication accessible.
+		_, err = db.Exec(ctx, `UPDATE public.pieces SET body='Edited while moving' WHERE id=$1::uuid`, original)
+		if err != nil {
+			t.Fatal(err)
+		}
+		require(call(h.FinalizeReturnToVault, "POST", original, user, finish), 409)
+		require(call(h.GetPublishedPiece, "GET", original, "", nil), 200)
+		if err = db.QueryRow(ctx, `SELECT updated_at FROM public.pieces WHERE id=$1::uuid`, original).Scan(&sourceStamp); err != nil {
+			t.Fatal(err)
+		}
+		stage["updatedAt"] = sourceStamp
+		finish["updatedAt"] = sourceStamp
+		require(call(h.ReturnToVault, "POST", original, user, stage), 200)
+		require(call(h.FinalizeReturnToVault, "POST", original, other, finish), 409)
+		// Inject failure into the source deletion; insertion must roll back too.
+		if _, err = db.Exec(ctx, `CREATE OR REPLACE FUNCTION varaq_private.test_reject_return() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test return failure'; END $$; CREATE TRIGGER test_reject_return BEFORE DELETE ON public.pieces FOR EACH ROW EXECUTE FUNCTION varaq_private.test_reject_return()`); err != nil {
+			t.Fatal(err)
+		}
+		failedMove := call(h.FinalizeReturnToVault, "POST", original, user, finish)
+		if _, err = db.Exec(ctx, `DROP TRIGGER test_reject_return ON public.pieces; DROP FUNCTION varaq_private.test_reject_return()`); err != nil {
+			t.Fatal(err)
+		}
+		require(failedMove, 500)
+		require(call(h.VaultDraft, "GET", destination, user, nil), 404)
+		require(call(h.GetPublishedPiece, "GET", original, "", nil), 200)
+		// Concurrent finalization and lost-response retries produce one private draft.
+		returns := make(chan *httptest.ResponseRecorder, 2)
+		go func() { returns <- call(h.FinalizeReturnToVault, "POST", original, user, finish) }()
+		go func() { returns <- call(h.FinalizeReturnToVault, "POST", original, user, finish) }()
+		require(<-returns, 200)
+		require(<-returns, 200)
+		require(call(h.GetPublishedPiece, "GET", original, "", nil), 404)
+		require(call(h.VaultDraft, "GET", destination, user, nil), 200)
+		// Old publication retries and cleanup must never touch the returned identity.
+		require(call(h.PublishVault, "POST", original, user, publishing), 200)
+		require(call(h.VaultTransfer, "POST", original, user, nil), 204)
+		require(call(h.VaultDraft, "GET", destination, user, nil), 200)
+		// It can be republished; replaying the move never resurrects an encrypted copy.
+		again := publishing
+		again.OperationID = testUUID()
+		require(call(h.PublishVault, "POST", destination, user, again), 200)
+		require(call(h.FinalizeReturnToVault, "POST", original, user, finish), 200)
+		require(call(h.GetPublishedPiece, "GET", destination, "", nil), 200)
+		_ = db.QueryRow(ctx, `SELECT count(*) FROM varaq_private.vault_returns WHERE source_piece_id=$1::uuid AND completed AND envelope IS NULL`, original).Scan(&count)
+		if count != 1 {
+			t.Fatal("receipt retained ciphertext or failed to complete")
+		}
+	}
+	for _, role := range []string{"anon", "authenticated", "service_role"} {
+		var allowed bool
+		err = db.QueryRow(ctx, `SELECT has_table_privilege($1,'varaq_private.vault_returns','SELECT,INSERT,UPDATE,DELETE,TRUNCATE')`, role).Scan(&allowed)
+		if err != nil || allowed {
+			t.Fatalf("return table exposed to %s: %v", role, err)
+		}
+	}
+
+	// Owner wall filters are applied before pagination; unlisted writing stays owner-only.
+	queryOwner := func(uid, query string) PiecePage {
+		r := httptest.NewRequest("GET", "/api/v1/owner/pieces?"+query, nil)
+		r = r.WithContext(auth.WithUser(r.Context(), auth.User{ID: uid}))
+		w := httptest.NewRecorder()
+		h.ListOwnerPieces(w, r)
+		require(w, 200)
+		var page PiecePage
+		if json.Unmarshal(w.Body.Bytes(), &page) != nil {
+			t.Fatal("invalid owner page")
+		}
+		return page
+	}
+	var expected int
+	if err = db.QueryRow(ctx, `SELECT count(*) FROM public.pieces WHERE persona_id=$1::uuid AND status='published'`, persona).Scan(&expected); err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]bool{}
+	cursor := ""
+	for {
+		page := queryOwner(user, "status=published&personaId="+persona+"&limit=2&cursor="+cursor)
+		for _, p := range page.Items {
+			if seen[p.ID] || p.Status != "published" || p.PersonaID != persona {
+				t.Fatal("incorrect owner filter/cursor")
+			}
+			seen[p.ID] = true
+		}
+		if page.NextCursor == nil {
+			break
+		}
+		cursor = *page.NextCursor
+		if len(seen) > expected {
+			t.Fatal("owner pagination does not terminate")
+		}
+	}
+	if len(seen) != expected {
+		t.Fatalf("owner pagination lost pieces: got %d want %d", len(seen), expected)
+	}
+	if got := queryOwner(other, "status=published&personaId="+persona); len(got.Items) != 0 {
+		t.Fatal("cross-user wall leaked content")
+	}
+	for _, p := range queryOwner(user, "status=draft&personaId="+persona).Items {
+		if p.Status != "draft" {
+			t.Fatal("legacy filter returned publication")
+		}
+	}
+
 }

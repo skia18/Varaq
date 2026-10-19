@@ -32,6 +32,10 @@ import type {
   VaultImportFinalize,
   VaultPending,
   VaultPublish,
+  VaultReturn,
+  VaultReturnFinalize,
+  VaultReturnResult,
+  VaultReturnStage,
   VaultRevision,
   VaultTransfer,
 } from '../models/index';
@@ -70,6 +74,14 @@ import {
   VaultPendingToJSON,
   VaultPublishFromJSON,
   VaultPublishToJSON,
+  VaultReturnFromJSON,
+  VaultReturnToJSON,
+  VaultReturnFinalizeFromJSON,
+  VaultReturnFinalizeToJSON,
+  VaultReturnResultFromJSON,
+  VaultReturnResultToJSON,
+  VaultReturnStageFromJSON,
+  VaultReturnStageToJSON,
   VaultRevisionFromJSON,
   VaultRevisionToJSON,
   VaultTransferFromJSON,
@@ -94,6 +106,11 @@ export interface FinalizeVaultImportRequest {
   vaultImportFinalize: VaultImportFinalize;
 }
 
+export interface FinalizeVaultReturnRequest {
+  pieceID: string;
+  vaultReturnFinalize: VaultReturnFinalize;
+}
+
 export interface FinalizeVaultTransferRequest {
   pieceID: string;
 }
@@ -102,11 +119,22 @@ export interface GetOwnerPieceRequest {
   pieceID: string;
 }
 
+export interface GetOwnerPiecesRequest {
+  limit?: number;
+  status?: GetOwnerPiecesStatusEnum;
+  personaId?: string;
+  cursor?: string;
+}
+
 export interface GetPublishedPieceRequest {
   pieceID: string;
 }
 
 export interface GetVaultDraftRequest {
+  pieceID: string;
+}
+
+export interface GetVaultReturnRequest {
   pieceID: string;
 }
 
@@ -130,6 +158,11 @@ export interface SaveVaultConfigRequest {
 export interface SaveVaultDraftRequest {
   pieceID: string;
   vaultDraftWrite: VaultDraftWrite;
+}
+
+export interface StageVaultReturnRequest {
+  pieceID: string;
+  vaultReturnStage: VaultReturnStage;
 }
 
 export interface UpdateOwnerPieceRequest {
@@ -389,6 +422,75 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
+   * After browser decrypt-verification, atomically insert draft and remove unchanged publication
+   */
+  async finalizeVaultReturnRaw(
+    requestParameters: FinalizeVaultReturnRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<VaultReturnResult>> {
+    if (requestParameters['pieceID'] == null) {
+      throw new runtime.RequiredError(
+        'pieceID',
+        'Required parameter "pieceID" was null or undefined when calling finalizeVaultReturn().',
+      );
+    }
+
+    if (requestParameters['vaultReturnFinalize'] == null) {
+      throw new runtime.RequiredError(
+        'vaultReturnFinalize',
+        'Required parameter "vaultReturnFinalize" was null or undefined when calling finalizeVaultReturn().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/owner/pieces/{pieceID}/vault/finalize`;
+    urlPath = urlPath.replace(
+      `{${'pieceID'}}`,
+      encodeURIComponent(String(requestParameters['pieceID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: VaultReturnFinalizeToJSON(requestParameters['vaultReturnFinalize']),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      VaultReturnResultFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   * After browser decrypt-verification, atomically insert draft and remove unchanged publication
+   */
+  async finalizeVaultReturn(
+    requestParameters: FinalizeVaultReturnRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<VaultReturnResult> {
+    const response = await this.finalizeVaultReturnRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Remove ciphertext only for a committed publication
    */
   async finalizeVaultTransferRaw(
@@ -544,12 +646,29 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
-   * List published writing and legacy plaintext drafts
+   * List owned pieces with status/persona filters and cursor pagination
    */
   async getOwnerPiecesRaw(
+    requestParameters: GetOwnerPiecesRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<PiecePage>> {
     const queryParameters: any = {};
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['status'] != null) {
+      queryParameters['status'] = requestParameters['status'];
+    }
+
+    if (requestParameters['personaId'] != null) {
+      queryParameters['personaId'] = requestParameters['personaId'];
+    }
+
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor'];
+    }
 
     const headerParameters: runtime.HTTPHeaders = {};
 
@@ -578,12 +697,13 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
-   * List published writing and legacy plaintext drafts
+   * List owned pieces with status/persona filters and cursor pagination
    */
   async getOwnerPieces(
+    requestParameters: GetOwnerPiecesRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<PiecePage> {
-    const response = await this.getOwnerPiecesRaw(initOverrides);
+    const response = await this.getOwnerPiecesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -823,6 +943,63 @@ export class PiecesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<VaultDraftPage> {
     const response = await this.getVaultDraftsRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Get staged ciphertext or completed move receipt
+   */
+  async getVaultReturnRaw(
+    requestParameters: GetVaultReturnRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<VaultReturn>> {
+    if (requestParameters['pieceID'] == null) {
+      throw new runtime.RequiredError(
+        'pieceID',
+        'Required parameter "pieceID" was null or undefined when calling getVaultReturn().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/owner/pieces/{pieceID}/vault`;
+    urlPath = urlPath.replace(
+      `{${'pieceID'}}`,
+      encodeURIComponent(String(requestParameters['pieceID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => VaultReturnFromJSON(jsonValue));
+  }
+
+  /**
+   * Get staged ciphertext or completed move receipt
+   */
+  async getVaultReturn(
+    requestParameters: GetVaultReturnRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<VaultReturn> {
+    const response = await this.getVaultReturnRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -1126,6 +1303,75 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
+   * Stage client-encrypted copy; keep publication accessible
+   */
+  async stageVaultReturnRaw(
+    requestParameters: StageVaultReturnRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<VaultReturnResult>> {
+    if (requestParameters['pieceID'] == null) {
+      throw new runtime.RequiredError(
+        'pieceID',
+        'Required parameter "pieceID" was null or undefined when calling stageVaultReturn().',
+      );
+    }
+
+    if (requestParameters['vaultReturnStage'] == null) {
+      throw new runtime.RequiredError(
+        'vaultReturnStage',
+        'Required parameter "vaultReturnStage" was null or undefined when calling stageVaultReturn().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/owner/pieces/{pieceID}/vault`;
+    urlPath = urlPath.replace(
+      `{${'pieceID'}}`,
+      encodeURIComponent(String(requestParameters['pieceID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: VaultReturnStageToJSON(requestParameters['vaultReturnStage']),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      VaultReturnResultFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   * Stage client-encrypted copy; keep publication accessible
+   */
+  async stageVaultReturn(
+    requestParameters: StageVaultReturnRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<VaultReturnResult> {
+    const response = await this.stageVaultReturnRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Update an owned published piece
    */
   async updateOwnerPieceRaw(
@@ -1192,3 +1438,13 @@ export class PiecesApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const GetOwnerPiecesStatusEnum = {
+  Draft: 'draft',
+  Published: 'published',
+} as const;
+export type GetOwnerPiecesStatusEnum =
+  (typeof GetOwnerPiecesStatusEnum)[keyof typeof GetOwnerPiecesStatusEnum];

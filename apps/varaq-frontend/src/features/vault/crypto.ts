@@ -84,12 +84,12 @@ export async function setupVault(user: string, passphrase: string) {
       passphrase: await seal(await passKey(passphrase, salt), raw, context(user, 'passphrase')),
       recovery: await seal(await recoveryKey(recovery, user), raw, context(user, 'recovery')),
     };
-    return { config, recovery, key: await aes(raw) };
+    return { config, recovery, key: await aes(raw), sessionKey: toBase64(raw) };
   } finally {
     raw.fill(0);
   }
 }
-export async function unlockVault(user: string, config: VaultConfig, passphrase: string) {
+export async function unlockVaultSession(user: string, config: VaultConfig, passphrase: string) {
   if (config.version !== 1) throw new Error('Unsupported Vault format.');
   const raw = await open(
     await passKey(passphrase, config.salt),
@@ -97,6 +97,18 @@ export async function unlockVault(user: string, config: VaultConfig, passphrase:
     context(user, 'passphrase'),
   );
   try {
+    return { key: await aes(raw), sessionKey: toBase64(raw) };
+  } finally {
+    raw.fill(0);
+  }
+}
+export async function unlockVault(user: string, config: VaultConfig, passphrase: string) {
+  return (await unlockVaultSession(user, config, passphrase)).key;
+}
+export async function restoreVaultSession(sessionKey: string) {
+  const raw = fromBase64(sessionKey);
+  try {
+    if (raw.length !== 32) throw new Error('Invalid session key.');
     return await aes(raw);
   } finally {
     raw.fill(0);
@@ -123,7 +135,7 @@ export async function recoverVault(
       passphrase: await seal(await passKey(passphrase, salt), raw, context(user, 'passphrase')),
     };
     await unlockVault(user, next, passphrase);
-    return { config: next, key: await aes(raw) };
+    return { config: next, key: await aes(raw), sessionKey: toBase64(raw) };
   } finally {
     raw.fill(0);
   }
