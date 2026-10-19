@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
-import { getMyPersona, type Persona } from '@/lib/api';
+import { ApiError, getMyPersona, type Persona } from '@/lib/api';
 
 type AuthContextValue = {
   session: Session | null;
@@ -43,7 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPersona(result);
     } catch (error) {
       setPersona(null);
-      setPersonaError(error instanceof Error ? error.message : 'Could not load your persona.');
+      setPersonaError(
+        error instanceof ApiError && error.status === 404 && error.code === 'persona_not_found'
+          ? null
+          : error instanceof Error
+            ? error.message
+            : 'Could not load your persona.',
+      );
     } finally {
       setIsPersonaLoading(false);
     }
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      if (nextSession) setIsPersonaLoading(true);
       setIsLoading(false);
 
       if (!nextSession) {
@@ -74,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const initialSession = error ? null : data.session;
 
       setSession(initialSession);
+      if (initialSession) setIsPersonaLoading(true);
       setIsLoading(false);
 
       if (initialSession) {

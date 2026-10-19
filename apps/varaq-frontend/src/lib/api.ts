@@ -15,6 +15,17 @@ export type Persona = {
 
 export type PieceType = 'poem' | 'fragment' | 'story' | 'letter' | 'essay';
 
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const supabase = createClient();
   const {
@@ -44,8 +55,17 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `API request failed with status ${response.status}`);
+    const body = await response.text();
+    let message = body || `API request failed with status ${response.status}`;
+    let code: string | undefined;
+    try {
+      const payload = JSON.parse(body);
+      if (typeof payload.error?.message === 'string') message = payload.error.message;
+      if (typeof payload.error?.code === 'string') code = payload.error.code;
+    } catch {
+      // Non-JSON errors still carry their HTTP status and response text.
+    }
+    throw new ApiError(message, response.status, code);
   }
 
   if (response.status === 204) {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [repeatPassword, setRepeatPassword] = useState('');
@@ -28,11 +29,16 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: { emailRedirectTo: `${window.location.origin}/signup` },
       });
       if (error) throw error;
+      if (data.session) {
+        navigate('/', { replace: true });
+        return;
+      }
       setSuccess(true);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -53,12 +59,14 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
             >
               Thank you for signing up!
             </CardTitle>
-            <CardDescription>Check your email to confirm</CardDescription>
+            <CardDescription>
+              Check your email to confirm, then create your persona.
+            </CardDescription>
           </CardHeader>
           <CardContent role="status">
             <p className="text-sm text-muted-foreground">
               You&apos;ve successfully signed up. Please check your email to confirm your account
-              before signing in.
+              before continuing. Once confirmed, return here or sign in to choose your persona.
             </p>
             <Link to="/login" className="mt-4 block underline">
               Back to sign in
