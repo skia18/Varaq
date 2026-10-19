@@ -2,7 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export * from './CreatePersona';
-export * from './CreatePiece';
 export * from './ErrorError';
 export * from './FeedPage';
 export * from './FeedPiece';
@@ -16,7 +15,6 @@ export * from './Piece';
 export * from './PiecePage';
 export * from './PieceStatus';
 export * from './PieceType';
-export * from './PublishOwnerPiece200Response';
 export * from './Sealed';
 export * from './UpdatePersona';
 export * from './UpdatePiece';
@@ -28,8 +26,6 @@ export * from './VaultDraft';
 export * from './VaultDraftPage';
 export * from './VaultDraftWrite';
 export * from './VaultEnvelope';
-export * from './VaultImport';
-export * from './VaultImportFinalize';
 export * from './VaultPending';
 export * from './VaultPublish';
 export * from './VaultReturn';

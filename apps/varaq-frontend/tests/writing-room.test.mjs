@@ -4,7 +4,7 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { WritingRoomPage } from '@/pages/write/WritingRoomPage';
-import { LegacyWritingRoomPage } from '@/pages/write/LegacyWritingRoomPage';
+import { PublishedWritingRoomPage } from '@/pages/write/PublishedWritingRoomPage';
 const mocks = vi.hoisted(() => ({
   draft: vi.fn(),
   saveDraft: vi.fn(),
@@ -98,7 +98,7 @@ test('restored draft editor preserves writing and saves only its encrypted envel
   expect(mocks.lock).toHaveBeenCalledOnce();
 });
 test('published editor uses the same writing layout and clearly saves readable published content', async () => {
-  await mount(LegacyWritingRoomPage, '/wall/manage/edit?pieceId=published');
+  await mount(PublishedWritingRoomPage, '/wall/manage/edit?pieceId=published');
   expect(host.querySelector('h1').textContent).toContain('published words');
   expect(host.textContent).toContain('Published piece');
   expect(host.textContent).not.toContain('Encrypted draft');

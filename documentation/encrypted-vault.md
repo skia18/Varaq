@@ -4,12 +4,12 @@ The Vault uses the existing React/Vite/TypeScript, Go/Chi, Supabase Auth, and Po
 
 ## User flow
 
-1. Sign in with Supabase. Open `/vault` and create a separate passphrase (minimum 12 characters).
+1. Sign in with Supabase. Open `/vault` and create a separate non-empty passphrase of any length. There are no character-composition or strength requirements.
 2. Save the recovery key and acknowledge it before setup is committed. There is no server copy of this secret.
 3. Unlock once per tab session. Manual lock, sign-out, or account change clears the unlocked UI/key references and tab storage. Navigating, switching tabs, and refreshing retain unlock. The Vault master key is stored in sessionStorage for this tab; passphrases and draft plaintext are not. Browser session restoration or opening a tab from an existing tab may preserve/copy sessionStorage; use manual lock for explicit revocation. No inactivity timer is currently implemented.
 4. Save drafts manually. The browser encrypts before sending; optimistic revisions prevent stale overwrites. A lost-response retry reuses the original envelope. After an uncertain save, retry unchanged content or reload before further edits. Closing/refreshing with unsaved edits triggers the browser warning; in-app navigation does not yet have a dirty-state blocker.
 5. Select Publish, confirm the snapshot and public/unlisted visibility. This intentionally sends readable content to Varaq. A committed receipt removes the source from active Vault queries and freezes it. Browser cleanup removes ciphertext; a Go worker retries confirmed transfers after five minutes, checked every minute.
-6. Published writing is managed on `/wall/{handle}` when the signed-in user owns that wall. Unlisted pieces and owner controls are omitted from the visitor view; legacy `/published` links redirect to My Wall. Public and unlisted pieces are readable at `/piece/{uuid}`; only public pieces appear on public walls/feeds. Published editing/deletion retain their existing plaintext behavior.
+6. Published writing is managed on `/wall/{handle}` when the signed-in user owns that wall. Unlisted pieces and owner controls are omitted from the visitor view; older `/published` links redirect to My Wall. Public and unlisted pieces are readable at `/piece/{uuid}`; only public pieces appear on public walls/feeds. Published editing/deletion retain their existing plaintext behavior.
 
 ## Crypto format v1
 
@@ -28,12 +28,6 @@ Storage is in `varaq_private`, outside configured Data API schemas. Browser role
 `publication_operations.draft_id` is unique and intentionally has no cascading foreign key to `pieces`. This receipt survives published deletion and prevents replay from recreating content. Publication, source revision check, and receipt insertion commit together. Advisory transaction locks serialize operations on a draft, including absent-row creation. Same-operation/snapshot retry returns the original identity. A conflicting snapshot returns 409; the browser queries source status before deciding whether to retain an active draft.
 
 Failed/uncertain publication preserves ciphertext. Failed cleanup is shown as pending and retried. Cleanup cannot authorize itself from a browser claim: it requires a committed server receipt and deletes only the encrypted source. Existing published rows/revisions/backups are not converted to encrypted storage.
-
-## Legacy drafts
-
-Existing plaintext drafts remain explicitly labelled at `/vault/legacy`. New plaintext draft creation is disabled. Published edits remain supported; legacy draft editing moves through `/write?importId={uuid}`.
-
-Import uploads ciphertext while preserving the source, reads it back, authenticates/decrypts locally, compares the content, then conditionally removes the unchanged plaintext draft. Pending imports are not active Vault drafts and cannot be published through the encrypted publisher. Concurrent source changes prevent deletion. Reloading the import can replace a staged copy when the source timestamp changed. Historical backups/WAL may retain plaintext according to existing retention policies; this feature cannot retroactively encrypt them.
 
 ## Validation
 
@@ -64,4 +58,11 @@ Database tests cover both visibilities, source edits, cross-user access, concurr
 
 My Wall manages published public and unlisted pieces, including Edit, Move to Vault, and Delete. Other visitors use the public listing and see neither unlisted pieces nor management actions. Switching accounts or signing out unmounts the owner view and its reading dialog. Owner listings filter status/persona before cursor pagination, while Go always scopes queries to the authenticated user.
 
-My Vault contains encrypted unpublished writing. Legacy plaintext drafts remain separately labelled at `/vault/legacy` until imported. The separate Published writing navigation item has been removed; `/published` redirects to the owner's wall, and older editor links remain supported.
+My Vault contains encrypted unpublished writing. The separate Published writing navigation item has been removed; `/published` redirects to the owner's wall, and older editor links remain supported.
+
+
+## Completed draft migration cleanup
+
+All drafting now uses encrypted Vault storage. The import UI, import endpoints, plaintext creation endpoint, and plaintext publication fallback have been removed. Published editing uses `PublishedWritingRoomPage`.
+
+Apply `20261019020000_remove_legacy_drafts.sql` with the updated backend. It refuses to run if plaintext drafts or unfinished imports remain, drops the unused import-tracking column, and constrains `public.pieces` to published content. It does not delete writing. Historical migrations remain unchanged so clean database rebuilds retain a consistent history. Historical plaintext backups remain subject to their existing retention policies.

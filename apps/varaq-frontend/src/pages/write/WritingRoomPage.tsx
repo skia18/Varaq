@@ -5,13 +5,11 @@ import { useAuth } from '@/auth/AuthProvider';
 import { useVault } from '@/features/vault/VaultProvider';
 import { decryptDraft, encryptDraft, type DraftContent } from '@/features/vault/crypto';
 import * as api from '@/features/vault/api';
-import { apiRequest, getOwnerPiece } from '@/lib/api';
 
 export function WritingRoomPage() {
   const { persona } = useAuth();
   const { session, lock } = useVault();
   const [params, setParams] = useSearchParams();
-  const source = params.get('importId');
   const paramId = params.get('pieceId');
   const [id, setId] = useState(() => paramId || crypto.randomUUID());
   const [revision, setRevision] = useState(0);
@@ -22,7 +20,6 @@ export function WritingRoomPage() {
   const [message, setMessage] = useState('');
   const epoch = useRef(0);
   const owner = useRef('');
-  const legacy = useRef<{ id: string; updatedAt: string } | null>(null);
   const unsaved = useRef(false);
   // Retry exactly the same envelope after a lost save response.
   const pending = useRef<{
@@ -38,21 +35,10 @@ export function WritingRoomPage() {
     setError('');
     setMessage('');
     pending.current = null;
-    legacy.current = null;
     unsaved.current = false;
     if (!session || !persona) return;
     void (async () => {
-      if (source) {
-        const p = await getOwnerPiece(source);
-        if (p.status !== 'draft') throw new Error('Only unpublished drafts can be imported.');
-        if (n !== epoch.current) return;
-        legacy.current = { id: p.id, updatedAt: p.updatedAt };
-        owner.current = p.personaId;
-        setId(p.id);
-        setRevision(0);
-        setContent({ title: p.title, body: p.body, type: p.type });
-        unsaved.current = true;
-      } else if (paramId) {
+      if (paramId) {
         const d = await api.draft(paramId);
         const c = await decryptDraft(
           session.key,
@@ -80,7 +66,7 @@ export function WritingRoomPage() {
     return () => {
       epoch.current++;
     };
-  }, [paramId, source, session, persona?.id]);
+  }, [paramId, session, persona?.id]);
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (unsaved.current) {
@@ -124,19 +110,8 @@ export function WritingRoomPage() {
         content: snapshot,
       };
       pending.current = request;
-      if (legacy.current) {
-        await apiRequest('/api/v1/owner/vault/import', {
-          method: 'POST',
-          body: JSON.stringify({
-            id: legacy.current.id,
-            updatedAt: legacy.current.updatedAt,
-            envelope: request.envelope,
-          }),
-        });
-      } else {
-        await api.saveDraft(request.id, request.persona, request.revision, request.envelope);
-      }
-      // Read back and authenticate before reporting success or deleting a legacy source.
+      await api.saveDraft(request.id, request.persona, request.revision, request.envelope);
+      // Read back and authenticate before reporting save success.
       const stored = await api.draft(id);
       const verified = await decryptDraft(
         session.key,
@@ -148,15 +123,8 @@ export function WritingRoomPage() {
       );
       if (JSON.stringify(verified) !== snapshot)
         throw new Error('Saved revision differs. Reload before continuing.');
-      if (legacy.current) {
-        await apiRequest(`/api/v1/owner/vault/import/${id}/finalize`, {
-          method: 'POST',
-          body: JSON.stringify({ updatedAt: legacy.current.updatedAt }),
-        });
-      }
       if (n !== epoch.current) return;
       pending.current = null;
-      legacy.current = null;
       unsaved.current = false;
       setRevision(stored.revision);
       setMessage('Encrypted draft saved.');
@@ -175,7 +143,7 @@ export function WritingRoomPage() {
       content={content}
       onChange={edit}
       onSave={save}
-      mode={source ? 'import' : paramId ? 'draft' : 'new'}
+      mode={paramId ? 'draft' : 'new'}
       handle={persona?.handle}
       backTo="/vault"
       loaded={loaded}

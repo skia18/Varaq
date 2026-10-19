@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getOwnerPiece, updateOwnerPiece, type Piece } from '@/lib/api';
 
 // Published content is intentionally readable by Varaq and uses the existing editor API.
-export function LegacyWritingRoomPage() {
+export function PublishedWritingRoomPage() {
   const { persona } = useAuth();
   const [params] = useSearchParams();
   const id = params.get('pieceId');
@@ -23,8 +23,7 @@ export function LegacyWritingRoomPage() {
     }
     void getOwnerPiece(id)
       .then((p) => {
-        if (p.status !== 'published')
-          throw new Error('Move this legacy draft into the encrypted Vault before editing.');
+        if (p.status !== 'published') throw new Error('Only published pieces can be edited here.');
         if (active) setPiece(p);
       })
       .catch((e) => {

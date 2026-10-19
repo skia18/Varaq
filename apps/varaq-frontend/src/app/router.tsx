@@ -11,9 +11,8 @@ import { VaultGate } from '@/features/vault/VaultProvider';
 import { ReturnToVaultPage } from '@/features/vault/ReturnToVaultPage';
 import { VaultPage } from '@/features/vault/VaultPage';
 import { PublishedPiecePage } from '@/features/vault/PublishedPiecePage';
-import { ProfilePage } from '../pages/profile/ProfilePage';
 import { PublicWallPage, MyWallRedirect } from '../pages/profile/PublicWallPage';
-import { LegacyWritingRoomPage } from '../pages/write/LegacyWritingRoomPage';
+import { PublishedWritingRoomPage } from '../pages/write/PublishedWritingRoomPage';
 import { WritingRoomPage } from '../pages/write/WritingRoomPage';
 import { LoginForm } from '@/components/login/login-form';
 import { SignUpForm } from '@/components/login/sign-up-form';
@@ -47,25 +46,20 @@ export const router = createBrowserRouter([
         children: [
           { path: '/saved', element: <SavedPagesPage /> },
 
-          // Published-content management and legacy plaintext draft migration.
+          // Published-content management.
           { path: '/published', element: <MyWallRedirect /> },
-          { path: '/wall/manage/edit', element: <LegacyWritingRoomPage /> },
-          { path: '/published/edit', element: <LegacyWritingRoomPage /> },
+          { path: '/wall/manage/edit', element: <PublishedWritingRoomPage /> },
+          { path: '/published/edit', element: <PublishedWritingRoomPage /> },
           {
             element: <VaultGate />,
             children: [
               { path: '/vault', element: <VaultPage /> },
-              { path: '/vault/legacy', element: <ProfilePage mode="legacy" /> },
               { path: '/vault/return/:pieceId', element: <ReturnToVaultPage /> },
 
               // Writing room.
               { path: '/write', element: <WritingRoomPage /> },
             ],
           },
-
-          // Legacy shortcut; redirects to the signed-in writer's public wall.
-          // MyWallRedirect must be implemented separately.
-          // { path: '/wall/you', element: <MyWallRedirect /> },
         ],
       },
 

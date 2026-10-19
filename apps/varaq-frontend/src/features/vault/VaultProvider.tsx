@@ -1,3 +1,4 @@
+import { Lock, KeyRound } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -106,9 +107,12 @@ export function VaultGate() {
   return session ? (
     <>
       {pathname !== '/write' && (
-        <button className="literary-button" onClick={lock}>
-          Lock Vault
-        </button>
+        <div className="vault-lock-toolbar">
+          <button className="varaq-action varaq-action--small" onClick={lock}>
+            <Lock aria-hidden="true" />
+            Lock Vault
+          </button>
+        </div>
       )}
       <Outlet key={session.userId} />
     </>
@@ -251,7 +255,6 @@ function VaultUnlock() {
                   className="w-full"
                   type="password"
                   autoComplete={config && !recover ? 'current-password' : 'new-password'}
-                  minLength={!config || recover ? 12 : undefined}
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
                   required
@@ -272,33 +275,38 @@ function VaultUnlock() {
               )}
             </>
           )}
-          <button
-            className="literary-button"
-            disabled={busy || config === undefined || Boolean(kit && !ack)}
-          >
-            {busy
-              ? 'Working…'
-              : kit
-                ? 'Finish setup'
-                : recover
-                  ? 'Recover Vault'
-                  : config
-                    ? 'Unlock'
-                    : 'Create Vault'}
-          </button>
-          {config && !kit && (
+          <div className="varaq-actions">
             <button
-              type="button"
-              onClick={() => {
-                setRecover(!recover);
-                setPass('');
-                setConfirm('');
-                setRecovery('');
-              }}
+              className="varaq-action varaq-action--primary"
+              disabled={busy || config === undefined || Boolean(kit && !ack)}
             >
-              {recover ? 'Use passphrase' : 'Use recovery key'}
+              {busy
+                ? 'Working…'
+                : kit
+                  ? 'Finish setup'
+                  : recover
+                    ? 'Recover Vault'
+                    : config
+                      ? 'Unlock'
+                      : 'Create Vault'}
             </button>
-          )}
+            {config && !kit && (
+              <button
+                type="button"
+                className="varaq-action"
+                disabled={busy}
+                onClick={() => {
+                  setRecover(!recover);
+                  setPass('');
+                  setConfirm('');
+                  setRecovery('');
+                }}
+              >
+                <KeyRound aria-hidden="true" />
+                {recover ? 'Use passphrase' : 'Use recovery key'}
+              </button>
+            )}
+          </div>
         </form>
       )}
       {error && <p role="alert">{error}</p>}

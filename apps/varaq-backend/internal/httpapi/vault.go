@@ -121,7 +121,7 @@ func (h PieceHandler) VaultConfig(w http.ResponseWriter, r *http.Request) {
 }
 func (h PieceHandler) VaultDrafts(w http.ResponseWriter, r *http.Request) {
 	u, _ := auth.UserFromContext(r.Context())
-	rows, err := h.DB.Query(r.Context(), `SELECT d.id,d.persona_id,d.revision,d.envelope,d.created_at,d.updated_at FROM varaq_private.vault_drafts d WHERE d.user_id=$1::uuid AND d.legacy_updated_at IS NULL AND NOT EXISTS(SELECT 1 FROM varaq_private.publication_operations o WHERE o.draft_id=d.id) ORDER BY d.updated_at DESC,d.id`, u.ID)
+	rows, err := h.DB.Query(r.Context(), `SELECT d.id,d.persona_id,d.revision,d.envelope,d.created_at,d.updated_at FROM varaq_private.vault_drafts d WHERE d.user_id=$1::uuid AND NOT EXISTS(SELECT 1 FROM varaq_private.publication_operations o WHERE o.draft_id=d.id) ORDER BY d.updated_at DESC,d.id`, u.ID)
 	if err != nil {
 		writeInternalError(w)
 		return
@@ -226,7 +226,7 @@ func (h PieceHandler) VaultDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	raw, _ := json.Marshal(req.Envelope)
 	var already int
-	err = tx.QueryRow(r.Context(), `SELECT revision FROM varaq_private.vault_drafts WHERE id=$1::uuid AND user_id=$2::uuid AND persona_id=$3::uuid AND revision=$5+1 AND envelope=$4::jsonb AND legacy_updated_at IS NULL`, id, u.ID, req.PersonaID, raw, req.Revision).Scan(&already)
+	err = tx.QueryRow(r.Context(), `SELECT revision FROM varaq_private.vault_drafts WHERE id=$1::uuid AND user_id=$2::uuid AND persona_id=$3::uuid AND revision=$5+1 AND envelope=$4::jsonb`, id, u.ID, req.PersonaID, raw, req.Revision).Scan(&already)
 	if err == nil {
 		writeJSON(w, 200, map[string]int{"revision": already})
 		return
@@ -239,11 +239,11 @@ func (h PieceHandler) VaultDraft(w http.ResponseWriter, r *http.Request) {
 	err = tx.QueryRow(r.Context(), `INSERT INTO varaq_private.vault_drafts(id,user_id,persona_id,revision,envelope)
  SELECT $1::uuid,$2::uuid,$3::uuid,1,$4 WHERE $5=0 AND EXISTS(SELECT 1 FROM public.personas WHERE id=$3::uuid AND user_id=$2::uuid) AND NOT EXISTS(SELECT 1 FROM public.pieces WHERE id=$1::uuid)
  ON CONFLICT(id) DO UPDATE SET envelope=EXCLUDED.envelope,revision=vault_drafts.revision+1,updated_at=now()
- WHERE vault_drafts.user_id=$2::uuid AND vault_drafts.persona_id=$3::uuid AND vault_drafts.revision=$5 AND vault_drafts.legacy_updated_at IS NULL
+ WHERE vault_drafts.user_id=$2::uuid AND vault_drafts.persona_id=$3::uuid AND vault_drafts.revision=$5
  RETURNING revision`, id, u.ID, req.PersonaID, raw, req.Revision).Scan(&revision)
 	// INSERT SELECT needs a row for updates too; update existing separately.
 	if errors.Is(err, pgx.ErrNoRows) && req.Revision > 0 {
-		err = tx.QueryRow(r.Context(), `UPDATE varaq_private.vault_drafts SET envelope=$4,revision=revision+1,updated_at=now() WHERE id=$1::uuid AND user_id=$2::uuid AND persona_id=$3::uuid AND revision=$5 AND legacy_updated_at IS NULL RETURNING revision`, id, u.ID, req.PersonaID, raw, req.Revision).Scan(&revision)
+		err = tx.QueryRow(r.Context(), `UPDATE varaq_private.vault_drafts SET envelope=$4,revision=revision+1,updated_at=now() WHERE id=$1::uuid AND user_id=$2::uuid AND persona_id=$3::uuid AND revision=$5 RETURNING revision`, id, u.ID, req.PersonaID, raw, req.Revision).Scan(&revision)
 	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		vaultError(w, 409, "revision_conflict", "Draft changed or is unavailable. Reload before saving.")
@@ -308,7 +308,7 @@ func (h PieceHandler) PublishVault(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var persona string
-	err = tx.QueryRow(r.Context(), `SELECT d.persona_id FROM varaq_private.vault_drafts d JOIN public.personas p ON p.id=d.persona_id WHERE d.id=$1::uuid AND d.user_id=$2::uuid AND p.user_id=$2::uuid AND d.revision=$3 AND d.legacy_updated_at IS NULL FOR UPDATE OF d`, id, u.ID, req.SourceRevision).Scan(&persona)
+	err = tx.QueryRow(r.Context(), `SELECT d.persona_id FROM varaq_private.vault_drafts d JOIN public.personas p ON p.id=d.persona_id WHERE d.id=$1::uuid AND d.user_id=$2::uuid AND p.user_id=$2::uuid AND d.revision=$3 FOR UPDATE OF d`, id, u.ID, req.SourceRevision).Scan(&persona)
 	if errors.Is(err, pgx.ErrNoRows) {
 		vaultError(w, 409, "revision_conflict", "Draft changed or is unavailable.")
 		return
@@ -433,75 +433,4 @@ func (h PieceHandler) GetPublishedPiece(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, 200, p)
-}
-
-func (h PieceHandler) ImportVault(w http.ResponseWriter, r *http.Request) {
-	u, _ := auth.UserFromContext(r.Context())
-	var req struct {
-		ID        string        `json:"id"`
-		UpdatedAt time.Time     `json:"updatedAt"`
-		Envelope  vaultEnvelope `json:"envelope"`
-	}
-	if !decodeVault(w, r, &req) {
-		return
-	}
-	id := chi.URLParam(r, "pieceID")
-	if id == "" {
-		id = req.ID
-	}
-	if !uuidPattern.MatchString(id) || req.UpdatedAt.IsZero() {
-		writeBadRequest(w, "Invalid legacy source.")
-		return
-	}
-	tx, err := h.DB.Begin(r.Context())
-	if err != nil {
-		writeInternalError(w)
-		return
-	}
-	defer tx.Rollback(r.Context())
-	if _, err = tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, id); err != nil {
-		writeInternalError(w)
-		return
-	}
-	if chi.URLParam(r, "pieceID") != "" {
-		var saved time.Time
-		err = tx.QueryRow(r.Context(), `SELECT legacy_updated_at FROM varaq_private.vault_drafts WHERE id=$1::uuid AND user_id=$2::uuid AND legacy_updated_at=$3 FOR UPDATE`, id, u.ID, req.UpdatedAt).Scan(&saved)
-		if err != nil {
-			vaultError(w, 409, "import_conflict", "Import not found or already finalized. Reload the Vault.")
-			return
-		}
-		tag, e := tx.Exec(r.Context(), `DELETE FROM public.pieces p USING public.personas a WHERE p.id=$1::uuid AND a.id=p.persona_id AND a.user_id=$2::uuid AND p.status='draft' AND p.updated_at=$3`, id, u.ID, req.UpdatedAt)
-		if e != nil {
-			writeInternalError(w)
-			return
-		}
-		if tag.RowsAffected() != 1 {
-			vaultError(w, 409, "import_conflict", "Legacy source changed. It has been preserved.")
-			return
-		}
-		_, err = tx.Exec(r.Context(), `UPDATE varaq_private.vault_drafts SET legacy_updated_at=NULL WHERE id=$1::uuid`, id)
-	} else {
-		if req.Envelope.Version != 1 || !validSealed(req.Envelope.Key, 48) || !validSealed(req.Envelope.Content, 250000) {
-			writeBadRequest(w, "Invalid envelope.")
-			return
-		}
-		var persona string
-		err = tx.QueryRow(r.Context(), `SELECT p.persona_id FROM public.pieces p JOIN public.personas a ON a.id=p.persona_id WHERE p.id=$1::uuid AND a.user_id=$2::uuid AND p.status='draft' AND p.updated_at=$3 FOR UPDATE OF p`, id, u.ID, req.UpdatedAt).Scan(&persona)
-		if err != nil {
-			vaultError(w, 409, "import_conflict", "Legacy source changed. Reload before importing.")
-			return
-		}
-		raw, _ := json.Marshal(req.Envelope)
-		_, err = tx.Exec(r.Context(), `INSERT INTO varaq_private.vault_drafts(id,user_id,persona_id,revision,envelope,legacy_updated_at) VALUES($1::uuid,$2::uuid,$3::uuid,1,$4,$5) ON CONFLICT(id) DO UPDATE SET envelope=EXCLUDED.envelope,legacy_updated_at=EXCLUDED.legacy_updated_at
- WHERE vault_drafts.user_id=EXCLUDED.user_id AND vault_drafts.persona_id=EXCLUDED.persona_id AND vault_drafts.legacy_updated_at IS NOT NULL AND vault_drafts.legacy_updated_at<>EXCLUDED.legacy_updated_at`, id, u.ID, persona, raw, req.UpdatedAt)
-	}
-	if err != nil {
-		writeInternalError(w)
-		return
-	}
-	if tx.Commit(r.Context()) != nil {
-		writeInternalError(w)
-		return
-	}
-	w.WriteHeader(204)
 }

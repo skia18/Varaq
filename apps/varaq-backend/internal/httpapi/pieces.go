@@ -1,9 +1,7 @@
 package httpapi
 
 import (
-	"crypto/rand"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -49,14 +47,6 @@ type PieceHandler struct {
 	DB *pgxpool.Pool
 }
 
-type createPieceRequest struct {
-	PersonaID  string  `json:"personaId"`
-	Title      string  `json:"title"`
-	Body       string  `json:"body"`
-	Type       string  `json:"type"`
-	Visibility *string `json:"visibility"`
-}
-
 var pieceSlugPattern = regexp.MustCompile(`[^a-z0-9]+`)
 
 var allowedPieceTypes = map[string]bool{
@@ -67,94 +57,10 @@ var allowedPieceTypes = map[string]bool{
 	"essay":    true,
 }
 
-var allowedPieceVisibilities = map[string]bool{
-	"private":  true,
-	"unlisted": true,
-	"public":   true,
-}
-
-func (h PieceHandler) Create(w http.ResponseWriter, r *http.Request) {
-	_, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{
-			"error": map[string]string{
-				"code":    "unauthorized",
-				"message": "A valid access token is required.",
-			},
-		})
-		return
-	}
-
-	var req createPieceRequest
-
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-
-	if err := decoder.Decode(&req); err != nil {
-		writeBadRequest(w, "Invalid JSON request body.")
-		return
-	}
-
-	var extra any
-	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
-		writeBadRequest(w, "Request body must contain a single JSON object.")
-		return
-	}
-
-	req.PersonaID = strings.TrimSpace(req.PersonaID)
-	req.Title = strings.TrimSpace(req.Title)
-
-	if req.PersonaID == "" {
-		writeBadRequest(w, "personaId is required.")
-		return
-	}
-
-	titleLength := utf8.RuneCountInString(req.Title)
-	if titleLength < 1 || titleLength > 200 {
-		writeBadRequest(w, "Title must contain 1–200 characters.")
-		return
-	}
-
-	bodyLength := utf8.RuneCountInString(req.Body)
-	if utf8.RuneCountInString(strings.TrimSpace(req.Body)) < 1 ||
-		bodyLength > 50000 {
-		writeBadRequest(w, "Body must contain 1–50000 characters and cannot be blank.")
-		return
-	}
-
-	if !allowedPieceTypes[req.Type] {
-		writeBadRequest(w, "Type must be poem, fragment, story, letter, or essay.")
-		return
-	}
-
-	visibility := "private"
-	if req.Visibility != nil {
-		visibility = *req.Visibility
-
-		if !allowedPieceVisibilities[visibility] {
-			writeBadRequest(w, "Visibility must be private, unlisted, or public.")
-			return
-		}
-	}
-
-	vaultError(w, http.StatusConflict, "vault_required", "New drafts must be encrypted in the Vault.")
-
-}
-
 func makePieceSlug(title string) string {
 	title = strings.ToLower(strings.TrimSpace(title))
 	slug := pieceSlugPattern.ReplaceAllString(title, "-")
 	return strings.Trim(slug, "-")
-}
-
-func randomPieceSlugSuffix() (string, error) {
-	var value [4]byte
-
-	if _, err := rand.Read(value[:]); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(value[:]), nil
 }
 
 func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request) {
@@ -315,7 +221,7 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status, personaID := r.URL.Query().Get("status"), r.URL.Query().Get("personaId")
-	if status != "" && status != "published" && status != "draft" {
+	if status != "" && status != "published" {
 		writeBadRequest(w, "Invalid status filter.")
 		return
 	}
@@ -344,7 +250,7 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 		       p.created_at, p.updated_at
 		FROM public.pieces p
 		JOIN public.personas persona ON persona.id = p.persona_id
-		WHERE persona.user_id = $1::uuid
+		WHERE persona.user_id = $1::uuid AND p.status='published'
           AND ($3::text='' OR p.status=$3)
           AND ($4::text='' OR p.persona_id=NULLIF($4,'')::uuid)
           AND ($5::timestamptz IS NULL OR (p.created_at,p.id)<($5,$6::uuid))
@@ -586,79 +492,11 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h PieceHandler) PublishOwnerPiece(w http.ResponseWriter, r *http.Request) {
-	user, ok := auth.UserFromContext(r.Context())
-	if !ok {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{
-			"error": map[string]string{
-				"code":    "unauthorized",
-				"message": "A valid access token is required.",
-			},
-		})
+	if _, ok := auth.UserFromContext(r.Context()); !ok {
+		vaultError(w, http.StatusUnauthorized, "unauthorized", "A valid access token is required.")
 		return
 	}
-
-	if r.ContentLength != 0 {
-		h.PublishVault(w, r)
-		return
-	}
-
-	pieceID := chi.URLParam(r, "pieceID")
-
-	var piece Piece
-	err := h.DB.QueryRow(
-		r.Context(),
-		`UPDATE public.pieces AS p
-         SET status = 'published',
-             visibility = 'public',
-             published_at = COALESCE(p.published_at, NOW()),
-             updated_at = NOW()
-         FROM public.personas AS persona
-         WHERE p.id = $1::uuid
-           AND persona.id = p.persona_id
-           AND persona.user_id = $2::uuid
-           AND p.status = 'draft'
-           AND NOT EXISTS(SELECT 1 FROM varaq_private.vault_drafts WHERE id=p.id)
-         RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
-                   p.type, p.status, p.visibility, p.published_at,
-                   p.created_at, p.updated_at`,
-		pieceID,
-		user.ID,
-	).Scan(
-		&piece.ID,
-		&piece.PersonaID,
-		&piece.Slug,
-		&piece.Title,
-		&piece.Body,
-		&piece.Type,
-		&piece.Status,
-		&piece.Visibility,
-		&piece.PublishedAt,
-		&piece.CreatedAt,
-		&piece.UpdatedAt,
-	)
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			writeJSON(w, http.StatusNotFound, map[string]any{
-				"error": map[string]string{
-					"code":    "piece_not_found",
-					"message": "Draft not found or already published.",
-				},
-			})
-			return
-		}
-
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
-			writeBadRequest(w, "pieceID must be a valid UUID.")
-			return
-		}
-
-		writeInternalError(w)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, piece)
+	h.PublishVault(w, r)
 }
 
 func (h PieceHandler) DeleteOwnerPiece(w http.ResponseWriter, r *http.Request) {

@@ -4,7 +4,6 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { PublicWallPage } from '@/pages/profile/PublicWallPage';
-import { ProfilePage } from '@/pages/profile/ProfilePage';
 import { HomePage } from '@/pages/home/HomePage';
 import { SavedPagesProvider } from '@/features/saved/SavedPagesContext';
 
@@ -13,11 +12,13 @@ const mocks = vi.hoisted(() => ({
   getPublicPieces: vi.fn(),
   getOwnerPieces: vi.fn(),
   getFeed: vi.fn(),
-  publishOwnerPiece: vi.fn(),
   deleteOwnerPiece: vi.fn(),
   useAuth: vi.fn(),
 }));
 vi.mock('@/lib/api', () => mocks);
+vi.mock('@/features/vault/VaultProvider', () => ({
+  useVault: () => ({ session: { userId: 'user', key: {} } }),
+}));
 vi.mock('@/auth/AuthProvider', () => ({ useAuth: mocks.useAuth }));
 
 const persona = {
@@ -152,38 +153,6 @@ test('public wall opens the full piece in place and closes with the close button
   expect(mocks.getFeed).not.toHaveBeenCalled();
   await click(document.querySelector('button[aria-label="Close reading"]'));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-});
-
-test('legacy draft list opens a private draft without requesting the public feed and closes with Escape', async () => {
-  await mount(React.createElement(ProfilePage), '/vault');
-  const trigger = await openReader();
-  expect(document.querySelector('[role="dialog"]').contains(document.activeElement)).toBe(true);
-  expect(mocks.getFeed).not.toHaveBeenCalled();
-  expect(mocks.getPublicPieces).not.toHaveBeenCalled();
-  await act(async () =>
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
-  );
-  await flushDialogUpdates();
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(document.activeElement).toBe(trigger);
-});
-
-test('legacy edit, publish and delete controls stay separate from reading', async () => {
-  await mount(React.createElement(ProfilePage), '/vault');
-  expect(host.querySelector('a[aria-label="Edit A page to read"]').getAttribute('href')).toBe(
-    '/write?importId=piece-1',
-  );
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-  await click(
-    [...host.querySelectorAll('button')].find((button) => button.textContent.includes('Publish')),
-  );
-  await click(
-    [...host.querySelectorAll('button')].find((button) => button.textContent.includes('Delete')),
-  );
-  expect(confirm).toHaveBeenCalledTimes(2);
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(mocks.publishOwnerPiece).not.toHaveBeenCalled();
-  expect(mocks.deleteOwnerPiece).not.toHaveBeenCalled();
 });
 
 test('commons continues to open the full piece with the shared reader', async () => {

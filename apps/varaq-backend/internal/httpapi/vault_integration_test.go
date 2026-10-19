@@ -155,19 +155,6 @@ func TestVaultDatabaseLifecycle(t *testing.T) {
 			}
 		}
 	}
-	legacy := testUUID()
-	var stamp time.Time
-	err = db.QueryRow(ctx, `INSERT INTO public.pieces(id,persona_id,slug,title,body,type) VALUES($1::uuid,$2::uuid,$3,'Legacy','Legacy body','poem') RETURNING updated_at`, legacy, persona, legacy).Scan(&stamp)
-	if err != nil {
-		t.Fatal(err)
-	}
-	require(call(h.ImportVault, "POST", "", user, map[string]any{"id": legacy, "updatedAt": stamp, "envelope": env}), 204)
-	require(call(h.VaultDraft, "GET", legacy, user, nil), 200)
-	require(call(h.ImportVault, "POST", legacy, user, map[string]any{"updatedAt": stamp}), 204)
-	_ = db.QueryRow(ctx, `SELECT count(*) FROM public.pieces WHERE id=$1::uuid`, legacy).Scan(&count)
-	if count != 0 {
-		t.Fatal("legacy plaintext retained")
-	}
 	// Two requests racing on an unpublished source must commit only one piece.
 	concurrent := testUUID()
 	save["revision"] = 0
@@ -205,23 +192,6 @@ func TestVaultDatabaseLifecycle(t *testing.T) {
 	if count != 0 {
 		t.Fatal("failed transaction recorded successful publication")
 	}
-	// Finalizing an import whose legacy source changed must preserve that source.
-	modified := testUUID()
-	err = db.QueryRow(ctx, `INSERT INTO public.pieces(id,persona_id,slug,title,body,type) VALUES($1::uuid,$2::uuid,$3,'Legacy','Original','poem') RETURNING updated_at`, modified, persona, modified).Scan(&stamp)
-	if err != nil {
-		t.Fatal(err)
-	}
-	require(call(h.ImportVault, "POST", "", user, map[string]any{"id": modified, "updatedAt": stamp, "envelope": env}), 204)
-	_, err = db.Exec(ctx, `UPDATE public.pieces SET body='Changed' WHERE id=$1::uuid`, modified)
-	if err != nil {
-		t.Fatal(err)
-	}
-	require(call(h.ImportVault, "POST", modified, user, map[string]any{"updatedAt": stamp}), 409)
-	_ = db.QueryRow(ctx, `SELECT count(*) FROM public.pieces WHERE id=$1::uuid`, modified).Scan(&count)
-	if count != 1 {
-		t.Fatal("changed legacy source was deleted")
-	}
-
 	// Returning both public and unlisted publications stages ciphertext without removing content.
 	for _, visibility := range []string{"public", "unlisted"} {
 		original, destination := testUUID(), testUUID()
@@ -341,11 +311,6 @@ func TestVaultDatabaseLifecycle(t *testing.T) {
 	}
 	if got := queryOwner(other, "status=published&personaId="+persona); len(got.Items) != 0 {
 		t.Fatal("cross-user wall leaked content")
-	}
-	for _, p := range queryOwner(user, "status=draft&personaId="+persona).Items {
-		if p.Status != "draft" {
-			t.Fatal("legacy filter returned publication")
-		}
 	}
 
 }

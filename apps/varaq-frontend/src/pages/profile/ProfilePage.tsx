@@ -2,10 +2,10 @@ import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Feather, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react';
+import { ArrowRight, Feather, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
-import { deleteOwnerPiece, getOwnerPieces, publishOwnerPiece, type Piece } from '@/lib/api';
+import { deleteOwnerPiece, getOwnerPieces, type Piece } from '@/lib/api';
 
 const PAGE_SIZE = 20;
 
@@ -32,9 +32,8 @@ function getReadTime(body: string) {
   return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
 }
 
-export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
+export function ProfilePage() {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
-
   const [pieces, setPieces] = useState<Piece[]>([]);
   const [readingId, setReadingId] = useState<string | null>(null);
   const readingPiece = pieces.find((piece) => piece.id === readingId);
@@ -74,7 +73,7 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
       try {
         const page = await getOwnerPieces({
           limit: PAGE_SIZE,
-          status: mode === 'wall' ? 'published' : 'draft',
+          status: 'published',
           personaId: persona!.id,
         });
 
@@ -83,10 +82,7 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
         setPieces(
           page.items.filter(
             (p) =>
-              p.personaId === persona!.id &&
-              (mode === 'wall'
-                ? p.status === 'published' && p.visibility !== 'private'
-                : p.status === 'draft'),
+              p.personaId === persona!.id && p.status === 'published' && p.visibility !== 'private',
           ),
         );
         setNextCursor(page.nextCursor);
@@ -106,7 +102,7 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, persona?.id, persona?.handle, mode, reloadKey]);
+  }, [user?.id, persona?.id, persona?.handle, reloadKey]);
 
   async function loadMore() {
     if (!nextCursor || !persona || loadingMore || isPiecesLoading) return;
@@ -115,7 +111,7 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
     try {
       const page = await getOwnerPieces({
         limit: PAGE_SIZE,
-        status: mode === 'wall' ? 'published' : 'draft',
+        status: 'published',
         personaId: persona.id,
         cursor: nextCursor,
       });
@@ -127,9 +123,8 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
             (p) =>
               !ids.has(p.id) &&
               p.personaId === persona.id &&
-              (mode === 'wall'
-                ? p.status === 'published' && p.visibility !== 'private'
-                : p.status === 'draft'),
+              p.status === 'published' &&
+              p.visibility !== 'private',
           ),
         ];
       });
@@ -140,29 +135,6 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
       setLoadingMore(false);
     }
   }
-  async function handlePublish(piece: Piece) {
-    const confirmed = window.confirm(
-      `Publish "${piece.title}"? It will become visible on your public wall.`,
-    );
-
-    if (!confirmed) return;
-
-    setPieceActionId(piece.id);
-    setActionError(null);
-    setActionMessage(null);
-
-    try {
-      await publishOwnerPiece(piece.id);
-
-      setActionMessage(`"${piece.title}" has been published.`);
-      setReloadKey((key) => key + 1);
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Could not publish this page.');
-    } finally {
-      setPieceActionId(null);
-    }
-  }
-
   async function handleDelete(piece: Piece) {
     const confirmed = window.confirm(`Permanently delete "${piece.title}"? This cannot be undone.`);
 
@@ -236,17 +208,12 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
 
   return (
     <div className="page-content">
-      {mode === 'wall' ? (
-        <p>
-          Your published writing. Unlisted pieces and management controls are visible only to you.{' '}
-          <Link to="/vault">My Vault</Link>
-        </p>
-      ) : (
-        <p>
-          Legacy drafts are not end-to-end encrypted. <Link to="/vault">Return to Vault</Link> and
-          move them into encrypted storage.
-        </p>
-      )}
+      <p>
+        Your published writing. Unlisted pieces and management controls are visible only to you.{' '}
+        <Link to="/vault" className="varaq-action varaq-action--small profile-mobile-link">
+          My Vault
+        </Link>
+      </p>
       <section className="writer-profile">
         <span className="eyebrow">A writer’s wall</span>
 
@@ -274,7 +241,7 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
             setReloadKey((key) => key + 1);
           }}
           disabled={isPiecesLoading || loadingMore || pieceActionId !== null}
-          className="wall-refresh"
+          className="wall-refresh varaq-action varaq-action--small"
           aria-label="Refresh your pages"
         >
           <RefreshCw size={14} className={isPiecesLoading ? 'animate-spin' : ''} />
@@ -363,51 +330,31 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
                         <span>
-                          {piece.status === 'draft'
-                            ? 'Legacy draft'
-                            : piece.visibility === 'unlisted'
-                              ? 'Unlisted · only shown to you here'
-                              : 'Public'}
+                          {piece.visibility === 'unlisted'
+                            ? 'Unlisted · only shown to you here'
+                            : 'Public'}
                         </span>
                       </div>
 
                       <div className="vault-card-actions">
-                        <Link
-                          to={
-                            piece.status === 'draft'
-                              ? `/write?importId=${encodeURIComponent(piece.id)}`
-                              : `/wall/manage/edit?pieceId=${encodeURIComponent(piece.id)}`
-                          }
-                          className="vault-card-action"
-                          aria-label={`Edit ${piece.title}`}
-                        >
-                          <Pencil size={14} />
-                          Edit
-                        </Link>
-
                         {piece.status === 'published' && (
-                          <Link
-                            className="vault-card-action"
-                            to={`/vault/return/${encodeURIComponent(piece.id)}`}
-                          >
-                            Move to Vault
-                          </Link>
+                          <>
+                            <Link
+                              to={`/wall/manage/edit?pieceId=${encodeURIComponent(piece.id)}`}
+                              className="vault-card-action"
+                              aria-label={`Edit ${piece.title}`}
+                            >
+                              <Pencil size={14} />
+                              Edit
+                            </Link>
+                            <Link
+                              className="vault-card-action"
+                              to={`/vault/return/${encodeURIComponent(piece.id)}`}
+                            >
+                              Move to Vault
+                            </Link>
+                          </>
                         )}
-                        {piece.status === 'draft' && (
-                          <Link to={`/write?importId=${piece.id}`}>Move into encrypted Vault</Link>
-                        )}
-                        {piece.status === 'draft' && (
-                          <button
-                            type="button"
-                            className="vault-card-action"
-                            onClick={() => void handlePublish(piece)}
-                            disabled={pieceActionId !== null}
-                          >
-                            <Send size={14} />
-                            {pieceActionId === piece.id ? 'Publishing…' : 'Publish'}
-                          </button>
-                        )}
-
                         <button
                           type="button"
                           className="vault-card-action vault-card-delete"
@@ -436,7 +383,7 @@ export function ProfilePage({ mode = 'legacy' }: { mode?: 'wall' | 'legacy' }) {
       {nextCursor && (
         <div className="wall-load-more">
           <button
-            className="wall-load-button"
+            className="wall-load-button varaq-action"
             disabled={loadingMore || isPiecesLoading}
             onClick={() => void loadMore()}
           >

@@ -1,0 +1,144 @@
+/* Quiet, tactile actions that match Varaq's paper and ink palette. */
+.varaq-action,
+.vault-card-action {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+.varaq-action:hover:not(:disabled),
+.vault-card-action:hover:not(:disabled) {
+  border-color: color-mix(in oklab, var(--primary) 55%, var(--border));
+  background: var(--secondary);
+  color: var(--primary);
+}
+.varaq-action:focus-visible,
+.vault-card-action:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.varaq-action:disabled,
+.vault-card-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.varaq-action svg,
+.vault-card-action svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke-width: 1.6;
+}
+.varaq-action--primary,
+.vault-card-action--primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.varaq-action--primary:hover:not(:disabled),
+.vault-card-action--primary:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 88%, var(--foreground));
+  color: var(--primary-foreground);
+}
+.varaq-action--small,
+.vault-card-action {
+  min-height: 34px;
+  padding: 7px 11px;
+  font-size: 11px;
+  gap: 6px;
+}
+.vault-card-delete {
+  color: var(--destructive);
+  border-color: color-mix(in oklab, var(--destructive) 24%, var(--border));
+}
+.vault-card-delete:hover:not(:disabled) {
+  color: var(--destructive);
+  border-color: var(--destructive);
+  background: color-mix(in oklab, var(--destructive) 8%, var(--card));
+}
+.varaq-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+.vault-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.tone-red .vault-card-actions {
+  border-color: color-mix(in oklab, var(--primary-foreground) 30%, transparent);
+}
+.tone-red .vault-card-action {
+  color: var(--primary-foreground);
+  background: color-mix(in oklab, var(--primary-foreground) 10%, transparent);
+  border-color: color-mix(in oklab, var(--primary-foreground) 40%, transparent);
+}
+.tone-red .vault-card-action:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--primary-foreground) 22%, transparent);
+  color: var(--primary-foreground);
+  border-color: var(--primary-foreground);
+}
+.tone-red .vault-card-action--primary {
+  color: var(--primary);
+  background: var(--primary-foreground);
+  border-color: var(--primary-foreground);
+}
+.tone-red .vault-card-action--primary:hover:not(:disabled) {
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary-foreground) 90%, var(--primary));
+}
+.tone-red .vault-card-action:focus-visible {
+  outline-color: var(--primary-foreground);
+}
+.vault-lock-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 18px clamp(20px, 3vw, 48px) 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .varaq-action,
+  .vault-card-action {
+    transition: none;
+  }
+}
+
+/* Desktop uses the sidebar; keep direct Wall/Vault shortcuts on mobile. */
+.profile-mobile-link {
+  display: none;
+}
+@media (max-width: 680px) {
+  .profile-mobile-link {
+    display: inline-flex;
+  }
+  p > .profile-mobile-link {
+    margin-top: 10px;
+  }
+}

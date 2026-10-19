@@ -42,23 +42,34 @@ describe('Vault envelopes', () => {
     ]);
     await expect(decryptDraft(wrong, user, id, persona, 1, a)).rejects.toThrow();
   });
-  it('unlocks on a fresh key, recovers and replaces the passphrase wrapper', async () => {
-    const v = await setupVault(user, 'a long first passphrase');
+  it('accepts single-character passphrases for setup, unlock and recovery', async () => {
+    const v = await setupVault(user, '7');
     expect(v.key.extractable).toBe(false);
     const encrypted = await encryptDraft(v.key, user, id, persona, 1, content);
     const restored = await restoreVaultSession(v.sessionKey);
     expect(restored.extractable).toBe(false);
     expect(await decryptDraft(restored, user, id, persona, 1, encrypted)).toEqual(content);
     await expect(restoreVaultSession('AA==')).rejects.toThrow();
-    const unlocked = await unlockVault(user, v.config, 'a long first passphrase');
+    const unlocked = await unlockVault(user, v.config, '7');
     expect(await decryptDraft(unlocked, user, id, persona, 1, encrypted)).toEqual(content);
     await expect(unlockVault(user, v.config, 'wrong passphrase')).rejects.toThrow();
-    const recovered = await recoverVault(user, v.config, v.recovery, 'a different long passphrase');
-    const fresh = await unlockVault(user, recovered.config, 'a different long passphrase');
+    const recovered = await recoverVault(user, v.config, v.recovery, '猫');
+    const fresh = await unlockVault(user, recovered.config, '猫');
     expect(await decryptDraft(fresh, user, id, persona, 1, encrypted)).toEqual(content);
-    await expect(unlockVault(user, recovered.config, 'a long first passphrase')).rejects.toThrow();
+    await expect(unlockVault(user, recovered.config, '7')).rejects.toThrow();
     await expect(
       recoverVault(user, v.config, 'varaq1.AA==', 'another long passphrase'),
     ).rejects.toThrow();
   }, 60000);
+  it('requires a non-empty passphrase', async () => {
+    await expect(setupVault(user, '')).rejects.toThrow('Enter a Vault passphrase.');
+    await expect(
+      recoverVault(
+        user,
+        { version: 1, salt: '', passphrase: { iv: '', data: '' }, recovery: { iv: '', data: '' } },
+        'unused',
+        '',
+      ),
+    ).rejects.toThrow('Enter a Vault passphrase.');
+  });
 });

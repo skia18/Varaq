@@ -7,7 +7,7 @@ type Props = {
   content: DraftContent;
   onChange: (content: DraftContent) => void;
   onSave: (event: FormEvent<HTMLFormElement>) => void;
-  mode: 'new' | 'draft' | 'import' | 'published';
+  mode: 'new' | 'draft' | 'published';
   handle?: string;
   backTo: string;
   loaded: boolean;
@@ -43,19 +43,12 @@ export function WritingEditor({
     <section className="page-content" aria-labelledby="writing-room-heading">
       <div className="mx-auto w-full max-w-3xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Link
-            to={backTo}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
-          >
+          <Link to={backTo} className="varaq-action varaq-action--small">
             <ArrowLeft size={15} />
             {published ? 'My Wall' : 'My Vault'}
           </Link>
           {onLock && (
-            <button
-              type="button"
-              onClick={onLock}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
-            >
+            <button type="button" onClick={onLock} className="varaq-action varaq-action--small">
               <Lock size={14} />
               Lock Vault
             </button>
@@ -79,9 +72,7 @@ export function WritingEditor({
           <p className="mt-4 max-w-xl font-serif text-lg leading-relaxed text-muted-foreground">
             {published
               ? 'A little room to revisit what you have shared. Changes here update your published piece.'
-              : mode === 'import'
-                ? 'Bring these words into your private Vault. Your original stays safe until the move is complete.'
-                : 'A thought, a half-remembered afternoon, a sentence that stayed. Give it a little room.'}
+              : 'A thought, a half-remembered afternoon, a sentence that stayed. Give it a little room.'}
           </p>
         </header>
         {!loaded && !error && (
@@ -105,11 +96,7 @@ export function WritingEditor({
             </span>
             <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground">
               {published ? <Globe size={12} /> : <Lock size={12} />}{' '}
-              {published
-                ? 'Published piece'
-                : mode === 'import'
-                  ? 'Legacy draft'
-                  : 'Encrypted draft'}
+              {published ? 'Published piece' : 'Encrypted draft'}
             </span>
           </div>
           <label htmlFor="piece-type" className="mb-2 block text-sm text-muted-foreground">
@@ -194,9 +181,7 @@ export function WritingEditor({
                   ? 'Save published changes'
                   : mode === 'new'
                     ? 'Save draft'
-                    : mode === 'import'
-                      ? 'Move to Vault'
-                      : 'Save changes'}
+                    : 'Save changes'}
             </button>
           </div>
         </form>

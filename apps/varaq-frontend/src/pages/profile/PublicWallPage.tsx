@@ -277,7 +277,7 @@ export function PublicWallPage() {
       </section>
     );
   return user && persona && persona.handle === handle ? (
-    <ProfilePage key={`${user.id}:${persona.id}`} mode="wall" />
+    <ProfilePage key={`${user.id}:${persona.id}`} />
   ) : (
     <PublicWallContent key={`${user?.id || 'visitor'}:${handle}`} />
   );

@@ -18,7 +18,7 @@ func (v routerVerifier) VerifyToken(context.Context, string) (auth.User, error) 
 func TestRouterProtectsOwnerEndpoints(t *testing.T) {
 	router := NewRouter(nil, routerVerifier{t})
 	for _, route := range []struct{ method, path string }{
-		{"POST", "/api/v1/personas"}, {"POST", "/api/v1/pieces"}, {"GET", "/api/v1/me/persona"},
+		{"POST", "/api/v1/personas"}, {"GET", "/api/v1/me/persona"},
 		{"GET", "/api/v1/owner/pieces"}, {"GET", "/api/v1/owner/pieces/id"}, {"PUT", "/api/v1/owner/pieces/id"},
 		{"POST", "/api/v1/owner/pieces/id/publish"}, {"DELETE", "/api/v1/owner/pieces/id"},
 	} {

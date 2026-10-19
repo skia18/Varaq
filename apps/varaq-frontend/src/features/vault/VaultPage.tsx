@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { forms } from '@/features/feed/writings';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
-import { Feather, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react';
+import { Feather, Pencil, RefreshCw, Send, Trash2, ShieldAlert, X } from 'lucide-react';
 import { Dialog } from '@base-ui/react/dialog';
 import { useVault } from './VaultProvider';
 import { decryptDraft, type DraftContent } from './crypto';
@@ -152,19 +152,16 @@ export function VaultPage() {
         <span className="eyebrow">
           {items.length === 1 ? '1 private page' : `${items.length} private pages`}
         </span>
-        <Link to="/write" className="vault-card-action">
-          <Feather size={14} /> Write a draft
-        </Link>
         {persona && (
-          <Link to={`/wall/${encodeURIComponent(persona.handle)}`} className="vault-card-action">
+          <Link
+            to={`/wall/${encodeURIComponent(persona.handle)}`}
+            className="vault-card-action profile-mobile-link"
+          >
             My Wall
           </Link>
         )}
-        <Link to="/vault/legacy" className="vault-card-action">
-          Legacy drafts
-        </Link>
         <button
-          className="wall-refresh"
+          className="wall-refresh varaq-action varaq-action--small"
           aria-label="Refresh your pages"
           onClick={() => setReload((x) => x + 1)}
           disabled={busy || loading}
@@ -182,14 +179,21 @@ export function VaultPage() {
         <p className="wall-status" role="status">
           {message}{' '}
           {publishedId && (
-            <Link to={`/piece/${publishedId}`}>Read or share the published piece</Link>
+            <Link className="varaq-action varaq-action--small" to={`/piece/${publishedId}`}>
+              Read or share the published piece
+            </Link>
           )}
         </p>
       )}
       {pending.length > 0 && (
         <div className="wall-status" role="status">
           {pending.length} published piece(s) awaiting encrypted draft cleanup.{' '}
-          <button onClick={() => setReload((x) => x + 1)}>Retry cleanup</button>
+          <button
+            className="varaq-action varaq-action--small"
+            onClick={() => setReload((x) => x + 1)}
+          >
+            Retry cleanup
+          </button>
         </div>
       )}
       {loading && (
@@ -252,7 +256,7 @@ export function VaultPage() {
                         Edit
                       </Link>
                       <button
-                        className="vault-card-action"
+                        className="vault-card-action vault-card-action--primary"
                         disabled={busy}
                         onClick={() => {
                           setSelected(d);
@@ -305,14 +309,32 @@ export function VaultPage() {
         <Dialog.Portal>
           <Dialog.Backdrop className="reading-shade" />
           <Dialog.Viewport className="reading-backdrop">
-            <Dialog.Popup className="reading-modal">
-              <Dialog.Title>Publish “{selected?.content.title}”?</Dialog.Title>
-              <Dialog.Description>
-                Publishing moves this piece out of your encrypted Vault. Varaq will receive and
-                store readable content.
+            <Dialog.Popup className="reading-modal confirmation-modal" aria-busy={busy}>
+              <Dialog.Close
+                className="confirmation-close"
+                aria-label="Cancel publication"
+                disabled={busy}
+              >
+                <X aria-hidden="true" />
+              </Dialog.Close>
+              <div className="confirmation-heading">
+                <span className="confirmation-icon">
+                  <Send aria-hidden="true" />
+                </span>
+                <span className="eyebrow">Share your words</span>
+              </div>
+              <Dialog.Title className="confirmation-title">
+                Publish “{selected?.content.title}”?
+              </Dialog.Title>
+              <Dialog.Description className="confirmation-notice">
+                <ShieldAlert aria-hidden="true" />
+                <span>
+                  Publishing moves this piece out of your encrypted Vault. Varaq will receive and
+                  store readable content.
+                </span>
               </Dialog.Description>
-              <label>
-                Visibility{' '}
+              <label className="confirmation-field">
+                <span className="confirmation-label">Who can read this piece?</span>
                 <select
                   disabled={busy}
                   value={visibility}
@@ -322,15 +344,22 @@ export function VaultPage() {
                   <option value="unlisted">Unlisted — anyone with the link can read</option>
                 </select>
               </label>
-              <div style={{ whiteSpace: 'pre-wrap', maxHeight: '40vh', overflow: 'auto' }}>
-                {selected?.content.body}
+              <section className="confirmation-preview" aria-label="Publication preview">
+                <span className="confirmation-label">Your piece</span>
+                <div className="confirmation-preview-body">{selected?.content.body}</div>
+              </section>
+              <div className="varaq-actions confirmation-actions">
+                <button
+                  className="varaq-action varaq-action--primary"
+                  disabled={busy}
+                  onClick={() => void publish()}
+                >
+                  {busy ? 'Publishing…' : 'Confirm publication'}
+                </button>
+                <button className="varaq-action" disabled={busy} onClick={() => setSelected(null)}>
+                  Cancel
+                </button>
               </div>
-              <button disabled={busy} onClick={() => void publish()}>
-                {busy ? 'Publishing…' : 'Confirm publication'}
-              </button>
-              <button disabled={busy} onClick={() => setSelected(null)}>
-                Cancel
-              </button>
             </Dialog.Popup>
           </Dialog.Viewport>
         </Dialog.Portal>

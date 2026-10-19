@@ -1,3 +1,4 @@
+import { LockKeyhole, ShieldAlert, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthProvider';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -116,57 +117,116 @@ export function ReturnToVaultPage() {
     }
   }
   return (
-    <section className="page-section">
-      <Link to={persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/vault'}>← My Wall</Link>
-      <h1>Move back to Vault</h1>
-      {piece && (
-        <>
-          <h2>{piece.title}</h2>
-          <p>
-            This will remove the piece from your published writing, public wall, discovery, and its
-            current public or unlisted link. Your browser will encrypt a private draft first.
+    <section className="page-content">
+      <div className="confirmation-page">
+        <Link to={persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/vault'}>
+          ← My Wall
+        </Link>
+        <div className="confirmation-heading">
+          <span className="confirmation-icon">
+            <LockKeyhole aria-hidden="true" />
+          </span>
+          <span className="eyebrow">A private page again</span>
+        </div>
+        <h1 className="confirmation-title">Move back to Vault</h1>
+        {piece && (
+          <>
+            <h2 className="confirmation-piece-title">{piece.title}</h2>
+            <p className="confirmation-notice">
+              <ShieldAlert aria-hidden="true" />
+              <span>
+                This will remove the piece from your published writing, public wall, discovery, and
+                its current public or unlisted link. Your browser will encrypt a private draft
+                first.
+              </span>
+            </p>
+            <p className="confirmation-footnote">
+              Copies already saved by readers or retained in backups cannot be recalled.
+            </p>
+            <button
+              className="varaq-action varaq-action--primary"
+              disabled={busy}
+              onClick={() => setConfirm(true)}
+            >
+              Move to Vault
+            </button>
+          </>
+        )}
+        {!piece && !error && <p>Loading…</p>}
+        {error && (
+          <p role="alert">
+            {error}{' '}
+            <button
+              className="varaq-action varaq-action--small"
+              disabled={busy}
+              onClick={() => setReload((x) => x + 1)}
+            >
+              Refresh status
+            </button>
           </p>
-          <p>Copies already saved by readers or retained in backups cannot be recalled.</p>
-          <button className="literary-button" disabled={busy} onClick={() => setConfirm(true)}>
-            Move to Vault
-          </button>
-        </>
-      )}
-      {!piece && !error && <p>Loading…</p>}
-      {error && (
-        <p role="alert">
-          {error}{' '}
-          <button disabled={busy} onClick={() => setReload((x) => x + 1)}>
-            Refresh status
-          </button>
-        </p>
-      )}
-      <Dialog.Root
-        open={confirm}
-        onOpenChange={(open) => {
-          if (!busy) setConfirm(open);
-        }}
-      >
-        <Dialog.Portal>
-          <Dialog.Backdrop className="reading-shade" />
-          <Dialog.Viewport className="reading-backdrop">
-            <Dialog.Popup className="reading-modal">
-              <Dialog.Title>Unpublish “{piece?.title}” and move to Vault?</Dialog.Title>
-              <Dialog.Description>
-                The published link will stop working. An encrypted private draft will replace the
-                publication after its encrypted copy is verified.
-              </Dialog.Description>
-              <button disabled={busy} onClick={() => void move()}>
-                {busy ? 'Moving…' : 'Confirm move to Vault'}
-              </button>
-              <button disabled={busy} onClick={() => setConfirm(false)}>
-                Cancel
-              </button>
-              {error && <p role="alert">{error}</p>}
-            </Dialog.Popup>
-          </Dialog.Viewport>
-        </Dialog.Portal>
-      </Dialog.Root>
+        )}
+        <Dialog.Root
+          open={confirm}
+          onOpenChange={(open) => {
+            if (!busy) setConfirm(open);
+          }}
+        >
+          <Dialog.Portal>
+            <Dialog.Backdrop className="reading-shade" />
+            <Dialog.Viewport className="reading-backdrop">
+              <Dialog.Popup className="reading-modal confirmation-modal" aria-busy={busy}>
+                <Dialog.Close
+                  className="confirmation-close"
+                  aria-label="Cancel move to Vault"
+                  disabled={busy}
+                >
+                  <X aria-hidden="true" />
+                </Dialog.Close>
+                <div className="confirmation-heading">
+                  <span className="confirmation-icon">
+                    <LockKeyhole aria-hidden="true" />
+                  </span>
+                  <span className="eyebrow">Return to your Vault</span>
+                </div>
+                <Dialog.Title className="confirmation-title">
+                  Unpublish “{piece?.title}” and move to Vault?
+                </Dialog.Title>
+                <Dialog.Description className="confirmation-notice">
+                  <ShieldAlert aria-hidden="true" />
+                  <span>
+                    The published link will stop working. An encrypted private draft will replace
+                    the publication after its encrypted copy is verified.
+                  </span>
+                </Dialog.Description>
+                <p className="confirmation-footnote">
+                  Copies already saved by readers or retained in backups cannot be recalled.
+                </p>
+                <div className="varaq-actions confirmation-actions">
+                  <button
+                    className="varaq-action varaq-action--primary"
+                    disabled={busy}
+                    onClick={() => void move()}
+                  >
+                    {busy ? 'Moving…' : 'Confirm move to Vault'}
+                  </button>
+                  <button
+                    className="varaq-action"
+                    disabled={busy}
+                    onClick={() => setConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {error && (
+                  <p className="confirmation-error" role="alert">
+                    {error}
+                  </p>
+                )}
+              </Dialog.Popup>
+            </Dialog.Viewport>
+          </Dialog.Portal>
+        </Dialog.Root>
+      </div>
     </section>
   );
 }

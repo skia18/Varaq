@@ -36,8 +36,8 @@ func authenticatedRequest(body string) *http.Request {
 func TestProtectedHandlersRejectMissingUser(t *testing.T) {
 	for name, handler := range map[string]http.HandlerFunc{
 		"create persona": PersonaHandler{}.Create, "get persona": PersonaHandler{}.GetMine,
-		"create piece": PieceHandler{}.Create, "list owner pieces": PieceHandler{}.ListOwnerPieces,
-		"get owner piece": PieceHandler{}.GetOwnerPiece, "update owner piece": PieceHandler{}.UpdateOwnerPiece,
+		"list owner pieces": PieceHandler{}.ListOwnerPieces,
+		"get owner piece":   PieceHandler{}.GetOwnerPiece, "update owner piece": PieceHandler{}.UpdateOwnerPiece,
 		"publish owner piece": PieceHandler{}.PublishOwnerPiece, "delete owner piece": PieceHandler{}.DeleteOwnerPiece,
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -48,51 +48,15 @@ func TestProtectedHandlersRejectMissingUser(t *testing.T) {
 	}
 }
 func TestPieceWriteValidation(t *testing.T) {
-	for _, tc := range []struct{ name, body, message string }{
-		{"malformed JSON", `{`, "Invalid JSON"},
-		{"unknown field", `{"unexpected":true}`, "Invalid JSON"},
-		{"multiple objects", `{} {}`, "single JSON object"},
-		{"trailing garbage", `{} garbage`, "single JSON object"},
-		{"blank title", `{"personaId":"id","title":"  ","body":"text","type":"poem"}`, "Title"},
-		{"blank body", `{"personaId":"id","title":"Title","body":" \n\t","type":"poem"}`, "Body"},
-		{"invalid type", `{"personaId":"id","title":"Title","body":"text","type":"unknown"}`, "Type"},
+	for _, tc := range []struct{ body, message string }{
+		{`{`, "Invalid JSON"}, {`{"unexpected":true}`, "Invalid JSON"}, {`{} {}`, "single JSON object"},
+		{`{"title":"  ","body":"text","type":"poem"}`, "Title"},
+		{`{"title":"Title","body":" ","type":"poem"}`, "Body"},
+		{`{"title":"Title","body":"text","type":"unknown"}`, "Type"},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			for _, update := range []bool{false, true} {
-				body := tc.body
-				if update {
-					body = strings.ReplaceAll(body, `"personaId":"id",`, "")
-				}
-				w := httptest.NewRecorder()
-				if update {
-					PieceHandler{}.UpdateOwnerPiece(w, authenticatedRequest(body))
-				} else {
-					PieceHandler{}.Create(w, authenticatedRequest(body))
-				}
-				assertAPIError(t, w, 400, "bad_request", tc.message)
-			}
-		})
-	}
-	for _, tc := range []struct {
-		name    string
-		input   map[string]any
-		message string
-	}{
-		{"missing persona", map[string]any{"title": "Title", "body": "text", "type": "poem"}, "personaId"},
-		{"long title", map[string]any{"personaId": "id", "title": strings.Repeat("a", 201), "body": "text", "type": "poem"}, "Title"},
-		{"long Unicode title", map[string]any{"personaId": "id", "title": strings.Repeat("文", 201), "body": "text", "type": "poem"}, "Title"},
-		{"long body", map[string]any{"personaId": "id", "title": "Title", "body": strings.Repeat("a", 50001), "type": "poem"}, "Body"},
-		{"invalid visibility", map[string]any{"personaId": "id", "title": "Title", "body": "text", "type": "poem", "visibility": "everyone"}, "Visibility"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			data, err := json.Marshal(tc.input)
-			if err != nil {
-				t.Fatal(err)
-			}
-			w := httptest.NewRecorder()
-			PieceHandler{}.Create(w, authenticatedRequest(string(data)))
-			assertAPIError(t, w, 400, "bad_request", tc.message)
-		})
+		w := httptest.NewRecorder()
+		PieceHandler{}.UpdateOwnerPiece(w, authenticatedRequest(tc.body))
+		assertAPIError(t, w, 400, "bad_request", tc.message)
 	}
 }
 func TestPersonaValidation(t *testing.T) {
@@ -148,13 +112,7 @@ func TestSlugs(t *testing.T) {
 			t.Errorf("slug(%q)=%q want %q", input, got, want)
 		}
 	}
-	suffix, err := randomPieceSlugSuffix()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(suffix) != 8 || strings.Trim(suffix, "0123456789abcdef") != "" {
-		t.Fatalf("invalid collision suffix %q", suffix)
-	}
+
 }
 func TestInternalErrorIsGeneric(t *testing.T) {
 	w := httptest.NewRecorder()

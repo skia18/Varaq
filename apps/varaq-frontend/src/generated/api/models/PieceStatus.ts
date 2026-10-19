@@ -18,7 +18,6 @@
  * @export
  */
 export const PieceStatus = {
-  Draft: 'draft',
   Published: 'published',
 } as const;
 export type PieceStatus = (typeof PieceStatus)[keyof typeof PieceStatus];

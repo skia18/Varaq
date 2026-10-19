@@ -73,7 +73,7 @@ async function recoveryKey(secret: string, user: string) {
   }
 }
 export async function setupVault(user: string, passphrase: string) {
-  if (passphrase.length < 12) throw new Error('Use a Vault passphrase of at least 12 characters.');
+  if (!passphrase.length) throw new Error('Enter a Vault passphrase.');
   const raw = random(32),
     salt = toBase64(random(16)),
     recovery = `varaq1.${toBase64(random(32))}`;
@@ -120,8 +120,8 @@ export async function recoverVault(
   recovery: string,
   passphrase: string,
 ) {
-  if (config.version !== 1 || passphrase.length < 12)
-    throw new Error('Use a passphrase of at least 12 characters.');
+  if (config.version !== 1) throw new Error('Unsupported Vault format.');
+  if (!passphrase.length) throw new Error('Enter a Vault passphrase.');
   const raw = await open(
     await recoveryKey(recovery.trim(), user),
     config.recovery,

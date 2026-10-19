@@ -121,37 +121,6 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalError"
-  /api/v1/pieces:
-    post:
-      tags:
-        - Pieces
-      operationId: createPiece
-      summary: Legacy plaintext draft creation is disabled
-      description: >
-        Creates a draft for a persona owned by the authenticated user. New
-        pieces always start in draft status and are private by default.
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreatePiece"
-      responses:
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: "vault_required: use encrypted Vault draft creation"
-        "500":
-          $ref: "#/components/responses/InternalError"
-      deprecated: true
   /api/v1/feed:
     get:
       tags:
@@ -354,7 +323,6 @@ paths:
           schema:
             type: string
             enum:
-              - draft
               - published
         - name: personaId
           in: query
@@ -377,7 +345,7 @@ paths:
       operationId: getOwnerPiece
       tags:
         - Pieces
-      summary: Get owned published writing or a legacy draft
+      summary: Get an owned published piece
       security:
         - bearerAuth: []
       responses:
@@ -579,9 +547,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: "#/components/schemas/VaultTransfer"
-                  - $ref: "#/components/schemas/Piece"
+                $ref: "#/components/schemas/VaultTransfer"
         "400":
           description: Request rejected
           content:
@@ -613,17 +579,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/VaultPublish"
-      description: A missing body temporarily supports legacy public publication and
-        returns Piece. Vault requests require a body, a stable operationId and
-        matching sourceRevision. Same request retries return success. The
-        committed receipt freezes and hides the encrypted source; finalize
-        removes ciphertext. On unknown outcomes query transfer status. Readable
-        content is intentionally stored as a publication.
+      description: Publishes an explicitly confirmed decrypted Vault snapshot.
+        Requires a stable operationId and matching sourceRevision. Same request
+        retries return success. The committed receipt freezes and hides the
+        encrypted source; finalize removes ciphertext. On unknown outcomes query
+        transfer status. Published content is intentionally readable.
   /api/v1/owner/vault:
     get:
       operationId: getVaultConfig
@@ -1058,108 +1023,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /api/v1/owner/vault/import:
-    post:
-      operationId: importVaultDraft
-      tags:
-        - Pieces
-      summary: Upload encrypted copy while preserving the legacy source
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: Completed
-        "400":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "409":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VaultImport"
-  /api/v1/owner/vault/import/{pieceID}/finalize:
-    parameters:
-      - name: pieceID
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-    post:
-      operationId: finalizeVaultImport
-      tags:
-        - Pieces
-      summary: After browser decrypt-verification, conditionally remove unchanged
-        legacy draft
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: Completed
-        "400":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "401":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "409":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          description: Request rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/VaultImportFinalize"
   /api/v1/owner/pieces/{pieceID}/vault:
     parameters:
       - name: pieceID
@@ -1385,7 +1248,6 @@ components:
     PieceStatus:
       type: string
       enum:
-        - draft
         - published
     Visibility:
       type: string
@@ -1450,31 +1312,6 @@ components:
         createdAt:
           type: string
           format: date-time
-    CreatePiece:
-      type: object
-      additionalProperties: false
-      required:
-        - personaId
-        - title
-        - body
-        - type
-      properties:
-        personaId:
-          type: string
-          format: uuid
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        body:
-          type: string
-          minLength: 1
-          maxLength: 50000
-        type:
-          $ref: "#/components/schemas/PieceType"
-        visibility:
-          $ref: "#/components/schemas/Visibility"
-          default: private
     UpdatePiece:
       type: object
       additionalProperties: false
@@ -1828,31 +1665,6 @@ components:
           items:
             type: string
             format: uuid
-    VaultImport:
-      type: object
-      additionalProperties: false
-      required:
-        - id
-        - updatedAt
-        - envelope
-      properties:
-        id:
-          type: string
-          format: uuid
-        updatedAt:
-          type: string
-          format: date-time
-        envelope:
-          $ref: "#/components/schemas/VaultEnvelope"
-    VaultImportFinalize:
-      type: object
-      additionalProperties: false
-      required:
-        - updatedAt
-      properties:
-        updatedAt:
-          type: string
-          format: date-time
     VaultReturnStage:
       type: object
       additionalProperties: false

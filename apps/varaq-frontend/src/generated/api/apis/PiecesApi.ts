@@ -15,12 +15,9 @@
 
 import * as runtime from '../runtime';
 import type {
-  CreatePiece,
-  InternalError,
   Persona,
   Piece,
   PiecePage,
-  PublishOwnerPiece200Response,
   UpdatePiece,
   VaultConfigState,
   VaultConfigWrite,
@@ -28,8 +25,6 @@ import type {
   VaultDraft,
   VaultDraftPage,
   VaultDraftWrite,
-  VaultImport,
-  VaultImportFinalize,
   VaultPending,
   VaultPublish,
   VaultReturn,
@@ -40,18 +35,12 @@ import type {
   VaultTransfer,
 } from '../models/index';
 import {
-  CreatePieceFromJSON,
-  CreatePieceToJSON,
-  InternalErrorFromJSON,
-  InternalErrorToJSON,
   PersonaFromJSON,
   PersonaToJSON,
   PieceFromJSON,
   PieceToJSON,
   PiecePageFromJSON,
   PiecePageToJSON,
-  PublishOwnerPiece200ResponseFromJSON,
-  PublishOwnerPiece200ResponseToJSON,
   UpdatePieceFromJSON,
   UpdatePieceToJSON,
   VaultConfigStateFromJSON,
@@ -66,10 +55,6 @@ import {
   VaultDraftPageToJSON,
   VaultDraftWriteFromJSON,
   VaultDraftWriteToJSON,
-  VaultImportFromJSON,
-  VaultImportToJSON,
-  VaultImportFinalizeFromJSON,
-  VaultImportFinalizeToJSON,
   VaultPendingFromJSON,
   VaultPendingToJSON,
   VaultPublishFromJSON,
@@ -88,10 +73,6 @@ import {
   VaultTransferToJSON,
 } from '../models/index';
 
-export interface CreatePieceRequest {
-  createPiece: CreatePiece;
-}
-
 export interface DeleteOwnerPieceRequest {
   pieceID: string;
 }
@@ -99,11 +80,6 @@ export interface DeleteOwnerPieceRequest {
 export interface DeleteVaultDraftRequest {
   pieceID: string;
   vaultDelete: VaultDelete;
-}
-
-export interface FinalizeVaultImportRequest {
-  pieceID: string;
-  vaultImportFinalize: VaultImportFinalize;
 }
 
 export interface FinalizeVaultReturnRequest {
@@ -142,13 +118,9 @@ export interface GetVaultTransferRequest {
   pieceID: string;
 }
 
-export interface ImportVaultDraftRequest {
-  vaultImport: VaultImport;
-}
-
 export interface PublishOwnerPieceRequest {
   pieceID: string;
-  vaultPublish?: VaultPublish;
+  vaultPublish: VaultPublish;
 }
 
 export interface SaveVaultConfigRequest {
@@ -174,65 +146,6 @@ export interface UpdateOwnerPieceRequest {
  *
  */
 export class PiecesApi extends runtime.BaseAPI {
-  /**
-   * Creates a draft for a persona owned by the authenticated user. New pieces always start in draft status and are private by default.
-   * Legacy plaintext draft creation is disabled
-   * @deprecated
-   */
-  async createPieceRaw(
-    requestParameters: CreatePieceRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters['createPiece'] == null) {
-      throw new runtime.RequiredError(
-        'createPiece',
-        'Required parameter "createPiece" was null or undefined when calling createPiece().',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('bearerAuth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-
-    let urlPath = `/api/v1/pieces`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: CreatePieceToJSON(requestParameters['createPiece']),
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * Creates a draft for a persona owned by the authenticated user. New pieces always start in draft status and are private by default.
-   * Legacy plaintext draft creation is disabled
-   * @deprecated
-   */
-  async createPiece(
-    requestParameters: CreatePieceRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.createPieceRaw(requestParameters, initOverrides);
-  }
-
   /**
    * Delete an owned piece
    */
@@ -353,72 +266,6 @@ export class PiecesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.deleteVaultDraftRaw(requestParameters, initOverrides);
-  }
-
-  /**
-   * After browser decrypt-verification, conditionally remove unchanged legacy draft
-   */
-  async finalizeVaultImportRaw(
-    requestParameters: FinalizeVaultImportRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters['pieceID'] == null) {
-      throw new runtime.RequiredError(
-        'pieceID',
-        'Required parameter "pieceID" was null or undefined when calling finalizeVaultImport().',
-      );
-    }
-
-    if (requestParameters['vaultImportFinalize'] == null) {
-      throw new runtime.RequiredError(
-        'vaultImportFinalize',
-        'Required parameter "vaultImportFinalize" was null or undefined when calling finalizeVaultImport().',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('bearerAuth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-
-    let urlPath = `/api/v1/owner/vault/import/{pieceID}/finalize`;
-    urlPath = urlPath.replace(
-      `{${'pieceID'}}`,
-      encodeURIComponent(String(requestParameters['pieceID'])),
-    );
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: VaultImportFinalizeToJSON(requestParameters['vaultImportFinalize']),
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * After browser decrypt-verification, conditionally remove unchanged legacy draft
-   */
-  async finalizeVaultImport(
-    requestParameters: FinalizeVaultImportRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.finalizeVaultImportRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -589,7 +436,7 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get owned published writing or a legacy draft
+   * Get an owned published piece
    */
   async getOwnerPieceRaw(
     requestParameters: GetOwnerPieceRequest,
@@ -635,7 +482,7 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get owned published writing or a legacy draft
+   * Get an owned published piece
    */
   async getOwnerPiece(
     requestParameters: GetOwnerPieceRequest,
@@ -1061,72 +908,24 @@ export class PiecesApi extends runtime.BaseAPI {
   }
 
   /**
-   * Upload encrypted copy while preserving the legacy source
-   */
-  async importVaultDraftRaw(
-    requestParameters: ImportVaultDraftRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters['vaultImport'] == null) {
-      throw new runtime.RequiredError(
-        'vaultImport',
-        'Required parameter "vaultImport" was null or undefined when calling importVaultDraft().',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('bearerAuth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-
-    let urlPath = `/api/v1/owner/vault/import`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: VaultImportToJSON(requestParameters['vaultImport']),
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * Upload encrypted copy while preserving the legacy source
-   */
-  async importVaultDraft(
-    requestParameters: ImportVaultDraftRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.importVaultDraftRaw(requestParameters, initOverrides);
-  }
-
-  /**
-   * A missing body temporarily supports legacy public publication and returns Piece. Vault requests require a body, a stable operationId and matching sourceRevision. Same request retries return success. The committed receipt freezes and hides the encrypted source; finalize removes ciphertext. On unknown outcomes query transfer status. Readable content is intentionally stored as a publication.
+   * Publishes an explicitly confirmed decrypted Vault snapshot. Requires a stable operationId and matching sourceRevision. Same request retries return success. The committed receipt freezes and hides the encrypted source; finalize removes ciphertext. On unknown outcomes query transfer status. Published content is intentionally readable.
    * Publish an explicit decrypted Vault snapshot idempotently
    */
   async publishOwnerPieceRaw(
     requestParameters: PublishOwnerPieceRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<PublishOwnerPiece200Response>> {
+  ): Promise<runtime.ApiResponse<VaultTransfer>> {
     if (requestParameters['pieceID'] == null) {
       throw new runtime.RequiredError(
         'pieceID',
         'Required parameter "pieceID" was null or undefined when calling publishOwnerPiece().',
+      );
+    }
+
+    if (requestParameters['vaultPublish'] == null) {
+      throw new runtime.RequiredError(
+        'vaultPublish',
+        'Required parameter "vaultPublish" was null or undefined when calling publishOwnerPiece().',
       );
     }
 
@@ -1162,19 +961,17 @@ export class PiecesApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      PublishOwnerPiece200ResponseFromJSON(jsonValue),
-    );
+    return new runtime.JSONApiResponse(response, (jsonValue) => VaultTransferFromJSON(jsonValue));
   }
 
   /**
-   * A missing body temporarily supports legacy public publication and returns Piece. Vault requests require a body, a stable operationId and matching sourceRevision. Same request retries return success. The committed receipt freezes and hides the encrypted source; finalize removes ciphertext. On unknown outcomes query transfer status. Readable content is intentionally stored as a publication.
+   * Publishes an explicitly confirmed decrypted Vault snapshot. Requires a stable operationId and matching sourceRevision. Same request retries return success. The committed receipt freezes and hides the encrypted source; finalize removes ciphertext. On unknown outcomes query transfer status. Published content is intentionally readable.
    * Publish an explicit decrypted Vault snapshot idempotently
    */
   async publishOwnerPiece(
     requestParameters: PublishOwnerPieceRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<PublishOwnerPiece200Response> {
+  ): Promise<VaultTransfer> {
     const response = await this.publishOwnerPieceRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -1443,7 +1240,6 @@ export class PiecesApi extends runtime.BaseAPI {
  * @export
  */
 export const GetOwnerPiecesStatusEnum = {
-  Draft: 'draft',
   Published: 'published',
 } as const;
 export type GetOwnerPiecesStatusEnum =
