@@ -1,9 +1,11 @@
+import { ReadingDialog } from '@/components/literary/ReadingDialog';
+import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Feather, Pencil, RefreshCw, Send, Trash2 } from 'lucide-react';
+import { ArrowRight, Feather, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
-import { deleteOwnerPiece, getOwnerPieces, publishOwnerPiece, type Piece } from '@/lib/api';
+import { deleteOwnerPiece, getOwnerPieces, type Piece } from '@/lib/api';
 
 const PAGE_SIZE = 20;
 
@@ -32,15 +34,26 @@ function getReadTime(body: string) {
 
 export function ProfilePage() {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
-
   const [pieces, setPieces] = useState<Piece[]>([]);
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const readingPiece = pieces.find((piece) => piece.id === readingId);
+  const reading =
+    readingPiece && persona
+      ? toWriting({ ...readingPiece, author: persona.displayName, handle: persona.handle })
+      : null;
   const [isPiecesLoading, setIsPiecesLoading] = useState(false);
   const [piecesError, setPiecesError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const [pieceActionId, setPieceActionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReadingId(null);
+  }, [persona?.handle]);
 
   useEffect(() => {
     if (!persona?.handle) {
@@ -53,15 +66,26 @@ export function ProfilePage() {
 
     async function loadPieces() {
       setIsPiecesLoading(true);
+      setNextCursor(null);
       setPiecesError(null);
       setPieces([]);
 
       try {
-        const page = await getOwnerPieces({ limit: PAGE_SIZE });
+        const page = await getOwnerPieces({
+          limit: PAGE_SIZE,
+          status: 'published',
+          personaId: persona!.id,
+        });
 
         if (cancelled) return;
 
-        setPieces(page.items);
+        setPieces(
+          page.items.filter(
+            (p) =>
+              p.personaId === persona!.id && p.status === 'published' && p.visibility !== 'private',
+          ),
+        );
+        setNextCursor(page.nextCursor);
       } catch (error) {
         if (cancelled) return;
 
@@ -78,31 +102,39 @@ export function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [persona?.handle, reloadKey]);
+  }, [user?.id, persona?.id, persona?.handle, reloadKey]);
 
-  async function handlePublish(piece: Piece) {
-    const confirmed = window.confirm(
-      `Publish "${piece.title}"? It will become visible on your public wall.`,
-    );
-
-    if (!confirmed) return;
-
-    setPieceActionId(piece.id);
-    setActionError(null);
-    setActionMessage(null);
-
+  async function loadMore() {
+    if (!nextCursor || !persona || loadingMore || isPiecesLoading) return;
+    setLoadingMore(true);
+    setPiecesError(null);
     try {
-      await publishOwnerPiece(piece.id);
-
-      setActionMessage(`"${piece.title}" has been published.`);
-      setReloadKey((key) => key + 1);
-    } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'Could not publish this page.');
+      const page = await getOwnerPieces({
+        limit: PAGE_SIZE,
+        status: 'published',
+        personaId: persona.id,
+        cursor: nextCursor,
+      });
+      setPieces((current) => {
+        const ids = new Set(current.map((p) => p.id));
+        return [
+          ...current,
+          ...page.items.filter(
+            (p) =>
+              !ids.has(p.id) &&
+              p.personaId === persona.id &&
+              p.status === 'published' &&
+              p.visibility !== 'private',
+          ),
+        ];
+      });
+      setNextCursor(page.nextCursor);
+    } catch {
+      setPiecesError('Could not load more pages. Please try again.');
     } finally {
-      setPieceActionId(null);
+      setLoadingMore(false);
     }
   }
-
   async function handleDelete(piece: Piece) {
     const confirmed = window.confirm(`Permanently delete "${piece.title}"? This cannot be undone.`);
 
@@ -176,6 +208,12 @@ export function ProfilePage() {
 
   return (
     <div className="page-content">
+      <p>
+        Your published writing. Unlisted pieces and management controls are visible only to you.{' '}
+        <Link to="/vault" className="varaq-action varaq-action--small profile-mobile-link">
+          My Vault
+        </Link>
+      </p>
       <section className="writer-profile">
         <span className="eyebrow">A writer’s wall</span>
 
@@ -202,8 +240,8 @@ export function ProfilePage() {
             setActionMessage(null);
             setReloadKey((key) => key + 1);
           }}
-          disabled={isPiecesLoading || pieceActionId !== null}
-          className="wall-refresh"
+          disabled={isPiecesLoading || loadingMore || pieceActionId !== null}
+          className="wall-refresh varaq-action varaq-action--small"
           aria-label="Refresh your pages"
         >
           <RefreshCw size={14} className={isPiecesLoading ? 'animate-spin' : ''} />
@@ -279,38 +317,44 @@ export function ProfilePage() {
                         <span className="card-type">{formatType(piece.type)}</span>
                       </div>
 
-                      <div className="card-read wall-card-content">
+                      <button
+                        type="button"
+                        className="card-read wall-card-content"
+                        aria-label={`Read ${piece.title}`}
+                        onClick={() => setReadingId(piece.id)}
+                      >
                         <h2>{piece.title}</h2>
                         <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                      </div>
+                      </button>
 
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
-                        <span>{piece.status === 'draft' ? 'Draft' : 'Published'}</span>
+                        <span>
+                          {piece.visibility === 'unlisted'
+                            ? 'Unlisted · only shown to you here'
+                            : 'Public'}
+                        </span>
                       </div>
 
                       <div className="vault-card-actions">
-                        <Link
-                          to={`/write?pieceId=${encodeURIComponent(piece.id)}`}
-                          className="vault-card-action"
-                          aria-label={`Edit ${piece.title}`}
-                        >
-                          <Pencil size={14} />
-                          Edit
-                        </Link>
-
-                        {piece.status === 'draft' && (
-                          <button
-                            type="button"
-                            className="vault-card-action"
-                            onClick={() => void handlePublish(piece)}
-                            disabled={pieceActionId !== null}
-                          >
-                            <Send size={14} />
-                            {pieceActionId === piece.id ? 'Publishing…' : 'Publish'}
-                          </button>
+                        {piece.status === 'published' && (
+                          <>
+                            <Link
+                              to={`/wall/manage/edit?pieceId=${encodeURIComponent(piece.id)}`}
+                              className="vault-card-action"
+                              aria-label={`Edit ${piece.title}`}
+                            >
+                              <Pencil size={14} />
+                              Edit
+                            </Link>
+                            <Link
+                              className="vault-card-action"
+                              to={`/vault/return/${encodeURIComponent(piece.id)}`}
+                            >
+                              Move to Vault
+                            </Link>
+                          </>
                         )}
-
                         <button
                           type="button"
                           className="vault-card-action vault-card-delete"
@@ -335,6 +379,19 @@ export function ProfilePage() {
           {piecesError}
         </p>
       )}
+
+      {nextCursor && (
+        <div className="wall-load-more">
+          <button
+            className="wall-load-button varaq-action"
+            disabled={loadingMore || isPiecesLoading}
+            onClick={() => void loadMore()}
+          >
+            {loadingMore ? 'Loading…' : 'Load more pages'}
+          </button>
+        </div>
+      )}
+      <ReadingDialog reading={reading} onClose={() => setReadingId(null)} />
 
       <footer className="page-footer">
         <span>A little less noise. A little more meaning.</span>

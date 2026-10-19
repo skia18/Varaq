@@ -1,6 +1,6 @@
-import { test } from "vitest";
-import assert from "node:assert/strict";
-import { createScrollPager } from "../src/features/feed/scroll-pagination";
+import { test } from 'vitest';
+import assert from 'node:assert/strict';
+import { createScrollPager } from '../src/features/feed/scroll-pagination';
 
 function setup(fetchPage) {
   const pages = [],
@@ -14,11 +14,11 @@ function setup(fetchPage) {
   });
   return { pager, pages, errors };
 }
-test("loads one initial page, then only on a new downward scroll near the end", async () => {
+test('loads one initial page, then only on a new downward scroll near the end', async () => {
   const calls = [];
   const { pager } = setup(async (cursor) => {
     calls.push(cursor);
-    return { items: Array(10).fill({}), nextCursor: "page2" };
+    return { items: Array(10).fill({}), nextCursor: 'page2' };
   });
   await pager.start();
   await pager.start();
@@ -29,16 +29,16 @@ test("loads one initial page, then only on a new downward scroll near the end", 
   await pager.onScroll(10, 100, 800); // upward
   assert.deepEqual(calls, [null]);
   await pager.onScroll(30, 900, 800);
-  assert.deepEqual(calls, [null, "page2"]);
+  assert.deepEqual(calls, [null, 'page2']);
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.equal(calls.length, 2); // completion must not cascade
 });
-test("rapid scrolls do not overlap requests, and exhausted feeds stop", async () => {
+test('rapid scrolls do not overlap requests, and exhausted feeds stop', async () => {
   let resolvePage;
   let count = 0;
   const { pager } = setup(async () => {
     count++;
-    if (count === 1) return { items: [], nextCursor: "next" };
+    if (count === 1) return { items: [], nextCursor: 'next' };
     return new Promise((resolve) => {
       resolvePage = resolve;
     });
@@ -52,21 +52,21 @@ test("rapid scrolls do not overlap requests, and exhausted feeds stop", async ()
   await pager.onScroll(30, 100, 800);
   assert.equal(count, 2);
 });
-test("failed later pages keep their cursor and retry only on another scroll", async () => {
+test('failed later pages keep their cursor and retry only on another scroll', async () => {
   const calls = [];
   const { pager, errors } = setup(async (cursor) => {
     calls.push(cursor);
-    if (calls.length === 2) throw Error("offline");
-    return { items: [], nextCursor: "next" };
+    if (calls.length === 2) throw Error('offline');
+    return { items: [], nextCursor: 'next' };
   });
   await pager.start();
   await pager.onScroll(10, 100, 800);
   assert.equal(errors.length, 1);
-  assert.deepEqual(calls, [null, "next"]);
+  assert.deepEqual(calls, [null, 'next']);
   await pager.onScroll(20, 100, 800);
-  assert.deepEqual(calls, [null, "next", "next"]);
+  assert.deepEqual(calls, [null, 'next', 'next']);
 });
-test("disposed pages ignore late responses and further scrolls", async () => {
+test('disposed pages ignore late responses and further scrolls', async () => {
   let resolvePage;
   const { pager, pages } = setup(
     () =>
@@ -76,34 +76,34 @@ test("disposed pages ignore late responses and further scrolls", async () => {
   );
   const initial = pager.start();
   pager.dispose();
-  resolvePage({ items: [{ id: "stale" }], nextCursor: "next" });
+  resolvePage({ items: [{ id: 'stale' }], nextCursor: 'next' });
   await initial;
   await pager.onScroll(20, 100, 800);
   assert.deepEqual(pages, []);
 });
 
-test("a non-overflowing page loads more only after a downward scroll gesture", async () => {
+test('a non-overflowing page loads more only after a downward scroll gesture', async () => {
   const calls = [];
   const { pager } = setup(async (cursor) => {
     calls.push(cursor);
-    return { items: [], nextCursor: "next" };
+    return { items: [], nextCursor: 'next' };
   });
   await pager.start();
   await pager.onScroll(0, 500, 1200);
   await pager.onScrollIntent(false, 500, 1200, 800);
   assert.deepEqual(calls, [null]);
   await pager.onScrollIntent(true, 500, 1200, 800);
-  assert.deepEqual(calls, [null, "next"]);
+  assert.deepEqual(calls, [null, 'next']);
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.equal(calls.length, 2); // no completion or viewport-fill cascade
 });
 
-test("gesture fallback ignores overflowing pages and serializes requests", async () => {
+test('gesture fallback ignores overflowing pages and serializes requests', async () => {
   const calls = [];
   let resolvePage;
   const { pager } = setup(async (cursor) => {
     calls.push(cursor);
-    if (calls.length === 1) return { items: [], nextCursor: "next" };
+    if (calls.length === 1) return { items: [], nextCursor: 'next' };
     return new Promise((resolve) => {
       resolvePage = resolve;
     });
@@ -121,17 +121,17 @@ test("gesture fallback ignores overflowing pages and serializes requests", async
   assert.equal(calls.length, 2); // exhausted
 });
 
-test("gesture fallback retries the same cursor and ignores disposed feeds", async () => {
+test('gesture fallback retries the same cursor and ignores disposed feeds', async () => {
   const calls = [];
   const { pager } = setup(async (cursor) => {
     calls.push(cursor);
-    if (calls.length === 2) throw Error("offline");
-    return { items: [], nextCursor: "next" };
+    if (calls.length === 2) throw Error('offline');
+    return { items: [], nextCursor: 'next' };
   });
   await pager.start();
   await pager.onScrollIntent(true, 500, 1200, 800);
   await pager.onScrollIntent(true, 500, 1200, 800);
-  assert.deepEqual(calls, [null, "next", "next"]);
+  assert.deepEqual(calls, [null, 'next', 'next']);
   pager.dispose();
   await pager.onScrollIntent(true, 500, 1200, 800);
   assert.equal(calls.length, 3);

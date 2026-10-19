@@ -1,5 +1,9 @@
+import { useAuth } from '@/auth/AuthProvider';
+import { ProfilePage } from './ProfilePage';
+import { ReadingDialog } from '@/components/literary/ReadingDialog';
+import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
@@ -29,16 +33,26 @@ function getReadTime(body: string) {
   return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
 }
 
-export function PublicWallPage() {
+function PublicWallContent() {
   const { handle } = useParams<{ handle: string }>();
 
   const [persona, setPersona] = useState<Persona | null>(null);
   const [pieces, setPieces] = useState<Piece[]>([]);
+  const [readingId, setReadingId] = useState<string | null>(null);
+  const readingPiece = pieces.find((piece) => piece.id === readingId);
+  const reading =
+    readingPiece && persona
+      ? toWriting({ ...readingPiece, author: persona.displayName, handle: persona.handle })
+      : null;
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [piecesError, setPiecesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReadingId(null);
+  }, [handle]);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,10 +205,15 @@ export function PublicWallPage() {
                         <span className="card-type">{formatType(piece.type)}</span>
                       </div>
 
-                      <div className="card-read wall-card-content">
+                      <button
+                        type="button"
+                        className="card-read wall-card-content"
+                        aria-label={`Read ${piece.title}`}
+                        onClick={() => setReadingId(piece.id)}
+                      >
                         <h2>{piece.title}</h2>
                         <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                      </div>
+                      </button>
 
                       <div className="card-footer wall-card-footer">
                         <span>{getReadTime(piece.body)} min read</span>
@@ -238,10 +257,38 @@ export function PublicWallPage() {
         </div>
       )}
 
+      <ReadingDialog reading={reading} onClose={() => setReadingId(null)} />
+
       <footer className="page-footer">
         <span>A little less noise. A little more meaning.</span>
         <span>Varaq · Words belong to their writers.</span>
       </footer>
     </div>
+  );
+}
+
+export function PublicWallPage() {
+  const { handle } = useParams<{ handle: string }>();
+  const { user, persona, isLoading, isPersonaLoading } = useAuth();
+  if (isLoading || (user && isPersonaLoading))
+    return (
+      <section className="page-section">
+        <p role="status">Opening the wall…</p>
+      </section>
+    );
+  return user && persona && persona.handle === handle ? (
+    <ProfilePage key={`${user.id}:${persona.id}`} />
+  ) : (
+    <PublicWallContent key={`${user?.id || 'visitor'}:${handle}`} />
+  );
+}
+export function MyWallRedirect() {
+  const { user, persona, isLoading, isPersonaLoading } = useAuth();
+  if (isLoading || isPersonaLoading) return <p role="status">Opening your wall…</p>;
+  return (
+    <Navigate
+      replace
+      to={user && persona ? `/wall/${encodeURIComponent(persona.handle)}` : '/vault'}
+    />
   );
 }

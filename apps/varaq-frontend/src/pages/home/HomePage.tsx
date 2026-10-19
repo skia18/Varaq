@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownLeft } from 'lucide-react';
+import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { FeedGrid } from '@/features/feed/FeedGrid';
 import { toWriting, forms, type Writing } from '../../features/feed/writings';
 
@@ -91,47 +92,7 @@ export function HomePage() {
         <span>Varaq · Words belong to their writers.</span>
       </footer>
 
-      {reading && (
-        <div
-          className="reading-backdrop"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setReading(null);
-            }
-          }}
-          role="presentation"
-        >
-          <section
-            className="reading-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="reading-title"
-          >
-            <button
-              type="button"
-              className="reading-close"
-              onClick={() => setReading(null)}
-              aria-label="Close reading"
-            >
-              ×
-            </button>
-
-            <span className="eyebrow">
-              {reading.form} · {reading.minutes} min read
-            </span>
-
-            <h2 id="reading-title" className="reading-title">
-              {reading.title}
-            </h2>
-
-            <p className="reading-byline">
-              by {reading.author} · {reading.date}
-            </p>
-
-            <div className="reading-body">{reading.body}</div>
-          </section>
-        </div>
-      )}
+      <ReadingDialog reading={reading} onClose={() => setReading(null)} />
     </div>
   );
 }

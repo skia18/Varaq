@@ -7,8 +7,12 @@ import { HomePage } from '../pages/home/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { CollectionsPage } from '../pages/collections/CollectionsPage';
 import { SavedPagesPage } from '../pages/saved/SavedPagesPage';
-import { ProfilePage } from '../pages/profile/ProfilePage';
-import { PublicWallPage } from '../pages/profile/PublicWallPage';
+import { VaultGate } from '@/features/vault/VaultProvider';
+import { ReturnToVaultPage } from '@/features/vault/ReturnToVaultPage';
+import { VaultPage } from '@/features/vault/VaultPage';
+import { PublishedPiecePage } from '@/features/vault/PublishedPiecePage';
+import { PublicWallPage, MyWallRedirect } from '../pages/profile/PublicWallPage';
+import { PublishedWritingRoomPage } from '../pages/write/PublishedWritingRoomPage';
 import { WritingRoomPage } from '../pages/write/WritingRoomPage';
 import { LoginForm } from '@/components/login/login-form';
 import { SignUpForm } from '@/components/login/sign-up-form';
@@ -35,21 +39,27 @@ export const router = createBrowserRouter([
 
       // Public writer wall.
       { path: '/wall/:handle', element: <PublicWallPage /> },
+      { path: '/piece/:pieceId', element: <PublishedPiecePage /> },
 
       {
         element: <ProtectedRoute />,
         children: [
           { path: '/saved', element: <SavedPagesPage /> },
 
-          // Private workspace: drafts, private pieces and unlisted pieces.
-          { path: '/vault', element: <ProfilePage /> },
+          // Published-content management.
+          { path: '/published', element: <MyWallRedirect /> },
+          { path: '/wall/manage/edit', element: <PublishedWritingRoomPage /> },
+          { path: '/published/edit', element: <PublishedWritingRoomPage /> },
+          {
+            element: <VaultGate />,
+            children: [
+              { path: '/vault', element: <VaultPage /> },
+              { path: '/vault/return/:pieceId', element: <ReturnToVaultPage /> },
 
-          // Writing room.
-          { path: '/write', element: <WritingRoomPage /> },
-
-          // Legacy shortcut; redirects to the signed-in writer's public wall.
-          // MyWallRedirect must be implemented separately.
-          // { path: '/wall/you', element: <MyWallRedirect /> },
+              // Writing room.
+              { path: '/write', element: <WritingRoomPage /> },
+            ],
+          },
         ],
       },
 

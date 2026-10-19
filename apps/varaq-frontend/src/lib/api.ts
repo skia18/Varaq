@@ -73,7 +73,7 @@ export type Piece = {
   title: string;
   body: string;
   type: PieceType;
-  status: 'draft' | 'published';
+  status: 'published';
   visibility: 'public' | 'unlisted' | 'private';
   publishedAt?: string | null;
   createdAt: string;
@@ -105,25 +105,20 @@ export async function getPublicPieces(
   );
 }
 
-export type CreatePieceInput = {
-  personaId: string;
-  title: string;
-  body: string;
-  type: PieceType;
-  visibility: 'private' | 'unlisted' | 'public';
-};
-
-export async function createPiece(input: CreatePieceInput): Promise<Piece> {
-  return apiRequest<Piece>('/api/v1/pieces', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-}
-
-export async function getOwnerPieces(options: { limit?: number } = {}): Promise<PiecePage> {
+export async function getOwnerPieces(
+  options: {
+    limit?: number;
+    status?: 'published';
+    personaId?: string;
+    cursor?: string;
+  } = {},
+): Promise<PiecePage> {
   const params = new URLSearchParams();
   params.set('limit', String(options.limit ?? 20));
 
+  if (options.status) params.set('status', options.status);
+  if (options.personaId) params.set('personaId', options.personaId);
+  if (options.cursor) params.set('cursor', options.cursor);
   return apiRequest<PiecePage>(`/api/v1/owner/pieces?${params.toString()}`);
 }
 
@@ -141,12 +136,6 @@ export async function updateOwnerPiece(pieceId: string, input: UpdatePieceInput)
   return apiRequest<Piece>(`/api/v1/owner/pieces/${encodeURIComponent(pieceId)}`, {
     method: 'PUT',
     body: JSON.stringify(input),
-  });
-}
-
-export async function publishOwnerPiece(pieceId: string): Promise<Piece> {
-  return apiRequest<Piece>(`/api/v1/owner/pieces/${encodeURIComponent(pieceId)}/publish`, {
-    method: 'POST',
   });
 }
 

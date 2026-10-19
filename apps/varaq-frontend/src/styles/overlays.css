@@ -1,3 +1,10 @@
+.reading-shade {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  background: rgb(35 31 27 / 55%);
+}
+
 /* Reading overlay */
 
 .reading-backdrop {
@@ -15,7 +22,7 @@
 
   padding: 20px;
 
-  background: rgb(35 31 27 / 55%);
+  background: transparent;
 }
 
 .reading-modal {
@@ -82,4 +89,196 @@
   line-height: 1.95;
 
   white-space: pre-wrap;
+}
+
+/* Publication and Vault transitions use the same quiet paper treatment. */
+.confirmation-modal {
+  width: min(600px, 100%);
+  max-height: min(90vh, 90dvh);
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.confirmation-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 32px 18px 0;
+}
+.confirmation-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in oklab, var(--primary) 25%, var(--border));
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--primary) 6%, var(--card));
+  color: var(--primary);
+}
+.confirmation-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+.confirmation-title {
+  margin: 0 20px 22px 0;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 500;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.confirmation-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 0 0 24px;
+  padding: 16px;
+  border: 1px solid color-mix(in oklab, var(--primary) 24%, var(--border));
+  border-left: 3px solid var(--primary);
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--primary) 5%, var(--card));
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.75;
+}
+.confirmation-notice > svg {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  color: var(--primary);
+  stroke-width: 1.6;
+}
+.confirmation-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.confirmation-close svg {
+  width: 16px;
+  height: 16px;
+}
+.confirmation-close:hover:not(:disabled) {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.confirmation-close:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.confirmation-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.confirmation-field {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 22px;
+}
+.confirmation-label {
+  display: block;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+.confirmation-field select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+.confirmation-field select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.confirmation-field select:disabled {
+  opacity: 0.6;
+}
+.confirmation-preview {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+}
+.confirmation-preview-body {
+  max-height: 28vh;
+  overflow-y: auto;
+  margin-top: 12px;
+  color: var(--foreground);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.confirmation-actions {
+  justify-content: flex-end;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.confirmation-footnote {
+  margin: 0 0 24px;
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  line-height: 1.85;
+}
+.confirmation-error {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--destructive) 30%, var(--border));
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--destructive) 5%, var(--card));
+  color: var(--destructive);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.confirmation-page {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.confirmation-page > .confirmation-heading {
+  margin-top: 30px;
+}
+.confirmation-piece-title {
+  margin-bottom: 20px;
+  font-family: var(--font-serif);
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .reading-modal.confirmation-modal {
+    padding: 28px 20px;
+  }
+  .confirmation-notice {
+    padding: 13px;
+    font-size: 12px;
+  }
+  .confirmation-actions > .varaq-action {
+    flex: 1 1 180px;
+  }
 }
