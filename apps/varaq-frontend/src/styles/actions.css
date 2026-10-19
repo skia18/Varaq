@@ -142,3 +142,199 @@
     margin-top: 10px;
   }
 }
+
+/* Vault setup, unlock and recovery share the app's paper and ink treatment. */
+.vault-unlock-page {
+  display: flex;
+  justify-content: center;
+}
+.vault-unlock-card {
+  width: 100%;
+  max-width: 500px;
+  margin: clamp(12px, 4vh, 48px) 0;
+  padding: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background-color: var(--card);
+  background-image: var(--texture);
+  box-shadow: 0 5px 24px color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+.vault-unlock-header {
+  margin-bottom: 28px;
+}
+.vault-unlock-icon {
+  display: flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+  border: 1px solid color-mix(in oklab, var(--primary) 25%, var(--border));
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--primary) 6%, var(--card));
+  color: var(--primary);
+}
+.vault-unlock-icon svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.4;
+}
+.vault-unlock-header h1 {
+  margin: 10px 0 14px;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4vw, 38px);
+  font-weight: 500;
+  line-height: 1.15;
+}
+.vault-unlock-intro {
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 13px;
+  line-height: 1.85;
+}
+.vault-unlock-form {
+  display: grid;
+  gap: 18px;
+}
+.vault-unlock-field {
+  display: grid;
+  gap: 9px;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 12px;
+}
+.vault-unlock-field > span {
+  font-weight: 500;
+}
+.vault-unlock-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.vault-unlock-field input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.8;
+}
+.vault-unlock-field input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-color: var(--primary);
+}
+.vault-unlock-field input:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.vault-unlock-hint {
+  margin-top: -6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.vault-unlock-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+.vault-unlock-actions .varaq-action {
+  min-height: 44px;
+  width: 100%;
+}
+.vault-unlock-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.8;
+}
+.vault-unlock-footer > svg {
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  stroke-width: 1.5;
+}
+.vault-unlock-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.vault-unlock-loading svg {
+  width: 16px;
+  height: 16px;
+}
+.vault-recovery-notice {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid color-mix(in oklab, var(--primary) 24%, var(--border));
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--primary) 5%, var(--card));
+  font-size: 12px;
+  line-height: 1.75;
+}
+.vault-recovery-notice > svg {
+  width: 17px;
+  height: 17px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.vault-recovery-key {
+  display: block;
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.vault-recovery-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  cursor: pointer;
+}
+.vault-recovery-ack input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--primary);
+}
+@media (max-width: 600px) {
+  .vault-unlock-card {
+    padding: 26px 22px;
+    margin: 8px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vault-unlock-field input {
+    transition: none;
+  }
+  .vault-unlock-card .animate-spin {
+    animation: none;
+  }
+}
