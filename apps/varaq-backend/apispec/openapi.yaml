@@ -1,18 +1,14 @@
-
 openapi: 3.1.0
-
 info:
   title: Varaq API
   version: 0.1.0
   description: >
-    REST API for Varaq, a literary writing and discovery platform.
-    Writers can create pseudonymous personas, draft and publish pieces,
-    and discover publicly available writing.
-
+    REST API for Varaq, a literary writing and discovery platform. Writers can
+    create pseudonymous personas, draft and publish pieces, and discover
+    publicly available writing.
 servers:
   - url: http://localhost:8080
     description: Local development server
-
 tags:
   - name: Health
     description: Service health and readiness
@@ -22,16 +18,16 @@ tags:
     description: Writing drafts and published pieces
   - name: Feed
     description: Public literary discovery
-
 paths:
   /healthz:
     get:
-      tags: [Health]
+      tags:
+        - Health
       operationId: getHealth
       summary: Check API liveness
       description: >
-        Confirms that the HTTP process is running.
-        Does not check database connectivity.
+        Confirms that the HTTP process is running. Does not check database
+        connectivity.
       security: []
       responses:
         "200":
@@ -40,20 +36,21 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [status]
+                required:
+                  - status
                 properties:
                   status:
                     type: string
                     const: ok
-
   /readyz:
     get:
-      tags: [Health]
+      tags:
+        - Health
       operationId: getReadiness
       summary: Check database readiness
       description: >
-        Executes a lightweight database query to verify that
-        PostgreSQL is reachable.
+        Executes a lightweight database query to verify that PostgreSQL is
+        reachable.
       security: []
       responses:
         "200":
@@ -68,15 +65,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
   /api/v1/personas:
     post:
-      tags: [Personas]
+      tags:
+        - Personas
       operationId: createPersona
       summary: Create a literary persona
       description: >
-        Creates a persona owned by the authenticated Supabase user.
-        The owner is derived from the verified access token.
+        Creates a persona owned by the authenticated Supabase user. The owner is
+        derived from the verified access token.
       security:
         - bearerAuth: []
       requestBody:
@@ -104,13 +101,12 @@ paths:
                 $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/InternalError"
-
   /api/v1/personas/{handle}:
     parameters:
       - $ref: "#/components/parameters/Handle"
-
     get:
-      tags: [Personas]
+      tags:
+        - Personas
       operationId: getPersona
       summary: Retrieve a public persona
       security: []
@@ -125,45 +121,15 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalError"
-
-    patch:
-      tags: [Personas]
-      operationId: updatePersona
-      summary: Update an owned persona
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdatePersona"
-      responses:
-        "200":
-          description: Persona updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Persona"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
   /api/v1/pieces:
     post:
-      tags: [Pieces]
+      tags:
+        - Pieces
       operationId: createPiece
-      summary: Create a writing draft
+      summary: Legacy plaintext draft creation is disabled
       description: >
-        Creates a draft for a persona owned by the authenticated user.
-        New pieces always start in draft status and are private by default.
+        Creates a draft for a persona owned by the authenticated user. New
+        pieces always start in draft status and are private by default.
       security:
         - bearerAuth: []
       requestBody:
@@ -173,12 +139,6 @@ paths:
             schema:
               $ref: "#/components/schemas/CreatePiece"
       responses:
-        "201":
-          description: Draft created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Piece"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -187,123 +147,20 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          description: "vault_required: use encrypted Vault draft creation"
         "500":
           $ref: "#/components/responses/InternalError"
-
-  /api/v1/pieces/{id}:
-    parameters:
-      - $ref: "#/components/parameters/PieceId"
-
-    get:
-      tags: [Pieces]
-      operationId: getPiece
-      summary: Retrieve a piece
-      description: >
-        Retrieves a piece if its visibility and publication status
-        permit access. Drafts and inaccessible resources must not
-        be exposed to anonymous readers.
-      security: []
-      responses:
-        "200":
-          description: Piece found and accessible
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Piece"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-    patch:
-      tags: [Pieces]
-      operationId: updatePiece
-      summary: Update an owned piece
-      description: >
-        Updates a piece owned by the authenticated user.
-        The author and ownership fields cannot be changed through this request.
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdatePiece"
-      responses:
-        "200":
-          description: Piece updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Piece"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-    delete:
-      tags: [Pieces]
-      operationId: deletePiece
-      summary: Delete an owned piece
-      security:
-        - bearerAuth: []
-      responses:
-        "204":
-          description: Piece deleted
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
-  /api/v1/pieces/{id}/publish:
-    parameters:
-      - $ref: "#/components/parameters/PieceId"
-
-    post:
-      tags: [Pieces]
-      operationId: publishPiece
-      summary: Publish a piece
-      description: >
-        Publishes an owned draft or unpublished piece.
-        The server sets publishedAt. The piece's visibility determines
-        whether it appears in public discovery.
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Piece published
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Piece"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalError"
-
+      deprecated: true
   /api/v1/feed:
     get:
-      tags: [Feed]
+      tags:
+        - Feed
       operationId: getFeed
       summary: Browse the public literary feed
       description: >
-        Returns published pieces with public visibility only.
-        Supports cursor-based pagination.
+        Returns published pieces with public visibility only. Supports
+        cursor-based pagination.
       security: []
       parameters:
         - name: limit
@@ -315,31 +172,29 @@ paths:
             minimum: 1
             maximum: 50
             default: 10
-
         - name: cursor
           in: query
           required: false
           description: Opaque cursor returned by the previous response
           schema:
             type: string
-
         - name: type
           in: query
           required: false
           description: Filter by literary piece type
           schema:
             $ref: "#/components/schemas/PieceType"
-
         - name: q
           in: query
-          description: Literal text search across title, body and writer (maximum 300 UTF-8 bytes)
+          description: Literal text search across title, body and writer (maximum 300
+            UTF-8 bytes)
           schema:
             type: string
             maxLength: 300
-
         - name: ids
           in: query
-          description: Comma-separated piece UUIDs (maximum 50); only public published pieces are returned
+          description: Comma-separated piece UUIDs (maximum 50); only public published
+            pieces are returned
           style: form
           explode: false
           schema:
@@ -348,7 +203,6 @@ paths:
             items:
               type: string
               format: uuid
-
       responses:
         "200":
           description: Public feed page
@@ -360,18 +214,17 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalError"
-
   /api/v1/personas/{handle}/pieces:
     parameters:
       - $ref: "#/components/parameters/Handle"
-
     get:
-      tags: [Personas]
+      tags:
+        - Personas
       operationId: listPersonaPieces
       summary: List a persona's public writing
       description: >
-        Returns published pieces with public visibility belonging
-        to the requested persona.
+        Returns published pieces with public visibility belonging to the
+        requested persona.
       security: []
       parameters:
         - name: limit
@@ -382,13 +235,11 @@ paths:
             minimum: 1
             maximum: 50
             default: 20
-
         - name: cursor
           in: query
           required: false
           schema:
             type: string
-
       responses:
         "200":
           description: Persona's public writing
@@ -400,14 +251,897 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalError"
-
+  /api/v1/me/persona:
+    get:
+      operationId: getMyPersona
+      tags:
+        - Pieces
+      summary: Get the signed-in persona
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Persona"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/pieces:
+    get:
+      operationId: getOwnerPieces
+      tags:
+        - Pieces
+      summary: List published writing and legacy plaintext drafts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PiecePage"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/pieces/{pieceID}:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getOwnerPiece
+      tags:
+        - Pieces
+      summary: Get owned published writing or a legacy draft
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: updateOwnerPiece
+      tags:
+        - Pieces
+      summary: Update an owned published piece
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePiece"
+    delete:
+      operationId: deleteOwnerPiece
+      tags:
+        - Pieces
+      summary: Delete an owned piece
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Completed
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/pieces/{pieceID}:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getPublishedPiece
+      tags:
+        - Pieces
+      summary: Read a published public or unlisted piece
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Piece"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/pieces/{pieceID}/publish:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: publishOwnerPiece
+      tags:
+        - Pieces
+      summary: Publish an explicit decrypted Vault snapshot idempotently
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/VaultTransfer"
+                  - $ref: "#/components/schemas/Piece"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultPublish"
+      description: A missing body temporarily supports legacy public publication and
+        returns Piece. Vault requests require a body, a stable operationId and
+        matching sourceRevision. Same request retries return success. The
+        committed receipt freezes and hides the encrypted source; finalize
+        removes ciphertext. On unknown outcomes query transfer status. Readable
+        content is intentionally stored as a publication.
+  /api/v1/owner/vault:
+    get:
+      operationId: getVaultConfig
+      tags:
+        - Pieces
+      summary: Get encrypted Vault key wrappers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultConfigState"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: saveVaultConfig
+      tags:
+        - Pieces
+      summary: Create or conditionally replace key wrappers
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultRevision"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultConfigWrite"
+  /api/v1/owner/vault/drafts:
+    get:
+      operationId: getVaultDrafts
+      tags:
+        - Pieces
+      summary: List active encrypted drafts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultDraftPage"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/vault/drafts/{pieceID}:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getVaultDraft
+      tags:
+        - Pieces
+      summary: Get an encrypted draft
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultDraft"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: saveVaultDraft
+      tags:
+        - Pieces
+      summary: Save ciphertext with expected revision; exact envelope retries are
+        idempotent
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultRevision"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultDraftWrite"
+    delete:
+      operationId: deleteVaultDraft
+      tags:
+        - Pieces
+      summary: Delete an encrypted draft at expected revision
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Completed
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultDelete"
+  /api/v1/owner/vault/transfers:
+    get:
+      operationId: getPendingVaultTransfers
+      tags:
+        - Pieces
+      summary: List confirmed publications awaiting ciphertext cleanup
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultPending"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/vault/transfers/{pieceID}:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getVaultTransfer
+      tags:
+        - Pieces
+      summary: Resolve a publication outcome by source draft ID
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultTransfer"
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/vault/transfers/{pieceID}/finalize:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: finalizeVaultTransfer
+      tags:
+        - Pieces
+      summary: Remove ciphertext only for a committed publication
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Completed
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/v1/owner/vault/import:
+    post:
+      operationId: importVaultDraft
+      tags:
+        - Pieces
+      summary: Upload encrypted copy while preserving the legacy source
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Completed
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultImport"
+  /api/v1/owner/vault/import/{pieceID}/finalize:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: finalizeVaultImport
+      tags:
+        - Pieces
+      summary: After browser decrypt-verification, conditionally remove unchanged
+        legacy draft
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Completed
+        "400":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultImportFinalize"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   parameters:
     Handle:
       name: handle
@@ -418,8 +1152,7 @@ components:
         type: string
         minLength: 3
         maxLength: 30
-        pattern: "^[a-z0-9_]+$"
-
+        pattern: ^[a-z0-9_]+$
     PieceId:
       name: id
       in: path
@@ -428,11 +1161,12 @@ components:
       schema:
         type: string
         format: uuid
-
   schemas:
     HealthStatus:
       type: object
-      required: [status, database]
+      required:
+        - status
+        - database
       properties:
         status:
           type: string
@@ -440,7 +1174,6 @@ components:
         database:
           type: string
           const: connected
-
     PieceType:
       type: string
       enum:
@@ -449,20 +1182,17 @@ components:
         - story
         - letter
         - essay
-
     PieceStatus:
       type: string
       enum:
         - draft
         - published
-
     Visibility:
       type: string
       enum:
         - public
         - unlisted
         - private
-
     CreatePersona:
       type: object
       additionalProperties: false
@@ -474,15 +1204,16 @@ components:
           type: string
           minLength: 3
           maxLength: 30
-          pattern: "^[a-z0-9_]+$"
+          pattern: ^[a-z0-9_]+$
         displayName:
           type: string
           minLength: 1
           maxLength: 80
         bio:
-          type: [string, "null"]
+          type:
+            - string
+            - "null"
           maxLength: 500
-
     UpdatePersona:
       type: object
       minProperties: 1
@@ -493,9 +1224,10 @@ components:
           minLength: 1
           maxLength: 80
         bio:
-          type: [string, "null"]
+          type:
+            - string
+            - "null"
           maxLength: 500
-
     Persona:
       type: object
       required:
@@ -512,11 +1244,12 @@ components:
         displayName:
           type: string
         bio:
-          type: [string, "null"]
+          type:
+            - string
+            - "null"
         createdAt:
           type: string
           format: date-time
-
     CreatePiece:
       type: object
       additionalProperties: false
@@ -542,11 +1275,13 @@ components:
         visibility:
           $ref: "#/components/schemas/Visibility"
           default: private
-
     UpdatePiece:
       type: object
-      minProperties: 1
       additionalProperties: false
+      required:
+        - title
+        - body
+        - type
       properties:
         title:
           type: string
@@ -558,9 +1293,6 @@ components:
           maxLength: 50000
         type:
           $ref: "#/components/schemas/PieceType"
-        visibility:
-          $ref: "#/components/schemas/Visibility"
-
     Piece:
       type: object
       required:
@@ -594,7 +1326,9 @@ components:
         visibility:
           $ref: "#/components/schemas/Visibility"
         publishedAt:
-          type: [string, "null"]
+          type:
+            - string
+            - "null"
           format: date-time
         createdAt:
           type: string
@@ -602,29 +1336,32 @@ components:
         updatedAt:
           type: string
           format: date-time
-
     FeedPiece:
       allOf:
         - $ref: "#/components/schemas/Piece"
         - type: object
-          required: [author, handle]
+          required:
+            - author
+            - handle
           properties:
             author:
               type: string
             handle:
               type: string
-
     FeedPage:
       type: object
-      required: [items, nextCursor]
+      required:
+        - items
+        - nextCursor
       properties:
         items:
           type: array
           items:
             $ref: "#/components/schemas/FeedPiece"
         nextCursor:
-          type: [string, "null"]
-
+          type:
+            - string
+            - "null"
     PiecePage:
       type: object
       required:
@@ -636,31 +1373,39 @@ components:
           items:
             $ref: "#/components/schemas/Piece"
         nextCursor:
-          type: [string, "null"]
-
+          type:
+            - string
+            - "null"
     Error:
       type: object
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: object
-          required: [code, message]
+          required:
+            - code
+            - message
           properties:
             code:
               type: string
             message:
               type: string
             requestId:
-              type: [string, "null"]
-
+              type:
+                - string
+                - "null"
     InternalError:
       type: object
       description: Generic internal server error response
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: object
-          required: [code, message]
+          required:
+            - code
+            - message
           properties:
             code:
               type: string
@@ -669,8 +1414,245 @@ components:
               type: string
               const: An unexpected error occurred.
             requestId:
-              type: [string, "null"]
-
+              type:
+                - string
+                - "null"
+    Sealed:
+      type: object
+      additionalProperties: false
+      required:
+        - iv
+        - data
+      properties:
+        iv:
+          type: string
+          contentEncoding: base64
+          minLength: 16
+          maxLength: 16
+        data:
+          type: string
+          contentEncoding: base64
+          maxLength: 333336
+    VaultConfig:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - salt
+        - passphrase
+        - recovery
+      properties:
+        version:
+          type: integer
+          enum:
+            - 1
+        salt:
+          type: string
+          contentEncoding: base64
+          minLength: 24
+          maxLength: 24
+        passphrase:
+          $ref: "#/components/schemas/Sealed"
+        recovery:
+          $ref: "#/components/schemas/Sealed"
+      description: "Version 1: Argon2id t=3,m=65536 KiB,p=1,32-byte output; 16-byte
+        salt. AES-256-GCM wrappers with 12-byte nonces, 128-bit tags, and
+        purpose-bound AAD. No plaintext key or passphrase."
+    VaultConfigState:
+      type: object
+      additionalProperties: false
+      required:
+        - config
+        - revision
+      properties:
+        config:
+          oneOf:
+            - $ref: "#/components/schemas/VaultConfig"
+            - type: "null"
+        revision:
+          type: integer
+          minimum: 0
+    VaultConfigWrite:
+      type: object
+      additionalProperties: false
+      required:
+        - config
+        - revision
+      properties:
+        config:
+          $ref: "#/components/schemas/VaultConfig"
+        revision:
+          type: integer
+          minimum: 0
+    VaultEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - content
+        - key
+      properties:
+        version:
+          type: integer
+          enum:
+            - 1
+        content:
+          $ref: "#/components/schemas/Sealed"
+        key:
+          $ref: "#/components/schemas/Sealed"
+    VaultDraft:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - personaId
+        - revision
+        - envelope
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        personaId:
+          type: string
+          format: uuid
+        revision:
+          type: integer
+          minimum: 1
+        envelope:
+          $ref: "#/components/schemas/VaultEnvelope"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    VaultDraftWrite:
+      type: object
+      additionalProperties: false
+      required:
+        - personaId
+        - revision
+        - envelope
+      properties:
+        personaId:
+          type: string
+          format: uuid
+        revision:
+          type: integer
+          minimum: 0
+        envelope:
+          $ref: "#/components/schemas/VaultEnvelope"
+    VaultDraftPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/VaultDraft"
+    VaultRevision:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+    VaultDelete:
+      type: object
+      additionalProperties: false
+      required:
+        - revision
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+    VaultPublish:
+      type: object
+      additionalProperties: false
+      required:
+        - operationId
+        - sourceRevision
+        - title
+        - body
+        - type
+        - visibility
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        sourceRevision:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          minLength: 1
+          maxLength: 50000
+        type:
+          $ref: "#/components/schemas/PieceType"
+        visibility:
+          type: string
+          enum:
+            - public
+            - unlisted
+    VaultTransfer:
+      type: object
+      additionalProperties: false
+      required:
+        - published
+      properties:
+        published:
+          type: boolean
+        pieceId:
+          type: string
+          format: uuid
+        cleanupPending:
+          type: boolean
+    VaultPending:
+      type: object
+      additionalProperties: false
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    VaultImport:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - updatedAt
+        - envelope
+      properties:
+        id:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: date-time
+        envelope:
+          $ref: "#/components/schemas/VaultEnvelope"
+    VaultImportFinalize:
+      type: object
+      additionalProperties: false
+      required:
+        - updatedAt
+      properties:
+        updatedAt:
+          type: string
+          format: date-time
   responses:
     BadRequest:
       description: Invalid request
@@ -678,28 +1660,24 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-
     Unauthorized:
       description: Missing or invalid access token
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-
     Forbidden:
       description: Operation not permitted
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-
     NotFound:
       description: Resource not found or not accessible
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
-
     InternalError:
       description: Unexpected server error
       content:

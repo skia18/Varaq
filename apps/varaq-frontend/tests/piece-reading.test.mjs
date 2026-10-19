@@ -165,7 +165,7 @@ test('vault opens a private draft without requesting the public feed and closes 
 test('vault edit, publish and delete controls stay separate from reading', async () => {
   await mount(React.createElement(ProfilePage), '/vault');
   expect(host.querySelector('a[aria-label="Edit A page to read"]').getAttribute('href')).toBe(
-    '/write?pieceId=piece-1',
+    '/write?importId=piece-1',
   );
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
   await click(

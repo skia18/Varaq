@@ -74,7 +74,7 @@ var allowedPieceVisibilities = map[string]bool{
 }
 
 func (h PieceHandler) Create(w http.ResponseWriter, r *http.Request) {
-	user, ok := auth.UserFromContext(r.Context())
+	_, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		writeJSON(w, http.StatusUnauthorized, map[string]any{
 			"error": map[string]string{
@@ -137,117 +137,8 @@ func (h PieceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Only allow users to create pieces under personas they own.
-	var ownsPersona bool
-	err := h.DB.QueryRow(
-		r.Context(),
-		`SELECT EXISTS (
-			SELECT 1
-			FROM public.personas
-			WHERE id = $1::uuid
-			  AND user_id = $2::uuid
-		)`,
-		req.PersonaID,
-		user.ID,
-	).Scan(&ownsPersona)
+	vaultError(w, http.StatusConflict, "vault_required", "New drafts must be encrypted in the Vault.")
 
-	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "22P02" {
-			writeBadRequest(w, "personaId must be a valid UUID.")
-			return
-		}
-
-		writeInternalError(w)
-		return
-	}
-
-	if !ownsPersona {
-		writeJSON(w, http.StatusNotFound, map[string]any{
-			"error": map[string]string{
-				"code":    "persona_not_found",
-				"message": "Persona not found.",
-			},
-		})
-		return
-	}
-
-	slugBase := makePieceSlug(req.Title)
-	if slugBase == "" {
-		slugBase = "piece"
-	}
-
-	// Keep enough room for the collision suffix within varchar(220).
-	if len(slugBase) > 200 {
-		slugBase = slugBase[:200]
-	}
-
-	// Retry if another piece under this persona already uses the slug.
-	for attempt := 0; attempt < 5; attempt++ {
-		slug := slugBase
-
-		if attempt > 0 {
-			suffix, err := randomPieceSlugSuffix()
-			if err != nil {
-				writeInternalError(w)
-				return
-			}
-
-			slug = slugBase + "-" + suffix
-		}
-
-		var piece Piece
-
-		err := h.DB.QueryRow(
-			r.Context(),
-			`INSERT INTO public.pieces
-				(persona_id, slug, title, body, type, status, visibility, published_at)
-			VALUES ($1::uuid, $2, $3, $4, $5, 'draft', $6, NULL)
-			RETURNING
-				id, persona_id, slug, title, body, type, status,
-				visibility, published_at, created_at, updated_at`,
-			req.PersonaID,
-			slug,
-			req.Title,
-			req.Body,
-			req.Type,
-			visibility,
-		).Scan(
-			&piece.ID,
-			&piece.PersonaID,
-			&piece.Slug,
-			&piece.Title,
-			&piece.Body,
-			&piece.Type,
-			&piece.Status,
-			&piece.Visibility,
-			&piece.PublishedAt,
-			&piece.CreatedAt,
-			&piece.UpdatedAt,
-		)
-
-		if err == nil {
-			writeJSON(w, http.StatusCreated, piece)
-			return
-		}
-
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) &&
-			pgErr.Code == "23505" &&
-			pgErr.ConstraintName == "pieces_persona_slug_unique" {
-			continue
-		}
-
-		writeInternalError(w)
-		return
-	}
-
-	writeJSON(w, http.StatusConflict, map[string]any{
-		"error": map[string]string{
-			"code":    "slug_conflict",
-			"message": "Could not generate a unique slug. Please try again.",
-		},
-	})
 }
 
 func makePieceSlug(title string) string {
@@ -608,6 +499,7 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		 WHERE p.id = $1::uuid
 		   AND persona.id = p.persona_id
 		   AND persona.user_id = $2::uuid
+         AND p.status = 'published'
 		 RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
 		           p.type, p.status, p.visibility, p.published_at,
 		           p.created_at, p.updated_at`,
@@ -666,6 +558,11 @@ func (h PieceHandler) PublishOwnerPiece(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if r.ContentLength != 0 {
+		h.PublishVault(w, r)
+		return
+	}
+
 	pieceID := chi.URLParam(r, "pieceID")
 
 	var piece Piece
@@ -681,6 +578,7 @@ func (h PieceHandler) PublishOwnerPiece(w http.ResponseWriter, r *http.Request) 
            AND persona.id = p.persona_id
            AND persona.user_id = $2::uuid
            AND p.status = 'draft'
+           AND NOT EXISTS(SELECT 1 FROM varaq_private.vault_drafts WHERE id=p.id)
          RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
                    p.type, p.status, p.visibility, p.published_at,
                    p.created_at, p.updated_at`,

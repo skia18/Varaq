@@ -14,9 +14,11 @@ import {
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 import { SearchDialog } from './SearchDialog';
+import { useVault } from '@/features/vault/VaultProvider';
 import { useAuth } from '@/auth/AuthProvider';
 
 export function SiteHeader() {
+  const { lock } = useVault();
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
     useAuth();
 
@@ -42,6 +44,7 @@ export function SiteHeader() {
 
   async function handleSignOut() {
     setSignOutError(null);
+    lock();
 
     try {
       await signOut();
@@ -200,6 +203,7 @@ export function SiteHeader() {
 }
 
 export function Topbar() {
+  const { lock } = useVault();
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
@@ -209,6 +213,7 @@ export function Topbar() {
 
   async function handleSignOut() {
     setSignOutError(null);
+    lock();
 
     try {
       await signOut();

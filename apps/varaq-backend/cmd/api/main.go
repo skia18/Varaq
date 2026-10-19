@@ -58,6 +58,7 @@ func main() {
 		syscall.SIGTERM,
 	)
 	defer stop()
+	go httpapi.RunVaultCleanup(ctx, db)
 
 	select {
 	case err := <-serverErrors:

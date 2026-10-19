@@ -188,6 +188,10 @@ export function ProfilePage() {
 
   return (
     <div className="page-content">
+      <p>
+        <Link to="/vault">Open encrypted Vault</Link> · Published writing and legacy drafts. Legacy
+        drafts are not end-to-end encrypted.
+      </p>
       <section className="writer-profile">
         <span className="eyebrow">A writer’s wall</span>
 
@@ -308,7 +312,11 @@ export function ProfilePage() {
 
                       <div className="vault-card-actions">
                         <Link
-                          to={`/write?pieceId=${encodeURIComponent(piece.id)}`}
+                          to={
+                            piece.status === 'draft'
+                              ? `/write?importId=${encodeURIComponent(piece.id)}`
+                              : `/published/edit?pieceId=${encodeURIComponent(piece.id)}`
+                          }
                           className="vault-card-action"
                           aria-label={`Edit ${piece.title}`}
                         >
@@ -316,6 +324,9 @@ export function ProfilePage() {
                           Edit
                         </Link>
 
+                        {piece.status === 'draft' && (
+                          <Link to={`/write?importId=${piece.id}`}>Move into encrypted Vault</Link>
+                        )}
                         {piece.status === 'draft' && (
                           <button
                             type="button"
