@@ -14,6 +14,10 @@ const mocks = vi.hoisted(() => ({
     refreshPersona: vi.fn(),
   },
   createPersona: vi.fn(),
+  signOut: vi.fn(),
+}));
+vi.mock('@/lib/supabase/client', () => ({
+  createClient: () => ({ auth: { signOut: mocks.signOut } }),
 }));
 vi.mock('@/auth/AuthProvider', () => ({ useAuth: () => mocks.auth }));
 vi.mock('@/lib/api', async (original) => ({
@@ -86,4 +90,16 @@ test('loading and failures do not prompt users to create another persona', async
   await render();
   expect(host.querySelector('[role="alert"]')?.textContent).toBe('Service unavailable');
   expect(host.querySelector('form')).toBeNull();
+});
+
+test('account errors offer a local sign-in recovery', async () => {
+  mocks.auth.personaError = 'Your session could not be verified. Please sign in again.';
+  mocks.signOut.mockResolvedValue({ error: null });
+  await render();
+  const button = Array.from(host.querySelectorAll('button')).find(
+    (item) => item.textContent === 'Sign in again',
+  );
+  expect(button).toBeDefined();
+  await act(async () => button!.click());
+  expect(mocks.signOut).toHaveBeenCalledWith({ scope: 'local' });
 });

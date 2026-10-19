@@ -49,10 +49,19 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     headers.set('Authorization', `Bearer ${session.access_token}`);
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  let response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
   });
+
+  // Authentication middleware rejects these requests before a handler can mutate data.
+  if (response.status === 401 && session?.access_token) {
+    const refreshed = await supabase.auth.refreshSession();
+    if (!refreshed.error && refreshed.data.session) {
+      headers.set('Authorization', `Bearer ${refreshed.data.session.access_token}`);
+      response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+    }
+  }
 
   if (!response.ok) {
     const body = await response.text();
