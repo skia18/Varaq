@@ -46,9 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPersonaError(
         error instanceof ApiError && error.status === 404 && error.code === 'persona_not_found'
           ? null
-          : error instanceof Error
-            ? error.message
-            : 'Could not load your persona.',
+          : error instanceof ApiError && error.status === 401
+            ? 'Your session could not be verified. Please sign in again.'
+            : error instanceof Error
+              ? error.message
+              : 'Could not load your persona.',
       );
     } finally {
       setIsPersonaLoading(false);
@@ -62,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
+      // A request refreshing its token will retry itself. Refetching here would
+      // start another refresh loop if the API continues rejecting valid tokens.
+      if (_event === 'TOKEN_REFRESHED') return;
       if (nextSession) setIsPersonaLoading(true);
       setIsLoading(false);
 

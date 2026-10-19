@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AccountScene } from '@/layouts/AccountScene';
+import { createClient } from '@/lib/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 export function PersonaGate({ children }: { children: ReactNode }) {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
@@ -18,10 +20,9 @@ export function PersonaGate({ children }: { children: ReactNode }) {
   }
   if (user && personaError) {
     return (
-      <div className="page-content">
-        <p role="alert">{personaError}</p>
-        <Button onClick={() => void refreshPersona()}>Try again</Button>
-      </div>
+      <AccountScene>
+        <AccountRecovery message={personaError} retry={refreshPersona} />
+      </AccountScene>
     );
   }
   if (user && !persona)
@@ -31,6 +32,48 @@ export function PersonaGate({ children }: { children: ReactNode }) {
       </AccountScene>
     );
   return children;
+}
+
+function AccountRecovery({ message, retry }: { message: string; retry: () => Promise<void> }) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function signInAgain() {
+    setBusy(true);
+    setError('');
+    try {
+      const result = await createClient().auth.signOut({ scope: 'local' });
+      if (result.error) throw result.error;
+      navigate('/login', { replace: true });
+    } catch {
+      setError('Could not clear your session. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle role="heading" aria-level={1} className="font-medium text-lg tracking-normal">
+          Let’s get you back in.
+        </CardTitle>
+        <CardDescription role="alert">{message}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <Button disabled={busy} onClick={() => void signInAgain()}>
+          Sign in again
+        </Button>
+        <Button variant="outline" disabled={busy} onClick={() => void retry()}>
+          Try again
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function PersonaSetup() {
