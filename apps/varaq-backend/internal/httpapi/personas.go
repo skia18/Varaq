@@ -92,6 +92,15 @@ func (h PersonaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			if pgErr.ConstraintName == "personas_user_id_key" {
+				writeJSON(w, http.StatusConflict, map[string]any{
+					"error": map[string]string{
+						"code":    "persona_already_exists",
+						"message": "This account already has a persona.",
+					},
+				})
+				return
+			}
 			writeJSON(w, http.StatusConflict, map[string]any{
 				"error": map[string]string{
 					"code":    "handle_unavailable",

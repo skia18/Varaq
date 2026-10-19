@@ -75,7 +75,9 @@ paths:
       summary: Create a literary persona
       description: >
         Creates a persona owned by the authenticated Supabase user. The owner is
-        derived from the verified access token.
+        derived from the verified access token. Each account can have at most one
+        persona. Creating another returns 409 with code persona_already_exists;
+        an unavailable handle returns 409 with code handle_unavailable.
       security:
         - bearerAuth: []
       requestBody:

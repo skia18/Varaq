@@ -1,5 +1,12 @@
 # Collections
 
+Each account can have at most one persona, enforced by the
+`20261019040000_one_persona_per_user.sql` migration. Collections remain account-owned;
+their public curator is that account's sole persona. Accounts without a persona
+do not yet have a public wall. No persona attribution column is needed on collections.
+The migration rejects existing duplicate personas without deleting or reassigning
+them; resolve duplicates explicitly before retrying it.
+
 Collections replaces the Saved Pages destination. `/saved` redirects to `/collections`.
 
 - Every account has one system-managed Saved collection, always private, with a fixed name. It cannot be edited or deleted.
