@@ -285,3 +285,41 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
+.discovery-tabs {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-block: 1rem;
+}
+.discovery-tabs [aria-pressed='true'],
+.discovery-tabs [aria-current='page'] {
+  text-decoration: underline;
+  text-underline-offset: 0.4rem;
+}
+.public-directory {
+  display: grid;
+  gap: 1rem;
+  padding-block: 1rem;
+}
+.directory-card {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.directory-card:hover,
+.directory-card:focus-visible {
+  background: var(--muted);
+}
+.directory-card span {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+.directory-card p {
+  margin: 0;
+}

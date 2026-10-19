@@ -17,10 +17,13 @@ models/InternalError.ts
 models/InternalErrorError.ts
 models/ModelError.ts
 models/Persona.ts
+models/PersonaPage.ts
 models/Piece.ts
 models/PiecePage.ts
 models/PieceStatus.ts
 models/PieceType.ts
+models/PublicCollectionPage.ts
+models/PublicCollectionSummary.ts
 models/Sealed.ts
 models/UpdatePersona.ts
 models/UpdatePiece.ts

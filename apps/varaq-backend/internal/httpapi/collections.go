@@ -22,6 +22,7 @@ type Collection struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	PieceIDs    []string  `json:"pieceIds"`
+	Curator     *Persona  `json:"curator,omitempty"`
 }
 type collectionInput struct {
 	Name        string `json:"name"`
@@ -84,6 +85,15 @@ func (h CollectionHandler) Public(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeInternalError(w)
 		return
+	}
+	var curator Persona
+	err = h.DB.QueryRow(r.Context(), `SELECT p.id,p.handle,p.display_name,p.bio,p.created_at FROM public.personas p JOIN public.collections c ON c.user_id=p.user_id WHERE c.id=$1`, id).Scan(&curator.ID, &curator.Handle, &curator.DisplayName, &curator.Bio, &curator.CreatedAt)
+	if err != nil && err != pgx.ErrNoRows {
+		writeInternalError(w)
+		return
+	}
+	if err == nil {
+		c.Curator = &curator
 	}
 	writeJSON(w, 200, c)
 }

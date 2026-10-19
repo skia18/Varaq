@@ -1,9 +1,10 @@
+import { PublicDirectory } from '@/features/discovery/PublicDirectory';
 import { useAuth } from '@/auth/AuthProvider';
 import { ProfilePage } from './ProfilePage';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
@@ -36,6 +37,8 @@ function getReadTime(body: string) {
 function PublicWallContent() {
   const { handle } = useParams<{ handle: string }>();
 
+  const [params, setParams] = useSearchParams();
+  const collectionsTab = params.get('tab') === 'collections';
   const [persona, setPersona] = useState<Persona | null>(null);
   const [pieces, setPieces] = useState<Piece[]>([]);
   const [readingId, setReadingId] = useState<string | null>(null);
@@ -78,6 +81,7 @@ function PublicWallContent() {
 
         setPersona(publicPersona);
 
+        if (collectionsTab) return;
         const page = await getPublicPieces(handle, {
           limit: PAGE_SIZE,
         });
@@ -102,7 +106,7 @@ function PublicWallContent() {
     return () => {
       cancelled = true;
     };
-  }, [handle]);
+  }, [handle, collectionsTab]);
 
   async function loadMore() {
     if (!handle || !nextCursor || isLoadingMore) return;
@@ -172,91 +176,115 @@ function PublicWallContent() {
         <p className="wall-handle">@{persona.handle}</p>
       </section>
 
-      <div className="writer-tabs">
-        <span className="eyebrow">{pieces.length === 1 ? '1 page' : `${pieces.length} pages`}</span>
+      <div className="writer-tabs discovery-tabs">
+        <button
+          className="varaq-action"
+          aria-pressed={!collectionsTab}
+          onClick={() => setParams({})}
+        >
+          Pages
+        </button>
+        <button
+          className="varaq-action"
+          aria-pressed={collectionsTab}
+          onClick={() => setParams({ tab: 'collections' })}
+        >
+          Collections
+        </button>
+        {!collectionsTab && (
+          <span className="eyebrow">
+            {pieces.length}
+            {nextCursor ? '+' : ''} {pieces.length === 1 ? 'page' : 'pages'}
+          </span>
+        )}
       </div>
 
-      {pieces.length === 0 && (
-        <div className="empty-page">
-          <Feather />
-          <h2>No pages here just yet.</h2>
-          <p>This writer’s public pages will find their way here when they’re ready.</p>
-          <Link to="/discover" className="literary-button wall-write-link">
-            Explore writing <ArrowRight size={14} />
-          </Link>
-        </div>
+      {collectionsTab ? (
+        <PublicDirectory key={handle} handle={handle} />
+      ) : (
+        <>
+          {pieces.length === 0 && (
+            <div className="empty-page">
+              <Feather />
+              <h2>No pages here just yet.</h2>
+              <p>This writer’s public pages will find their way here when they’re ready.</p>
+              <Link to="/discover" className="literary-button wall-write-link">
+                Explore writing <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+
+          {pieces.length > 0 && (
+            <div className="writing-grid wall-writing-grid">
+              {[0, 1, 2].map((column) => {
+                const columnPieces = pieces.filter((_, index) => index % 3 === column);
+
+                return (
+                  <div className="writing-column" key={column}>
+                    {columnPieces.map((piece) => {
+                      const pieceIndex = pieces.findIndex((item) => item.id === piece.id);
+                      const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
+
+                      return (
+                        <article key={piece.id} className={`writing-card tone-${tone}`}>
+                          <div className="card-meta">
+                            <span>{formatDate(piece.publishedAt ?? piece.createdAt)}</span>
+                            <span className="card-type">{formatType(piece.type)}</span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="card-read wall-card-content"
+                            aria-label={`Read ${piece.title}`}
+                            onClick={() => setReadingId(piece.id)}
+                          >
+                            <h2>{piece.title}</h2>
+                            <p className="card-excerpt">{getExcerpt(piece.body)}</p>
+                          </button>
+
+                          <div className="card-footer wall-card-footer">
+                            <span>{getReadTime(piece.body)} min read</span>
+                            <span>Published</span>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {piecesError && (
+            <p className="wall-inline-error" role="status">
+              {piecesError}
+            </p>
+          )}
+
+          {nextCursor && (
+            <div className="wall-load-more">
+              <button
+                type="button"
+                onClick={() => void loadMore()}
+                disabled={isLoadingMore}
+                className="wall-load-button"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    Loading…
+                  </>
+                ) : (
+                  <>
+                    Load more pages
+                    <ArrowRight size={14} />
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </>
       )}
-
-      {pieces.length > 0 && (
-        <div className="writing-grid wall-writing-grid">
-          {[0, 1, 2].map((column) => {
-            const columnPieces = pieces.filter((_, index) => index % 3 === column);
-
-            return (
-              <div className="writing-column" key={column}>
-                {columnPieces.map((piece) => {
-                  const pieceIndex = pieces.findIndex((item) => item.id === piece.id);
-                  const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
-
-                  return (
-                    <article key={piece.id} className={`writing-card tone-${tone}`}>
-                      <div className="card-meta">
-                        <span>{formatDate(piece.publishedAt ?? piece.createdAt)}</span>
-                        <span className="card-type">{formatType(piece.type)}</span>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="card-read wall-card-content"
-                        aria-label={`Read ${piece.title}`}
-                        onClick={() => setReadingId(piece.id)}
-                      >
-                        <h2>{piece.title}</h2>
-                        <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                      </button>
-
-                      <div className="card-footer wall-card-footer">
-                        <span>{getReadTime(piece.body)} min read</span>
-                        <span>Published</span>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {piecesError && (
-        <p className="wall-inline-error" role="status">
-          {piecesError}
-        </p>
-      )}
-
-      {nextCursor && (
-        <div className="wall-load-more">
-          <button
-            type="button"
-            onClick={() => void loadMore()}
-            disabled={isLoadingMore}
-            className="wall-load-button"
-          >
-            {isLoadingMore ? (
-              <>
-                <RefreshCw size={14} className="animate-spin" />
-                Loading…
-              </>
-            ) : (
-              <>
-                Load more pages
-                <ArrowRight size={14} />
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
       <ReadingDialog reading={reading} onClose={() => setReadingId(null)} />
 
       <footer className="page-footer">
@@ -270,13 +298,14 @@ function PublicWallContent() {
 export function PublicWallPage() {
   const { handle } = useParams<{ handle: string }>();
   const { user, persona, isLoading, isPersonaLoading } = useAuth();
+  const [params] = useSearchParams();
   if (isLoading || (user && isPersonaLoading))
     return (
       <section className="page-section">
         <p role="status">Opening the wall…</p>
       </section>
     );
-  return user && persona && persona.handle === handle ? (
+  return user && persona && persona.handle === handle && params.get('tab') !== 'collections' ? (
     <ProfilePage key={`${user.id}:${persona.id}`} />
   ) : (
     <PublicWallContent key={`${user?.id || 'visitor'}:${handle}`} />

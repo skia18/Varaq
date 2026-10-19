@@ -8,9 +8,10 @@ import {
   type ReactNode,
 } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
-import { apiRequest } from '@/lib/api';
+import { type Persona, apiRequest } from '@/lib/api';
 
 export type Collection = {
+  curator?: Persona;
   id: string;
   name: string;
   description: string;

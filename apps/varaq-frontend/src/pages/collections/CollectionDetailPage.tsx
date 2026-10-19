@@ -98,8 +98,22 @@ export function CollectionDetailPage() {
   }
   return (
     <div className="page-content collections-page collection-detail">
-      <Link className="collection-back" to="/collections">
-        <ArrowLeft aria-hidden="true" /> All collections
+      <Link
+        className="collection-back"
+        to={
+          owned
+            ? '/collections'
+            : collection?.curator
+              ? `/wall/${encodeURIComponent(collection.curator.handle)}?tab=collections`
+              : '/discover'
+        }
+      >
+        <ArrowLeft aria-hidden="true" />{' '}
+        {owned
+          ? 'All collections'
+          : collection?.curator
+            ? 'Back to curator’s collections'
+            : 'Discover'}
       </Link>
       {loading ? (
         <p className="collection-notice" role="status">
@@ -128,6 +142,14 @@ export function CollectionDetailPage() {
                       : 'A shared anthology'}
                 </span>
                 <h1>{collection.name}</h1>
+                {collection.curator && (
+                  <p>
+                    Collected by{' '}
+                    <Link to={`/wall/${encodeURIComponent(collection.curator.handle)}`}>
+                      {collection.curator.displayName} · @{collection.curator.handle}
+                    </Link>
+                  </p>
+                )}
                 <p>
                   {collection.description ||
                     (collection.systemType

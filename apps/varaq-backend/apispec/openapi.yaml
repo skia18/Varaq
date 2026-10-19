@@ -68,6 +68,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
   /api/v1/personas:
+    get:
+      tags: [Personas]
+      operationId: searchPersonas
+      summary: Search public personas by display name or handle
+      description: Case-insensitive literal matching, including personas without writing. Exact handles rank first, then name or handle prefixes, then partial matches. A leading @ is optional. Empty searches browse by handle. Cursors belong to the normalized query.
+      security: []
+      parameters:
+        - {name: q, in: query, schema: {type: string, maxLength: 300}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 20}}
+        - {name: cursor, in: query, schema: {type: string}}
+      responses:
+        "200":
+          description: Matching personas
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PersonaPage'}
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "500":
+          $ref: '#/components/responses/InternalError'
     post:
       tags:
         - Personas
@@ -105,6 +125,29 @@ paths:
                 $ref: "#/components/schemas/Error"
         "500":
           $ref: "#/components/responses/InternalError"
+  /api/v1/personas/{handle}/collections:
+    get:
+      tags: [Collections]
+      operationId: listPersonaPublicCollections
+      summary: List a persona's public custom collections
+      description: Newest created first with stable ID ordering. Counts include only currently public published pieces. Saved and private collections are excluded.
+      security: []
+      parameters:
+        - {name: handle, in: path, required: true, schema: {type: string}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 50, default: 20}}
+        - {name: cursor, in: query, schema: {type: string}}
+      responses:
+        "200":
+          description: Public collections
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PublicCollectionPage'}
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "404":
+          description: Persona unavailable
+        "500":
+          $ref: '#/components/responses/InternalError'
   /api/v1/personas/{handle}:
     parameters:
       - $ref: "#/components/parameters/Handle"
@@ -1390,10 +1433,37 @@ components:
         type: string
         format: uuid
   schemas:
+    PersonaPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/Persona'}
+        nextCursor: {type: string, nullable: true}
+    PublicCollectionSummary:
+      type: object
+      required: [id, name, description, pieceCount, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        description: {type: string}
+        pieceCount: {type: integer, minimum: 0}
+        createdAt: {type: string, format: date-time}
+    PublicCollectionPage:
+      type: object
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/PublicCollectionSummary'}
+        nextCursor: {type: string, nullable: true}
     Collection:
       type: object
       required: [id, name, description, systemType, visibility, pieceIds, createdAt, updatedAt]
       properties:
+        curator:
+          $ref: '#/components/schemas/Persona'
         id: {type: string, format: uuid}
         name: {type: string}
         description: {type: string}

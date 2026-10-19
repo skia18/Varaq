@@ -1,6 +1,8 @@
 // @ts-nocheck -- generated upstream code; application consumers remain type checked.
 /* tslint:disable */
 /* eslint-disable */
+export * from './Collection';
+export * from './CollectionInput';
 export * from './CreatePersona';
 export * from './ErrorError';
 export * from './FeedPage';
@@ -11,10 +13,13 @@ export * from './InternalError';
 export * from './InternalErrorError';
 export * from './ModelError';
 export * from './Persona';
+export * from './PersonaPage';
 export * from './Piece';
 export * from './PiecePage';
 export * from './PieceStatus';
 export * from './PieceType';
+export * from './PublicCollectionPage';
+export * from './PublicCollectionSummary';
 export * from './Sealed';
 export * from './UpdatePersona';
 export * from './UpdatePiece';
@@ -35,5 +40,3 @@ export * from './VaultReturnStage';
 export * from './VaultRevision';
 export * from './VaultTransfer';
 export * from './Visibility';
-export * from './Collection';
-export * from './CollectionInput';
