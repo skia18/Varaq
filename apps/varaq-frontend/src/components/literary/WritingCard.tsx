@@ -1,5 +1,6 @@
 import { BookmarkPicker } from '../../features/collections/BookmarkPicker';
 import type { Writing } from '../../features/feed/writings';
+import { Link } from 'react-router-dom';
 
 type WritingCardProps = {
   writing: Writing;
@@ -10,7 +11,13 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
   const content = (
     <>
       <div className="card-meta">
-        <span className="card-author">{writing.author}</span>
+        <Link
+          className="card-author"
+          to={`/wall/${encodeURIComponent(writing.handle)}`}
+          aria-label={`Visit ${writing.author}’s wall`}
+        >
+          {writing.author}
+        </Link>
         <span className="card-type">
           {writing.form === 'Short stories' ? 'Short story' : writing.form.replace(/s$/, '')}
         </span>

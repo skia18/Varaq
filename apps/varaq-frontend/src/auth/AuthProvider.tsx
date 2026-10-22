@@ -82,18 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    void supabase.auth.getSession().then(({ data, error }) => {
-      const initialSession = error ? null : data.session;
-
-      setSession(initialSession);
-      if (initialSession) setIsPersonaLoading(true);
-      setIsLoading(false);
-
-      if (initialSession) {
-        void refreshPersona();
-      }
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 

@@ -153,7 +153,7 @@
 }
 
 .search-result:hover,
-.search-result:focus-visible {
+.search-result:focus-within {
   background: color-mix(in oklab, var(--primary) 5%, transparent);
 }
 
@@ -185,6 +185,14 @@
   gap: 4px;
 }
 
+.search-result-copy > button {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: inherit;
+  text-align: left;
+}
+
 .search-result-copy strong {
   font-family: var(--font-display);
   font-size: 20px;
@@ -195,6 +203,18 @@
 .search-result-copy small {
   color: var(--muted-foreground);
   font-size: 9px;
+}
+
+.search-result-copy small a:hover,
+.search-result-copy small a:focus-visible {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.search-result-open {
+  flex-shrink: 0;
+  color: var(--faded);
 }
 
 .search-result-excerpt {

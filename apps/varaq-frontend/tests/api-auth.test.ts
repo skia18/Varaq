@@ -50,3 +50,29 @@ test('failed refresh preserves the authentication error without retrying', async
   await expect(apiRequest('/api/v1/me/persona')).rejects.toMatchObject({ status: 401 });
   expect(request).toHaveBeenCalledTimes(1);
 });
+
+test('concurrent authentication failures share one token refresh', async () => {
+  request.mockImplementation(async (_url, options) =>
+    options.headers.get('Authorization') === 'Bearer old'
+      ? rejected()
+      : new Response(JSON.stringify({ id: 'persona' })),
+  );
+  let finishRefresh!: (value: unknown) => void;
+  mocks.refreshSession.mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        finishRefresh = resolve;
+      }),
+  );
+
+  const first = apiRequest('/api/v1/me/persona');
+  const second = apiRequest('/api/v1/me/persona');
+  await vi.waitFor(() => expect(mocks.refreshSession).toHaveBeenCalledTimes(1));
+  finishRefresh({ data: { session: { access_token: 'new' } }, error: null });
+
+  await expect(Promise.all([first, second])).resolves.toEqual([
+    { id: 'persona' },
+    { id: 'persona' },
+  ]);
+  expect(mocks.refreshSession).toHaveBeenCalledTimes(1);
+});

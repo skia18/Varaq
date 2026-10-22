@@ -20,84 +20,87 @@ import { mapValues } from '../runtime';
  * @interface PublicCollectionSummary
  */
 export interface PublicCollectionSummary {
-    /**
-     *
-     * @type {string}
-     * @memberof PublicCollectionSummary
-     */
-    id: string;
-    /**
-     *
-     * @type {string}
-     * @memberof PublicCollectionSummary
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof PublicCollectionSummary
-     */
-    description: string;
-    /**
-     *
-     * @type {number}
-     * @memberof PublicCollectionSummary
-     */
-    pieceCount: number;
-    /**
-     *
-     * @type {Date}
-     * @memberof PublicCollectionSummary
-     */
-    createdAt: Date;
+  /**
+   *
+   * @type {string}
+   * @memberof PublicCollectionSummary
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublicCollectionSummary
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof PublicCollectionSummary
+   */
+  description: string;
+  /**
+   *
+   * @type {number}
+   * @memberof PublicCollectionSummary
+   */
+  pieceCount: number;
+  /**
+   *
+   * @type {Date}
+   * @memberof PublicCollectionSummary
+   */
+  createdAt: Date;
 }
 
 /**
  * Check if a given object implements the PublicCollectionSummary interface.
  */
 export function instanceOfPublicCollectionSummary(value: object): value is PublicCollectionSummary {
-    if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('description' in value) || value['description'] === undefined) return false;
-    if (!('pieceCount' in value) || value['pieceCount'] === undefined) return false;
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
-    return true;
+  if (!('id' in value) || value['id'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('description' in value) || value['description'] === undefined) return false;
+  if (!('pieceCount' in value) || value['pieceCount'] === undefined) return false;
+  if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+  return true;
 }
 
 export function PublicCollectionSummaryFromJSON(json: any): PublicCollectionSummary {
-    return PublicCollectionSummaryFromJSONTyped(json, false);
+  return PublicCollectionSummaryFromJSONTyped(json, false);
 }
 
-export function PublicCollectionSummaryFromJSONTyped(json: any, ignoreDiscriminator: boolean): PublicCollectionSummary {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'id': json['id'],
-        'name': json['name'],
-        'description': json['description'],
-        'pieceCount': json['pieceCount'],
-        'createdAt': (new Date(json['createdAt'])),
-    };
+export function PublicCollectionSummaryFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): PublicCollectionSummary {
+  if (json == null) {
+    return json;
+  }
+  return {
+    id: json['id'],
+    name: json['name'],
+    description: json['description'],
+    pieceCount: json['pieceCount'],
+    createdAt: new Date(json['createdAt']),
+  };
 }
 
 export function PublicCollectionSummaryToJSON(json: any): PublicCollectionSummary {
-    return PublicCollectionSummaryToJSONTyped(json, false);
+  return PublicCollectionSummaryToJSONTyped(json, false);
 }
 
-export function PublicCollectionSummaryToJSONTyped(value?: PublicCollectionSummary | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function PublicCollectionSummaryToJSONTyped(
+  value?: PublicCollectionSummary | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'id': value['id'],
-        'name': value['name'],
-        'description': value['description'],
-        'pieceCount': value['pieceCount'],
-        'createdAt': ((value['createdAt']).toISOString()),
-    };
+  return {
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    pieceCount: value['pieceCount'],
+    createdAt: value['createdAt'].toISOString(),
+  };
 }
-

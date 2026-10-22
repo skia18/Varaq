@@ -1,7 +1,10 @@
 import { Dialog } from '@base-ui/react/dialog';
+import { Link } from 'react-router-dom';
 import type { Writing } from '@/features/feed/writings';
 
-type Reading = Pick<Writing, 'title' | 'form' | 'minutes' | 'author' | 'date' | 'body'>;
+type Reading = Pick<Writing, 'title' | 'form' | 'minutes' | 'author' | 'date' | 'body'> & {
+  handle?: string;
+};
 
 export function ReadingDialog({
   reading,
@@ -31,7 +34,19 @@ export function ReadingDialog({
                 </span>
                 <Dialog.Title className="reading-title">{reading.title}</Dialog.Title>
                 <p className="reading-byline">
-                  by {reading.author} · {reading.date}
+                  by{' '}
+                  {reading.handle ? (
+                    <Link
+                      to={`/wall/${encodeURIComponent(reading.handle)}`}
+                      onClick={onClose}
+                      aria-label={`Visit ${reading.author}’s wall`}
+                    >
+                      {reading.author}
+                    </Link>
+                  ) : (
+                    reading.author
+                  )}{' '}
+                  · {reading.date}
                 </p>
                 <div className="reading-body">{reading.body}</div>
               </>

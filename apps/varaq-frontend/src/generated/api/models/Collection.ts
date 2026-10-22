@@ -16,10 +16,10 @@
 import { mapValues } from '../runtime';
 import type { Persona } from './Persona';
 import {
-    PersonaFromJSON,
-    PersonaFromJSONTyped,
-    PersonaToJSON,
-    PersonaToJSONTyped,
+  PersonaFromJSON,
+  PersonaFromJSONTyped,
+  PersonaToJSON,
+  PersonaToJSONTyped,
 } from './Persona';
 
 /**
@@ -28,138 +28,138 @@ import {
  * @interface Collection
  */
 export interface Collection {
-    /**
-     *
-     * @type {Persona}
-     * @memberof Collection
-     */
-    curator?: Persona;
-    /**
-     *
-     * @type {string}
-     * @memberof Collection
-     */
-    id: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Collection
-     */
-    name: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Collection
-     */
-    description: string;
-    /**
-     *
-     * @type {string}
-     * @memberof Collection
-     */
-    systemType: CollectionSystemTypeEnum | null;
-    /**
-     *
-     * @type {string}
-     * @memberof Collection
-     */
-    visibility: CollectionVisibilityEnum;
-    /**
-     * Currently public published pieces, most recently added first
-     * @type {Array<string>}
-     * @memberof Collection
-     */
-    pieceIds: Array<string>;
-    /**
-     *
-     * @type {Date}
-     * @memberof Collection
-     */
-    createdAt: Date;
-    /**
-     *
-     * @type {Date}
-     * @memberof Collection
-     */
-    updatedAt: Date;
+  /**
+   *
+   * @type {Persona}
+   * @memberof Collection
+   */
+  curator?: Persona;
+  /**
+   *
+   * @type {string}
+   * @memberof Collection
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Collection
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Collection
+   */
+  description: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Collection
+   */
+  systemType: CollectionSystemTypeEnum | null;
+  /**
+   *
+   * @type {string}
+   * @memberof Collection
+   */
+  visibility: CollectionVisibilityEnum;
+  /**
+   * Currently public published pieces, most recently added first
+   * @type {Array<string>}
+   * @memberof Collection
+   */
+  pieceIds: Array<string>;
+  /**
+   *
+   * @type {Date}
+   * @memberof Collection
+   */
+  createdAt: Date;
+  /**
+   *
+   * @type {Date}
+   * @memberof Collection
+   */
+  updatedAt: Date;
 }
-
 
 /**
  * @export
  */
 export const CollectionSystemTypeEnum = {
-    Saved: 'saved'
+  Saved: 'saved',
 } as const;
-export type CollectionSystemTypeEnum = typeof CollectionSystemTypeEnum[keyof typeof CollectionSystemTypeEnum];
+export type CollectionSystemTypeEnum =
+  (typeof CollectionSystemTypeEnum)[keyof typeof CollectionSystemTypeEnum];
 
 /**
  * @export
  */
 export const CollectionVisibilityEnum = {
-    Private: 'private',
-    Public: 'public'
+  Private: 'private',
+  Public: 'public',
 } as const;
-export type CollectionVisibilityEnum = typeof CollectionVisibilityEnum[keyof typeof CollectionVisibilityEnum];
-
+export type CollectionVisibilityEnum =
+  (typeof CollectionVisibilityEnum)[keyof typeof CollectionVisibilityEnum];
 
 /**
  * Check if a given object implements the Collection interface.
  */
 export function instanceOfCollection(value: object): value is Collection {
-    if (!('id' in value) || value['id'] === undefined) return false;
-    if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('description' in value) || value['description'] === undefined) return false;
-    if (!('systemType' in value) || value['systemType'] === undefined) return false;
-    if (!('visibility' in value) || value['visibility'] === undefined) return false;
-    if (!('pieceIds' in value) || value['pieceIds'] === undefined) return false;
-    if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
-    if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
-    return true;
+  if (!('id' in value) || value['id'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('description' in value) || value['description'] === undefined) return false;
+  if (!('systemType' in value) || value['systemType'] === undefined) return false;
+  if (!('visibility' in value) || value['visibility'] === undefined) return false;
+  if (!('pieceIds' in value) || value['pieceIds'] === undefined) return false;
+  if (!('createdAt' in value) || value['createdAt'] === undefined) return false;
+  if (!('updatedAt' in value) || value['updatedAt'] === undefined) return false;
+  return true;
 }
 
 export function CollectionFromJSON(json: any): Collection {
-    return CollectionFromJSONTyped(json, false);
+  return CollectionFromJSONTyped(json, false);
 }
 
 export function CollectionFromJSONTyped(json: any, ignoreDiscriminator: boolean): Collection {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'curator': json['curator'] == null ? undefined : PersonaFromJSON(json['curator']),
-        'id': json['id'],
-        'name': json['name'],
-        'description': json['description'],
-        'systemType': json['systemType'],
-        'visibility': json['visibility'],
-        'pieceIds': json['pieceIds'],
-        'createdAt': (new Date(json['createdAt'])),
-        'updatedAt': (new Date(json['updatedAt'])),
-    };
+  if (json == null) {
+    return json;
+  }
+  return {
+    curator: json['curator'] == null ? undefined : PersonaFromJSON(json['curator']),
+    id: json['id'],
+    name: json['name'],
+    description: json['description'],
+    systemType: json['systemType'],
+    visibility: json['visibility'],
+    pieceIds: json['pieceIds'],
+    createdAt: new Date(json['createdAt']),
+    updatedAt: new Date(json['updatedAt']),
+  };
 }
 
 export function CollectionToJSON(json: any): Collection {
-    return CollectionToJSONTyped(json, false);
+  return CollectionToJSONTyped(json, false);
 }
 
-export function CollectionToJSONTyped(value?: Collection | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function CollectionToJSONTyped(
+  value?: Collection | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'curator': PersonaToJSON(value['curator']),
-        'id': value['id'],
-        'name': value['name'],
-        'description': value['description'],
-        'systemType': value['systemType'],
-        'visibility': value['visibility'],
-        'pieceIds': value['pieceIds'],
-        'createdAt': ((value['createdAt']).toISOString()),
-        'updatedAt': ((value['updatedAt']).toISOString()),
-    };
+  return {
+    curator: PersonaToJSON(value['curator']),
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    systemType: value['systemType'],
+    visibility: value['visibility'],
+    pieceIds: value['pieceIds'],
+    createdAt: value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'].toISOString(),
+  };
 }
-

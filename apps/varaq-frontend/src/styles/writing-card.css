@@ -106,6 +106,13 @@
   gap: 6px;
 }
 
+.card-author:hover,
+.card-author:focus-visible {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .card-author::before {
   width: 4px;
 

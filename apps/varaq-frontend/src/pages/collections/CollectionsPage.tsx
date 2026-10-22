@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 import {
   ArrowUpRight,
   Bookmark,
@@ -8,25 +8,25 @@ import {
   LockKeyhole,
   Plus,
   Search,
-} from "lucide-react";
-import { Link } from "react-router-dom";
-import { useCollections } from "@/features/collections/CollectionsContext";
-import { CollectionForm } from "@/features/collections/CollectionForm";
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useCollections } from '@/features/collections/CollectionsContext';
+import { CollectionForm } from '@/features/collections/CollectionForm';
 
 export function CollectionsPage() {
   const { collections, loading, error, create, refresh, membership } = useCollections();
   const [creating, setCreating] = useState(false),
-    [query, setQuery] = useState(""),
-    [message, setMessage] = useState(""),
+    [query, setQuery] = useState(''),
+    [message, setMessage] = useState(''),
     [importing, setImporting] = useState(false);
   const [legacy, setLegacy] = useState<string[]>(() => {
     try {
-      const ids: unknown = JSON.parse(localStorage.getItem("varaq:saved-pages") ?? "[]");
+      const ids: unknown = JSON.parse(localStorage.getItem('varaq:saved-pages') ?? '[]');
       return Array.isArray(ids)
         ? [
             ...new Set(
               ids.filter(
-                (id): id is string => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id),
+                (id): id is string => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id),
               ),
             ),
           ]
@@ -36,7 +36,7 @@ export function CollectionsPage() {
     }
   });
   async function importSaved() {
-    const saved = collections.find((c) => c.systemType === "saved");
+    const saved = collections.find((c) => c.systemType === 'saved');
     if (!saved) return;
     setImporting(true);
     const failed: string[] = [];
@@ -49,15 +49,15 @@ export function CollectionsPage() {
     }
     setLegacy(failed);
     try {
-      if (failed.length) localStorage.setItem("varaq:saved-pages", JSON.stringify(failed));
-      else localStorage.removeItem("varaq:saved-pages");
+      if (failed.length) localStorage.setItem('varaq:saved-pages', JSON.stringify(failed));
+      else localStorage.removeItem('varaq:saved-pages');
     } catch {
       /* Preserve in-memory result if storage is unavailable. */
     }
     setMessage(
       failed.length
         ? `${legacy.length - failed.length} imported. ${failed.length} could not be imported; original browser saves retained for retry.`
-        : "Browser saves imported.",
+        : 'Browser saves imported.',
     );
     setImporting(false);
   }
@@ -88,7 +88,7 @@ export function CollectionsPage() {
             disabled={loading || importing}
             onClick={() => void importSaved()}
           >
-            {importing ? "Importing…" : "Import browser saves"}
+            {importing ? 'Importing…' : 'Import browser saves'}
           </button>
         </section>
       )}
@@ -112,7 +112,7 @@ export function CollectionsPage() {
           </span>
         </label>
         <span className="collection-tally">
-          {collections.length} {collections.length === 1 ? "collection" : "collections"} · A little
+          {collections.length} {collections.length === 1 ? 'collection' : 'collections'} · A little
           room for what stays.
         </span>
       </div>
@@ -122,10 +122,10 @@ export function CollectionsPage() {
         </p>
       ) : error ? (
         <p className="collection-notice collection-notice--error" role="alert">
-          {error}{" "}
+          {error}{' '}
           <button
             className="varaq-action varaq-action--small"
-            onClick={() => void refresh().catch(() => setMessage("Could not load collections."))}
+            onClick={() => void refresh().catch(() => setMessage('Could not load collections.'))}
           >
             Retry
           </button>
@@ -134,53 +134,53 @@ export function CollectionsPage() {
         <section className="collections-grid" aria-label="Your collections">
           {collections
             .filter((c) =>
-              (c.name + " " + c.description).toLowerCase().includes(query.toLowerCase()),
+              (c.name + ' ' + c.description).toLowerCase().includes(query.toLowerCase()),
             )
             .map((c) => (
               <Link
-                className={`collection-tile ${c.systemType ? "collection-tile-saved" : ""}`}
+                className={`collection-tile ${c.systemType ? 'collection-tile-saved' : ''}`}
                 to={`/collections/${c.id}`}
                 key={c.id}
               >
                 <div className="collection-art" aria-hidden="true">
                   <span className="collection-art-label">
-                    {c.systemType ? "The pages you keep" : "A personal anthology"}
+                    {c.systemType ? 'The pages you keep' : 'A personal anthology'}
                   </span>
                   <span className="collection-art-emblem">
                     {c.systemType ? <Bookmark /> : <BookOpen />}
                   </span>
                   <span className="collection-art-note">
                     {c.systemType
-                      ? "For another day, another reading."
-                      : "Words, gathered in your own way."}
+                      ? 'For another day, another reading.'
+                      : 'Words, gathered in your own way.'}
                   </span>
                 </div>
                 <span className="collection-tile-heading">
                   <span className="collection-eyebrow">
-                    {c.systemType ? "Made for you" : "Your collection"}
+                    {c.systemType ? 'Made for you' : 'Your collection'}
                   </span>
                   <ArrowUpRight aria-hidden="true" />
                 </span>
                 <h2>{c.name}</h2>
                 <p>
                   {c.description ||
-                    (c.systemType ? "Some words ask to be kept." : "A place for gathered pages.")}
+                    (c.systemType ? 'Some words ask to be kept.' : 'A place for gathered pages.')}
                 </p>
                 <div className="collection-tile-footer">
                   <small>
-                    {c.pieceIds.length} {c.pieceIds.length === 1 ? "piece" : "pieces"}
+                    {c.pieceIds.length} {c.pieceIds.length === 1 ? 'piece' : 'pieces'}
                   </small>
                   <span className="collection-privacy">
-                    {c.visibility === "private" ? (
+                    {c.visibility === 'private' ? (
                       <LockKeyhole aria-hidden="true" />
                     ) : (
                       <Globe2 aria-hidden="true" />
                     )}
                     {c.systemType
-                      ? "Always private"
-                      : c.visibility === "private"
-                        ? "Private"
-                        : "Public"}
+                      ? 'Always private'
+                      : c.visibility === 'private'
+                        ? 'Private'
+                        : 'Public'}
                   </span>
                 </div>
               </Link>

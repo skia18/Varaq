@@ -16,10 +16,10 @@
 import { mapValues } from '../runtime';
 import type { Persona } from './Persona';
 import {
-    PersonaFromJSON,
-    PersonaFromJSONTyped,
-    PersonaToJSON,
-    PersonaToJSONTyped,
+  PersonaFromJSON,
+  PersonaFromJSONTyped,
+  PersonaToJSON,
+  PersonaToJSONTyped,
 } from './Persona';
 
 /**
@@ -28,57 +28,57 @@ import {
  * @interface PersonaPage
  */
 export interface PersonaPage {
-    /**
-     *
-     * @type {Array<Persona>}
-     * @memberof PersonaPage
-     */
-    items: Array<Persona>;
-    /**
-     *
-     * @type {string}
-     * @memberof PersonaPage
-     */
-    nextCursor: string;
+  /**
+   *
+   * @type {Array<Persona>}
+   * @memberof PersonaPage
+   */
+  items: Array<Persona>;
+  /**
+   *
+   * @type {string}
+   * @memberof PersonaPage
+   */
+  nextCursor: string;
 }
 
 /**
  * Check if a given object implements the PersonaPage interface.
  */
 export function instanceOfPersonaPage(value: object): value is PersonaPage {
-    if (!('items' in value) || value['items'] === undefined) return false;
-    if (!('nextCursor' in value) || value['nextCursor'] === undefined) return false;
-    return true;
+  if (!('items' in value) || value['items'] === undefined) return false;
+  if (!('nextCursor' in value) || value['nextCursor'] === undefined) return false;
+  return true;
 }
 
 export function PersonaPageFromJSON(json: any): PersonaPage {
-    return PersonaPageFromJSONTyped(json, false);
+  return PersonaPageFromJSONTyped(json, false);
 }
 
 export function PersonaPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): PersonaPage {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'items': ((json['items'] as Array<any>).map(PersonaFromJSON)),
-        'nextCursor': json['nextCursor'],
-    };
+  if (json == null) {
+    return json;
+  }
+  return {
+    items: (json['items'] as Array<any>).map(PersonaFromJSON),
+    nextCursor: json['nextCursor'],
+  };
 }
 
 export function PersonaPageToJSON(json: any): PersonaPage {
-    return PersonaPageToJSONTyped(json, false);
+  return PersonaPageToJSONTyped(json, false);
 }
 
-export function PersonaPageToJSONTyped(value?: PersonaPage | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function PersonaPageToJSONTyped(
+  value?: PersonaPage | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'items': ((value['items'] as Array<any>).map(PersonaToJSON)),
-        'nextCursor': value['nextCursor'],
-    };
+  return {
+    items: (value['items'] as Array<any>).map(PersonaToJSON),
+    nextCursor: value['nextCursor'],
+  };
 }
-

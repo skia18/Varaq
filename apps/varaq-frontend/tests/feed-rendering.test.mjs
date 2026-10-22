@@ -10,7 +10,7 @@ import { DiscoverPage } from '@/pages/discover/DiscoverPage';
 
 // Rendering tests must not initialize a real Supabase client or call the API.
 vi.mock('@/lib/api', () => ({ getFeed: vi.fn(), apiRequest: vi.fn().mockResolvedValue([]) }));
-vi.mock('@/auth/AuthProvider', () => ({ useAuth: () => ({user: null}) }));
+vi.mock('@/auth/AuthProvider', () => ({ useAuth: () => ({ user: null }) }));
 
 const writings = Array.from({ length: 10 }, (_, i) => ({
   id: String(i + 1),
@@ -28,9 +28,13 @@ const writings = Array.from({ length: 10 }, (_, i) => ({
 test('all ten commons cards remain in publication order without hidden column containers', () => {
   const html = renderToString(
     React.createElement(
-      CollectionsProvider,
+      MemoryRouter,
       null,
-      React.createElement(FeedGrid, { writings, onRead() {} }),
+      React.createElement(
+        CollectionsProvider,
+        null,
+        React.createElement(FeedGrid, { writings, onRead() {} }),
+      ),
     ),
   );
   assert.equal((html.match(/<article /g) ?? []).length, 10);
@@ -67,7 +71,11 @@ test('truncated search exposes a query-preserving link and an incomplete count',
   const html = renderSearch();
   assert.ok(html.includes('View all results'));
   assert.ok(html.includes('10<!-- -->+'));
-  const href = html.match(/href="([^"]+)"/)[1].replaceAll('&amp;', '&');
+  assert.ok(html.includes('href="/wall/a_writer"'));
+  const href = [...html.matchAll(/href="([^"]+)"/g)]
+    .map((match) => match[1].replaceAll('&amp;', '&'))
+    .find((value) => value.startsWith('/discover'));
+  assert.ok(href);
   const target = new URL(href, 'http://localhost');
   assert.equal(target.pathname, '/discover');
   assert.equal(target.searchParams.get('q'), 'rain & light/ورق');
