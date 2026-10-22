@@ -45,7 +45,7 @@
 /* Original Varaq palette */
 
 :root {
-  --background: oklch(0.936 0.023 85.6);
+  --background: oklch(0.905 0.039 66);
 
   --foreground: oklch(0.261 0.005 89);
 

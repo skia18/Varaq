@@ -25,7 +25,7 @@ const writings = Array.from({ length: 10 }, (_, i) => ({
   date: '2026-10-18',
 }));
 
-test('all ten commons cards remain in publication order without hidden column containers', () => {
+test('all ten commons cards remain in publication order in the wall flow', () => {
   const html = renderToString(
     React.createElement(
       MemoryRouter,
@@ -38,8 +38,15 @@ test('all ten commons cards remain in publication order without hidden column co
     ),
   );
   assert.equal((html.match(/<article /g) ?? []).length, 10);
-  assert.ok(html.includes('class="saved-writing-grid"'));
+  assert.ok(html.includes('class="saved-writing-grid commons-wall"'));
   assert.ok(!html.includes('writing-column')); // old mobile CSS hides the third column
+  assert.equal((html.match(/class="commons-note"/g) ?? []).length, 10);
+  assert.ok(html.includes('tone-paper'));
+  assert.ok(html.includes('tone-sage'));
+  assert.ok(html.includes('tone-red'));
+  assert.ok(html.includes('tone-blue'));
+  assert.ok(html.includes('tone-blush'));
+  assert.ok(html.includes('tone-ochre'));
   let last = -1;
   for (const writing of writings) {
     const position = html.indexOf(`<h2>${writing.title}</h2>`);

@@ -1,7 +1,7 @@
 import type { FeedPiece, PieceType } from '@/lib/api';
 
 export type WritingForm = 'Poems' | 'Short stories' | 'Essays' | 'Letters' | 'Fragments';
-export type WritingTone = 'paper' | 'sage' | 'red' | 'plain';
+export type WritingTone = 'paper' | 'sage' | 'red' | 'plain' | 'blue' | 'blush' | 'ochre';
 export type Writing = {
   id: string;
   title: string;

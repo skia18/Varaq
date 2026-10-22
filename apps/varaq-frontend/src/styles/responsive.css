@@ -45,6 +45,11 @@
     gap: 20px;
   }
 
+  .saved-writing-grid.commons-wall {
+    columns: 2;
+    column-gap: 20px;
+  }
+
   .writing-column:last-child {
     display: none;
   }
@@ -67,6 +72,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 
     gap: 16px;
+  }
+
+  .saved-writing-grid.commons-wall {
+    columns: 1;
   }
 
   .writing-column {
