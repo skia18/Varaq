@@ -37,22 +37,33 @@ export function SearchResults({
         <>
           {matches.length ? (
             matches.map((writing) => (
-              <button
-                type="button"
-                className="search-result"
-                key={writing.id}
-                onClick={() => onRead(writing.id)}
-              >
+              <div className="search-result" key={writing.id}>
                 <span className={`search-result-mark tone-${writing.tone}`} />
                 <span className="search-result-copy">
-                  <strong>{writing.title}</strong>
+                  <button type="button" onClick={() => onRead(writing.id)}>
+                    <strong>{writing.title}</strong>
+                    <span className="search-result-excerpt">{writing.excerpt}</span>
+                  </button>
                   <small>
-                    {writing.author} <span aria-hidden="true">·</span> {writing.form}
+                    <Link
+                      to={`/wall/${encodeURIComponent(writing.handle)}`}
+                      onClick={onClose}
+                      aria-label={`Visit ${writing.author}’s wall`}
+                    >
+                      {writing.author}
+                    </Link>{' '}
+                    <span aria-hidden="true">·</span> {writing.form}
                   </small>
-                  <span className="search-result-excerpt">{writing.excerpt}</span>
                 </span>
-                <ArrowRight aria-hidden="true" className="search-result-arrow" />
-              </button>
+                <button
+                  type="button"
+                  className="search-result-open"
+                  onClick={() => onRead(writing.id)}
+                  aria-label={`Read ${writing.title}`}
+                >
+                  <ArrowRight aria-hidden="true" className="search-result-arrow" />
+                </button>
+              </div>
             ))
           ) : (
             <div className="search-empty">

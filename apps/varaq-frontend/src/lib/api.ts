@@ -26,6 +26,19 @@ export class ApiError extends Error {
   }
 }
 
+type AuthClient = ReturnType<typeof createClient>;
+type RefreshResult = Awaited<ReturnType<AuthClient['auth']['refreshSession']>>;
+let refreshRequest: Promise<RefreshResult> | null = null;
+
+function refreshSessionOnce(supabase: AuthClient) {
+  if (!refreshRequest) {
+    refreshRequest = supabase.auth.refreshSession().finally(() => {
+      refreshRequest = null;
+    });
+  }
+  return refreshRequest;
+}
+
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const supabase = createClient();
   const {
@@ -56,7 +69,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
 
   // Authentication middleware rejects these requests before a handler can mutate data.
   if (response.status === 401 && session?.access_token) {
-    const refreshed = await supabase.auth.refreshSession();
+    const refreshed = await refreshSessionOnce(supabase);
     if (!refreshed.error && refreshed.data.session) {
       headers.set('Authorization', `Bearer ${refreshed.data.session.access_token}`);
       response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });

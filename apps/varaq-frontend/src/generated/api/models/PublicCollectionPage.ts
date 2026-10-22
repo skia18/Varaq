@@ -16,10 +16,10 @@
 import { mapValues } from '../runtime';
 import type { PublicCollectionSummary } from './PublicCollectionSummary';
 import {
-    PublicCollectionSummaryFromJSON,
-    PublicCollectionSummaryFromJSONTyped,
-    PublicCollectionSummaryToJSON,
-    PublicCollectionSummaryToJSONTyped,
+  PublicCollectionSummaryFromJSON,
+  PublicCollectionSummaryFromJSONTyped,
+  PublicCollectionSummaryToJSON,
+  PublicCollectionSummaryToJSONTyped,
 } from './PublicCollectionSummary';
 
 /**
@@ -28,57 +28,60 @@ import {
  * @interface PublicCollectionPage
  */
 export interface PublicCollectionPage {
-    /**
-     *
-     * @type {Array<PublicCollectionSummary>}
-     * @memberof PublicCollectionPage
-     */
-    items: Array<PublicCollectionSummary>;
-    /**
-     *
-     * @type {string}
-     * @memberof PublicCollectionPage
-     */
-    nextCursor: string;
+  /**
+   *
+   * @type {Array<PublicCollectionSummary>}
+   * @memberof PublicCollectionPage
+   */
+  items: Array<PublicCollectionSummary>;
+  /**
+   *
+   * @type {string}
+   * @memberof PublicCollectionPage
+   */
+  nextCursor: string;
 }
 
 /**
  * Check if a given object implements the PublicCollectionPage interface.
  */
 export function instanceOfPublicCollectionPage(value: object): value is PublicCollectionPage {
-    if (!('items' in value) || value['items'] === undefined) return false;
-    if (!('nextCursor' in value) || value['nextCursor'] === undefined) return false;
-    return true;
+  if (!('items' in value) || value['items'] === undefined) return false;
+  if (!('nextCursor' in value) || value['nextCursor'] === undefined) return false;
+  return true;
 }
 
 export function PublicCollectionPageFromJSON(json: any): PublicCollectionPage {
-    return PublicCollectionPageFromJSONTyped(json, false);
+  return PublicCollectionPageFromJSONTyped(json, false);
 }
 
-export function PublicCollectionPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): PublicCollectionPage {
-    if (json == null) {
-        return json;
-    }
-    return {
-
-        'items': ((json['items'] as Array<any>).map(PublicCollectionSummaryFromJSON)),
-        'nextCursor': json['nextCursor'],
-    };
+export function PublicCollectionPageFromJSONTyped(
+  json: any,
+  ignoreDiscriminator: boolean,
+): PublicCollectionPage {
+  if (json == null) {
+    return json;
+  }
+  return {
+    items: (json['items'] as Array<any>).map(PublicCollectionSummaryFromJSON),
+    nextCursor: json['nextCursor'],
+  };
 }
 
 export function PublicCollectionPageToJSON(json: any): PublicCollectionPage {
-    return PublicCollectionPageToJSONTyped(json, false);
+  return PublicCollectionPageToJSONTyped(json, false);
 }
 
-export function PublicCollectionPageToJSONTyped(value?: PublicCollectionPage | null, ignoreDiscriminator: boolean = false): any {
-    if (value == null) {
-        return value;
-    }
+export function PublicCollectionPageToJSONTyped(
+  value?: PublicCollectionPage | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
+  }
 
-    return {
-
-        'items': ((value['items'] as Array<any>).map(PublicCollectionSummaryToJSON)),
-        'nextCursor': value['nextCursor'],
-    };
+  return {
+    items: (value['items'] as Array<any>).map(PublicCollectionSummaryToJSON),
+    nextCursor: value['nextCursor'],
+  };
 }
-

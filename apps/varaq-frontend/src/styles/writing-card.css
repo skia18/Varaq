@@ -40,6 +40,30 @@
   transform: rotate(1.5deg);
 }
 
+.writing-card.tone-blue {
+  background-color: color-mix(in oklab, #789092 62%, var(--card));
+}
+
+.writing-card.tone-blush {
+  background-color: color-mix(in oklab, #b86f5a 58%, var(--card));
+}
+
+.writing-card.tone-ochre {
+  background-color: color-mix(in oklab, #ad8242 64%, var(--card));
+}
+
+.commons-wall .writing-card.tone-paper {
+  background-color: color-mix(in oklab, #c7ad7f 22%, var(--card));
+}
+
+.commons-wall .writing-card.tone-sage {
+  background-color: color-mix(in oklab, #7f8761 55%, var(--card));
+}
+
+.commons-wall .writing-card.tone-red {
+  background-color: #914b3a;
+}
+
 .writing-card.tone-red {
   background-color: var(--primary);
 
@@ -64,7 +88,8 @@
   transform: rotate(-1deg);
 }
 
-.writing-card.tone-paper::before {
+.writing-card.tone-paper::before,
+.commons-wall .writing-card::before {
   position: absolute;
 
   z-index: 2;
@@ -82,6 +107,10 @@
   content: '';
 
   transform: rotate(-5deg);
+}
+
+.commons-wall .writing-card::before {
+  top: -9px;
 }
 
 .card-meta {
@@ -104,6 +133,13 @@
   align-items: center;
 
   gap: 6px;
+}
+
+.card-author:hover,
+.card-author:focus-visible {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .card-author::before {

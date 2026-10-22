@@ -79,6 +79,13 @@
   font-size: 12px;
 }
 
+.reading-byline a:hover,
+.reading-byline a:focus-visible {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .reading-body {
   margin: 28px 0;
 

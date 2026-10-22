@@ -13,7 +13,6 @@
  * Do not edit the class manually.
  */
 
-
 import * as runtime from '../runtime';
 import type {
   Collection,
@@ -22,422 +21,514 @@ import type {
   PublicCollectionPage,
 } from '../models/index';
 import {
-    CollectionFromJSON,
-    CollectionToJSON,
-    CollectionInputFromJSON,
-    CollectionInputToJSON,
-    InternalErrorFromJSON,
-    InternalErrorToJSON,
-    PublicCollectionPageFromJSON,
-    PublicCollectionPageToJSON,
+  CollectionFromJSON,
+  CollectionToJSON,
+  CollectionInputFromJSON,
+  CollectionInputToJSON,
+  InternalErrorFromJSON,
+  InternalErrorToJSON,
+  PublicCollectionPageFromJSON,
+  PublicCollectionPageToJSON,
 } from '../models/index';
 
 export interface AddCollectionPieceRequest {
-    collectionID: string;
-    pieceID: string;
+  collectionID: string;
+  pieceID: string;
 }
 
 export interface CreateCollectionRequest {
-    collectionInput: CollectionInput;
+  collectionInput: CollectionInput;
 }
 
 export interface DeleteCollectionRequest {
-    collectionID: string;
+  collectionID: string;
 }
 
 export interface GetPublicCollectionRequest {
-    collectionID: string;
+  collectionID: string;
 }
 
 export interface ListPersonaPublicCollectionsRequest {
-    handle: string;
-    limit?: number;
-    cursor?: string;
+  handle: string;
+  limit?: number;
+  cursor?: string;
 }
 
 export interface RemoveCollectionPieceRequest {
-    collectionID: string;
-    pieceID: string;
+  collectionID: string;
+  pieceID: string;
 }
 
 export interface UpdateCollectionRequest {
-    collectionID: string;
-    collectionInput: CollectionInput;
+  collectionID: string;
+  collectionInput: CollectionInput;
 }
 
 /**
  *
  */
 export class CollectionsApi extends runtime.BaseAPI {
-
-    /**
-     * Idempotently add a public published piece to own collection
-     */
-    async addCollectionPieceRaw(requestParameters: AddCollectionPieceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['collectionID'] == null) {
-            throw new runtime.RequiredError(
-                'collectionID',
-                'Required parameter "collectionID" was null or undefined when calling addCollectionPiece().'
-            );
-        }
-
-        if (requestParameters['pieceID'] == null) {
-            throw new runtime.RequiredError(
-                'pieceID',
-                'Required parameter "pieceID" was null or undefined when calling addCollectionPiece().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/collections/{collectionID}/pieces/{pieceID}`;
-        urlPath = urlPath.replace(`{${"collectionID"}}`, encodeURIComponent(String(requestParameters['collectionID'])));
-        urlPath = urlPath.replace(`{${"pieceID"}}`, encodeURIComponent(String(requestParameters['pieceID'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
+  /**
+   * Idempotently add a public published piece to own collection
+   */
+  async addCollectionPieceRaw(
+    requestParameters: AddCollectionPieceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['collectionID'] == null) {
+      throw new runtime.RequiredError(
+        'collectionID',
+        'Required parameter "collectionID" was null or undefined when calling addCollectionPiece().',
+      );
     }
 
-    /**
-     * Idempotently add a public published piece to own collection
-     */
-    async addCollectionPiece(requestParameters: AddCollectionPieceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.addCollectionPieceRaw(requestParameters, initOverrides);
+    if (requestParameters['pieceID'] == null) {
+      throw new runtime.RequiredError(
+        'pieceID',
+        'Required parameter "pieceID" was null or undefined when calling addCollectionPiece().',
+      );
     }
 
-    /**
-     * Create a private-by-default collection, optionally with an initial piece atomically
-     */
-    async createCollectionRaw(requestParameters: CreateCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Collection>> {
-        if (requestParameters['collectionInput'] == null) {
-            throw new runtime.RequiredError(
-                'collectionInput',
-                'Required parameter "collectionInput" was null or undefined when calling createCollection().'
-            );
-        }
+    const queryParameters: any = {};
 
-        const queryParameters: any = {};
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
 
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/collections`;
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CollectionInputToJSON(requestParameters['collectionInput']),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionFromJSON(jsonValue));
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
     }
 
-    /**
-     * Create a private-by-default collection, optionally with an initial piece atomically
-     */
-    async createCollection(requestParameters: CreateCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Collection> {
-        const response = await this.createCollectionRaw(requestParameters, initOverrides);
-        return await response.value();
+    let urlPath = `/api/v1/collections/{collectionID}/pieces/{pieceID}`;
+    urlPath = urlPath.replace(
+      `{${'collectionID'}}`,
+      encodeURIComponent(String(requestParameters['collectionID'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'pieceID'}}`,
+      encodeURIComponent(String(requestParameters['pieceID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Idempotently add a public published piece to own collection
+   */
+  async addCollectionPiece(
+    requestParameters: AddCollectionPieceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.addCollectionPieceRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Create a private-by-default collection, optionally with an initial piece atomically
+   */
+  async createCollectionRaw(
+    requestParameters: CreateCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Collection>> {
+    if (requestParameters['collectionInput'] == null) {
+      throw new runtime.RequiredError(
+        'collectionInput',
+        'Required parameter "collectionInput" was null or undefined when calling createCollection().',
+      );
     }
 
-    /**
-     * Delete own custom collection and memberships; preserve original pieces
-     */
-    async deleteCollectionRaw(requestParameters: DeleteCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['collectionID'] == null) {
-            throw new runtime.RequiredError(
-                'collectionID',
-                'Required parameter "collectionID" was null or undefined when calling deleteCollection().'
-            );
-        }
+    const queryParameters: any = {};
 
-        const queryParameters: any = {};
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    headerParameters['Content-Type'] = 'application/json';
 
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
 
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/collections/{collectionID}`;
-        urlPath = urlPath.replace(`{${"collectionID"}}`, encodeURIComponent(String(requestParameters['collectionID'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
     }
 
-    /**
-     * Delete own custom collection and memberships; preserve original pieces
-     */
-    async deleteCollection(requestParameters: DeleteCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.deleteCollectionRaw(requestParameters, initOverrides);
+    let urlPath = `/api/v1/collections`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: CollectionInputToJSON(requestParameters['collectionInput']),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => CollectionFromJSON(jsonValue));
+  }
+
+  /**
+   * Create a private-by-default collection, optionally with an initial piece atomically
+   */
+  async createCollection(
+    requestParameters: CreateCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Collection> {
+    const response = await this.createCollectionRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Delete own custom collection and memberships; preserve original pieces
+   */
+  async deleteCollectionRaw(
+    requestParameters: DeleteCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['collectionID'] == null) {
+      throw new runtime.RequiredError(
+        'collectionID',
+        'Required parameter "collectionID" was null or undefined when calling deleteCollection().',
+      );
     }
 
-    /**
-     * Read a public custom collection; only currently public published piece IDs are returned
-     */
-    async getPublicCollectionRaw(requestParameters: GetPublicCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Collection>> {
-        if (requestParameters['collectionID'] == null) {
-            throw new runtime.RequiredError(
-                'collectionID',
-                'Required parameter "collectionID" was null or undefined when calling getPublicCollection().'
-            );
-        }
+    const queryParameters: any = {};
 
-        const queryParameters: any = {};
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
 
-
-        let urlPath = `/api/v1/collections/{collectionID}/public`;
-        urlPath = urlPath.replace(`{${"collectionID"}}`, encodeURIComponent(String(requestParameters['collectionID'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CollectionFromJSON(jsonValue));
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
     }
 
-    /**
-     * Read a public custom collection; only currently public published piece IDs are returned
-     */
-    async getPublicCollection(requestParameters: GetPublicCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Collection> {
-        const response = await this.getPublicCollectionRaw(requestParameters, initOverrides);
-        return await response.value();
+    let urlPath = `/api/v1/collections/{collectionID}`;
+    urlPath = urlPath.replace(
+      `{${'collectionID'}}`,
+      encodeURIComponent(String(requestParameters['collectionID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Delete own custom collection and memberships; preserve original pieces
+   */
+  async deleteCollection(
+    requestParameters: DeleteCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteCollectionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Read a public custom collection; only currently public published piece IDs are returned
+   */
+  async getPublicCollectionRaw(
+    requestParameters: GetPublicCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Collection>> {
+    if (requestParameters['collectionID'] == null) {
+      throw new runtime.RequiredError(
+        'collectionID',
+        'Required parameter "collectionID" was null or undefined when calling getPublicCollection().',
+      );
     }
 
-    /**
-     * List own collections; ensures the private Saved collection exists
-     */
-    async listCollectionsRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<Collection>>> {
-        const queryParameters: any = {};
+    const queryParameters: any = {};
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+    let urlPath = `/api/v1/collections/{collectionID}/public`;
+    urlPath = urlPath.replace(
+      `{${'collectionID'}}`,
+      encodeURIComponent(String(requestParameters['collectionID'])),
+    );
 
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
 
-        let urlPath = `/api/v1/collections`;
+    return new runtime.JSONApiResponse(response, (jsonValue) => CollectionFromJSON(jsonValue));
+  }
 
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
+  /**
+   * Read a public custom collection; only currently public published piece IDs are returned
+   */
+  async getPublicCollection(
+    requestParameters: GetPublicCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Collection> {
+    const response = await this.getPublicCollectionRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CollectionFromJSON));
+  /**
+   * List own collections; ensures the private Saved collection exists
+   */
+  async listCollectionsRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<Collection>>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
     }
 
-    /**
-     * List own collections; ensures the private Saved collection exists
-     */
-    async listCollections(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<Collection>> {
-        const response = await this.listCollectionsRaw(initOverrides);
-        return await response.value();
+    let urlPath = `/api/v1/collections`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CollectionFromJSON));
+  }
+
+  /**
+   * List own collections; ensures the private Saved collection exists
+   */
+  async listCollections(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<Collection>> {
+    const response = await this.listCollectionsRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Newest created first with stable ID ordering. Counts include only currently public published pieces. Saved and private collections are excluded.
+   * List a persona\'s public custom collections
+   */
+  async listPersonaPublicCollectionsRaw(
+    requestParameters: ListPersonaPublicCollectionsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<PublicCollectionPage>> {
+    if (requestParameters['handle'] == null) {
+      throw new runtime.RequiredError(
+        'handle',
+        'Required parameter "handle" was null or undefined when calling listPersonaPublicCollections().',
+      );
     }
 
-    /**
-     * Newest created first with stable ID ordering. Counts include only currently public published pieces. Saved and private collections are excluded.
-     * List a persona\'s public custom collections
-     */
-    async listPersonaPublicCollectionsRaw(requestParameters: ListPersonaPublicCollectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<PublicCollectionPage>> {
-        if (requestParameters['handle'] == null) {
-            throw new runtime.RequiredError(
-                'handle',
-                'Required parameter "handle" was null or undefined when calling listPersonaPublicCollections().'
-            );
-        }
+    const queryParameters: any = {};
 
-        const queryParameters: any = {};
-
-        if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
-        }
-
-        if (requestParameters['cursor'] != null) {
-            queryParameters['cursor'] = requestParameters['cursor'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-
-        let urlPath = `/api/v1/personas/{handle}/collections`;
-        urlPath = urlPath.replace(`{${"handle"}}`, encodeURIComponent(String(requestParameters['handle'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => PublicCollectionPageFromJSON(jsonValue));
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
     }
 
-    /**
-     * Newest created first with stable ID ordering. Counts include only currently public published pieces. Saved and private collections are excluded.
-     * List a persona\'s public custom collections
-     */
-    async listPersonaPublicCollections(requestParameters: ListPersonaPublicCollectionsRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<PublicCollectionPage> {
-        const response = await this.listPersonaPublicCollectionsRaw(requestParameters, initOverrides);
-        return await response.value();
+    if (requestParameters['cursor'] != null) {
+      queryParameters['cursor'] = requestParameters['cursor'];
     }
 
-    /**
-     * Idempotently remove membership from only this collection
-     */
-    async removeCollectionPieceRaw(requestParameters: RemoveCollectionPieceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['collectionID'] == null) {
-            throw new runtime.RequiredError(
-                'collectionID',
-                'Required parameter "collectionID" was null or undefined when calling removeCollectionPiece().'
-            );
-        }
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['pieceID'] == null) {
-            throw new runtime.RequiredError(
-                'pieceID',
-                'Required parameter "pieceID" was null or undefined when calling removeCollectionPiece().'
-            );
-        }
+    let urlPath = `/api/v1/personas/{handle}/collections`;
+    urlPath = urlPath.replace(
+      `{${'handle'}}`,
+      encodeURIComponent(String(requestParameters['handle'])),
+    );
 
-        const queryParameters: any = {};
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
 
-        const headerParameters: runtime.HTTPHeaders = {};
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      PublicCollectionPageFromJSON(jsonValue),
+    );
+  }
 
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
+  /**
+   * Newest created first with stable ID ordering. Counts include only currently public published pieces. Saved and private collections are excluded.
+   * List a persona\'s public custom collections
+   */
+  async listPersonaPublicCollections(
+    requestParameters: ListPersonaPublicCollectionsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<PublicCollectionPage> {
+    const response = await this.listPersonaPublicCollectionsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
 
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/collections/{collectionID}/pieces/{pieceID}`;
-        urlPath = urlPath.replace(`{${"collectionID"}}`, encodeURIComponent(String(requestParameters['collectionID'])));
-        urlPath = urlPath.replace(`{${"pieceID"}}`, encodeURIComponent(String(requestParameters['pieceID'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
+  /**
+   * Idempotently remove membership from only this collection
+   */
+  async removeCollectionPieceRaw(
+    requestParameters: RemoveCollectionPieceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['collectionID'] == null) {
+      throw new runtime.RequiredError(
+        'collectionID',
+        'Required parameter "collectionID" was null or undefined when calling removeCollectionPiece().',
+      );
     }
 
-    /**
-     * Idempotently remove membership from only this collection
-     */
-    async removeCollectionPiece(requestParameters: RemoveCollectionPieceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.removeCollectionPieceRaw(requestParameters, initOverrides);
+    if (requestParameters['pieceID'] == null) {
+      throw new runtime.RequiredError(
+        'pieceID',
+        'Required parameter "pieceID" was null or undefined when calling removeCollectionPiece().',
+      );
     }
 
-    /**
-     * Replace custom collection details; Saved cannot be edited
-     */
-    async updateCollectionRaw(requestParameters: UpdateCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['collectionID'] == null) {
-            throw new runtime.RequiredError(
-                'collectionID',
-                'Required parameter "collectionID" was null or undefined when calling updateCollection().'
-            );
-        }
+    const queryParameters: any = {};
 
-        if (requestParameters['collectionInput'] == null) {
-            throw new runtime.RequiredError(
-                'collectionInput',
-                'Required parameter "collectionInput" was null or undefined when calling updateCollection().'
-            );
-        }
+    const headerParameters: runtime.HTTPHeaders = {};
 
-        const queryParameters: any = {};
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
 
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("bearerAuth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-
-        let urlPath = `/api/v1/collections/{collectionID}`;
-        urlPath = urlPath.replace(`{${"collectionID"}}`, encodeURIComponent(String(requestParameters['collectionID'])));
-
-        const response = await this.request({
-            path: urlPath,
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: CollectionInputToJSON(requestParameters['collectionInput']),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
     }
 
-    /**
-     * Replace custom collection details; Saved cannot be edited
-     */
-    async updateCollection(requestParameters: UpdateCollectionRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.updateCollectionRaw(requestParameters, initOverrides);
+    let urlPath = `/api/v1/collections/{collectionID}/pieces/{pieceID}`;
+    urlPath = urlPath.replace(
+      `{${'collectionID'}}`,
+      encodeURIComponent(String(requestParameters['collectionID'])),
+    );
+    urlPath = urlPath.replace(
+      `{${'pieceID'}}`,
+      encodeURIComponent(String(requestParameters['pieceID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Idempotently remove membership from only this collection
+   */
+  async removeCollectionPiece(
+    requestParameters: RemoveCollectionPieceRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.removeCollectionPieceRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Replace custom collection details; Saved cannot be edited
+   */
+  async updateCollectionRaw(
+    requestParameters: UpdateCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['collectionID'] == null) {
+      throw new runtime.RequiredError(
+        'collectionID',
+        'Required parameter "collectionID" was null or undefined when calling updateCollection().',
+      );
     }
 
+    if (requestParameters['collectionInput'] == null) {
+      throw new runtime.RequiredError(
+        'collectionInput',
+        'Required parameter "collectionInput" was null or undefined when calling updateCollection().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('bearerAuth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+
+    let urlPath = `/api/v1/collections/{collectionID}`;
+    urlPath = urlPath.replace(
+      `{${'collectionID'}}`,
+      encodeURIComponent(String(requestParameters['collectionID'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: CollectionInputToJSON(requestParameters['collectionInput']),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Replace custom collection details; Saved cannot be edited
+   */
+  async updateCollection(
+    requestParameters: UpdateCollectionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateCollectionRaw(requestParameters, initOverrides);
+  }
 }

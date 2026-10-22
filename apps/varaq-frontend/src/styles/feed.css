@@ -170,6 +170,32 @@
   gap: 26px;
 }
 
+/* A loose pinboard: notes stack independently instead of sharing grid-row heights. */
+.saved-writing-grid.commons-wall {
+  display: block;
+  columns: 3;
+  column-gap: 24px;
+}
+
+.commons-note {
+  padding-top: 10px;
+  margin-bottom: 14px;
+  break-inside: avoid;
+}
+
+.commons-note .writing-card {
+  width: 100%;
+  margin: 0;
+}
+
+.commons-note:nth-child(3n + 2) .writing-card {
+  transform: rotate(1.2deg);
+}
+
+.commons-note:nth-child(3n) .writing-card {
+  transform: rotate(-0.7deg);
+}
+
 /* Margin notes */
 
 .field-notes {
