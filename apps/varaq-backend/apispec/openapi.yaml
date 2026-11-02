@@ -1513,6 +1513,9 @@ components:
         - story
         - letter
         - essay
+    PieceMedium:
+      type: string
+      enum: [writing, photography, artwork, audio]
     PieceStatus:
       type: string
       enum:
@@ -1611,6 +1614,7 @@ components:
         - visibility
         - createdAt
         - updatedAt
+        - medium
       properties:
         id:
           type: string
@@ -1641,6 +1645,18 @@ components:
         updatedAt:
           type: string
           format: date-time
+        medium:
+          $ref: "#/components/schemas/PieceMedium"
+        mediaPath:
+          type: [string, "null"]
+        mediaMimeType:
+          type: [string, "null"]
+        mediaByteSize:
+          type: [integer, "null"]
+          format: int64
+        mediaUploadId:
+          type: [string, "null"]
+          format: uuid
     FeedPiece:
       allOf:
         - $ref: "#/components/schemas/Piece"
@@ -1909,6 +1925,17 @@ components:
           enum:
             - public
             - unlisted
+        medium:
+          $ref: "#/components/schemas/PieceMedium"
+        media:
+          type: object
+          additionalProperties: false
+          required: [uploadId, path, mimeType, byteSize]
+          properties:
+            uploadId: {type: string, format: uuid}
+            path: {type: string}
+            mimeType: {type: string}
+            byteSize: {type: integer, format: int64, minimum: 1}
     VaultTransfer:
       type: object
       additionalProperties: false

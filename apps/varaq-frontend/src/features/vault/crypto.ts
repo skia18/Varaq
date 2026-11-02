@@ -3,7 +3,36 @@ import type { PieceType } from '@/lib/api';
 
 import type { Sealed, VaultConfig, VaultEnvelope as Envelope } from '@/generated/api';
 export type { Sealed, VaultConfig, Envelope };
-export type DraftContent = { title: string; body: string; type: PieceType };
+export type DraftMedium = 'writing' | 'photography' | 'artwork' | 'audio';
+export type DraftMedia = {
+  uploadId: string;
+  bucket: 'varaq-media-private';
+  path: string;
+  mimeType: string;
+  byteSize: number;
+  originalName: string;
+};
+export type DraftContent = {
+  title: string;
+  body: string;
+  type: PieceType;
+  medium?: DraftMedium;
+  media?: DraftMedia;
+};
+function validDraftMedia(value: unknown): value is DraftMedia {
+  if (!value || typeof value !== 'object') return false;
+  const media = value as Record<string, unknown>;
+  return (
+    typeof media.uploadId === 'string' &&
+    media.bucket === 'varaq-media-private' &&
+    typeof media.path === 'string' &&
+    typeof media.mimeType === 'string' &&
+    typeof media.byteSize === 'number' &&
+    Number.isSafeInteger(media.byteSize) &&
+    media.byteSize > 0 &&
+    typeof media.originalName === 'string'
+  );
+}
 const enc = new TextEncoder();
 export const toBase64 = (b: Uint8Array) =>
   btoa(Array.from(b, (x) => String.fromCharCode(x)).join(''));
@@ -186,7 +215,11 @@ export async function decryptDraft(
     if (
       typeof content.title !== 'string' ||
       typeof content.body !== 'string' ||
-      !['poem', 'fragment', 'story', 'letter', 'essay'].includes(content.type)
+      !['poem', 'fragment', 'story', 'letter', 'essay'].includes(content.type) ||
+      (content.medium !== undefined &&
+        !['writing', 'photography', 'artwork', 'audio'].includes(content.medium)) ||
+      (content.media !== undefined && !validDraftMedia(content.media)) ||
+      (content.media !== undefined && (!content.medium || content.medium === 'writing'))
     )
       throw new Error('Invalid draft content.');
     return content;

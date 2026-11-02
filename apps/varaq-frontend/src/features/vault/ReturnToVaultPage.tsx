@@ -8,6 +8,7 @@ import { getOwnerPiece, type Piece } from '@/lib/api';
 import { useVault } from './VaultProvider';
 import { encryptDraft, decryptDraft, type DraftContent } from './crypto';
 import * as api from './api';
+import { copyPublishedMediaToPrivate, removePublicMediaSource } from '@/features/media/storage';
 
 // Stage ciphertext, read it back and authenticate it, then atomically unpublish.
 export function ReturnToVaultPage() {
@@ -60,8 +61,31 @@ export function ReturnToVaultPage() {
     const n = epoch.current;
     setBusy(true);
     setError('');
-    const content: DraftContent = { title: piece.title, body: piece.body, type: piece.type };
     try {
+      const content: DraftContent = {
+        title: piece.title,
+        body: piece.body,
+        type: piece.type,
+      };
+      if (
+        piece.medium &&
+        piece.medium !== 'writing' &&
+        piece.mediaUploadId &&
+        piece.mediaPath &&
+        piece.mediaMimeType &&
+        piece.mediaByteSize
+      ) {
+        await copyPublishedMediaToPrivate(piece.mediaPath);
+        content.medium = piece.medium;
+        content.media = {
+          uploadId: piece.mediaUploadId,
+          bucket: 'varaq-media-private',
+          path: piece.mediaPath,
+          mimeType: piece.mediaMimeType,
+          byteSize: piece.mediaByteSize,
+          originalName: piece.mediaPath.split('/').at(-1) ?? 'media',
+        };
+      }
       const existing = staged.current;
       const draftId = existing?.draftId || crypto.randomUUID();
       const envelope =
@@ -94,6 +118,13 @@ export function ReturnToVaultPage() {
         throw new Error('Encrypted copy did not match');
       if (n !== epoch.current) return;
       await api.finalizeReturn(pieceId, receipt.draftId, receipt.updatedAt);
+      if (content.media) {
+        try {
+          await removePublicMediaSource(content.media.path);
+        } catch {
+          // The private copy is authoritative after the move commits.
+        }
+      }
       if (n === epoch.current) navigate('/vault', { replace: true });
     } catch {
       // A timeout may occur after commit. The durable receipt resolves that outcome.

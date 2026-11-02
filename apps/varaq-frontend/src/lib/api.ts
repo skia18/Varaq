@@ -14,6 +14,26 @@ export type Persona = {
 };
 
 export type PieceType = 'poem' | 'fragment' | 'story' | 'letter' | 'essay';
+export type PieceMedium = 'writing' | 'photography' | 'artwork' | 'audio';
+export type TrailRelation = 'inspired-by' | 'continues';
+
+export type PieceMedia = {
+  medium?: PieceMedium;
+  imageUrl?: string | null;
+  imageAlt?: string | null;
+  audioUrl?: string | null;
+  coverUrl?: string | null;
+  audioDuration?: number | null;
+  credits?: string[];
+  respondsTo?: {
+    pieceId: string;
+    relation: TrailRelation;
+  } | null;
+  mediaPath?: string | null;
+  mediaMimeType?: string | null;
+  mediaByteSize?: number | null;
+  mediaUploadId?: string | null;
+};
 
 export class ApiError extends Error {
   status: number;
@@ -108,7 +128,7 @@ export function createPersona(input: { handle: string; displayName: string; bio?
   });
 }
 
-export type Piece = {
+export type Piece = PieceMedia & {
   id: string;
   personaId: string;
   slug: string;

@@ -98,6 +98,80 @@
   white-space: pre-wrap;
 }
 
+.reading-media {
+  margin: 28px 0 22px;
+}
+
+.reading-media-image {
+  display: block;
+  width: 100%;
+  max-height: min(58vh, 620px);
+  object-fit: contain;
+}
+
+.reading-media-cover {
+  width: min(420px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.audio-player {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 22px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--secondary) 42%, transparent);
+}
+
+.audio-toggle {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  cursor: pointer;
+  place-items: center;
+}
+
+.audio-toggle svg {
+  width: 17px;
+  height: 17px;
+}
+
+.audio-track {
+  flex: 1;
+  min-width: 0;
+}
+
+.audio-seek {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.audio-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.media-credits {
+  margin: 24px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 11px;
+  line-height: 1.8;
+  list-style: none;
+}
+
 /* Publication and Vault transitions use the same quiet paper treatment. */
 .confirmation-modal {
   width: min(600px, 100%);

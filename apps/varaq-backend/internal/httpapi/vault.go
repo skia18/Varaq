@@ -267,6 +267,13 @@ type publishVaultRequest struct {
 	Body           string `json:"body"`
 	Type           string `json:"type"`
 	Visibility     string `json:"visibility"`
+	Medium         string `json:"medium"`
+	Media          *struct {
+		UploadID string `json:"uploadId"`
+		Path     string `json:"path"`
+		MimeType string `json:"mimeType"`
+		ByteSize int64  `json:"byteSize"`
+	} `json:"media"`
 }
 
 func (h PieceHandler) PublishVault(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +283,15 @@ func (h PieceHandler) PublishVault(w http.ResponseWriter, r *http.Request) {
 	if !decodeVault(w, r, &req) {
 		return
 	}
-	if !uuidPattern.MatchString(id) || !uuidPattern.MatchString(req.OperationID) || req.SourceRevision < 1 || !allowedPieceTypes[req.Type] || (req.Visibility != "public" && req.Visibility != "unlisted") || utf8.RuneCountInString(strings.TrimSpace(req.Title)) < 1 || utf8.RuneCountInString(req.Title) > 200 || strings.TrimSpace(req.Body) == "" || utf8.RuneCountInString(req.Body) > 50000 {
+	if req.Medium == "" {
+		req.Medium = "writing"
+	}
+	mediaMedium := req.Medium == "photography" || req.Medium == "artwork" || req.Medium == "audio"
+	validMedia := !mediaMedium && req.Medium == "writing" && req.Media == nil
+	if mediaMedium && req.Media != nil {
+		validMedia = uuidPattern.MatchString(req.Media.UploadID) && req.Media.Path != "" && req.Media.MimeType != "" && req.Media.ByteSize > 0
+	}
+	if !uuidPattern.MatchString(id) || !uuidPattern.MatchString(req.OperationID) || req.SourceRevision < 1 || !allowedPieceTypes[req.Type] || (req.Visibility != "public" && req.Visibility != "unlisted") || !validMedia || utf8.RuneCountInString(strings.TrimSpace(req.Title)) < 1 || utf8.RuneCountInString(req.Title) > 200 || strings.TrimSpace(req.Body) == "" || utf8.RuneCountInString(req.Body) > 50000 {
 		writeBadRequest(w, "Invalid publication snapshot or visibility.")
 		return
 	}
@@ -326,10 +341,32 @@ func (h PieceHandler) PublishVault(w http.ResponseWriter, r *http.Request) {
 		slug = "piece"
 	}
 	slug += "-" + id
-	_, err = tx.Exec(r.Context(), `INSERT INTO public.pieces(id,persona_id,slug,title,body,type,status,visibility,published_at) VALUES($1::uuid,$2::uuid,$3,$4,$5,$6,'published',$7,now())`, id, persona, slug, req.Title, req.Body, req.Type, req.Visibility)
+	var mediaPath, mediaMime any
+	var mediaBytes any
+	if req.Media != nil {
+		var available bool
+		err = tx.QueryRow(r.Context(), `SELECT EXISTS(
+ SELECT 1 FROM public.media_uploads m JOIN storage.objects o ON o.bucket_id='varaq-media-public' AND o.name=m.object_path
+ WHERE m.id=$1::uuid AND m.user_id=$2::uuid AND m.piece_id=$3::uuid AND m.bucket_id='varaq-media-private'
+ AND m.status='ready' AND m.object_path=$4 AND m.mime_type=$5 AND m.byte_size=$6
+ AND (o.metadata->>'size')::bigint=m.byte_size)`, req.Media.UploadID, u.ID, id, req.Media.Path, req.Media.MimeType, req.Media.ByteSize).Scan(&available)
+		if err != nil || !available {
+			vaultError(w, 409, "media_unavailable", "The published media copy could not be verified.")
+			return
+		}
+		mediaPath, mediaMime, mediaBytes = req.Media.Path, req.Media.MimeType, req.Media.ByteSize
+	}
+	_, err = tx.Exec(r.Context(), `INSERT INTO public.pieces(id,persona_id,slug,title,body,type,status,visibility,published_at,medium,media_path,media_mime_type,media_byte_size) VALUES($1::uuid,$2::uuid,$3,$4,$5,$6,'published',$7,now(),$8,$9,$10,$11)`, id, persona, slug, req.Title, req.Body, req.Type, req.Visibility, req.Medium, mediaPath, mediaMime, mediaBytes)
 	if err != nil {
 		writeInternalError(w)
 		return
+	}
+	if req.Media != nil {
+		_, err = tx.Exec(r.Context(), `UPDATE public.media_uploads SET bucket_id='varaq-media-public',status='published',updated_at=now() WHERE id=$1::uuid AND user_id=$2::uuid`, req.Media.UploadID, u.ID)
+		if err != nil {
+			writeInternalError(w)
+			return
+		}
 	}
 	_, err = tx.Exec(r.Context(), `INSERT INTO varaq_private.publication_operations(draft_id,user_id,operation_id,piece_id,source_revision,fingerprint) VALUES($1::uuid,$2::uuid,$3::uuid,$1::uuid,$4,$5)`, id, u.ID, req.OperationID, req.SourceRevision, fingerprint)
 	if err != nil {
@@ -423,7 +460,7 @@ func (h PieceHandler) GetPublishedPiece(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var p Piece
-	err := h.DB.QueryRow(r.Context(), `SELECT id,persona_id,slug,title,body,type,status,visibility,published_at,created_at,updated_at FROM public.pieces WHERE id=$1::uuid AND status='published' AND visibility IN ('public','unlisted')`, id).Scan(&p.ID, &p.PersonaID, &p.Slug, &p.Title, &p.Body, &p.Type, &p.Status, &p.Visibility, &p.PublishedAt, &p.CreatedAt, &p.UpdatedAt)
+	err := h.DB.QueryRow(r.Context(), `SELECT id,persona_id,slug,title,body,type,status,visibility,published_at,created_at,updated_at,medium,media_path,media_mime_type,media_byte_size FROM public.pieces WHERE id=$1::uuid AND status='published' AND visibility IN ('public','unlisted')`, id).Scan(&p.ID, &p.PersonaID, &p.Slug, &p.Title, &p.Body, &p.Type, &p.Status, &p.Visibility, &p.PublishedAt, &p.CreatedAt, &p.UpdatedAt, &p.Medium, &p.MediaPath, &p.MediaMime, &p.MediaBytes)
 	if errors.Is(err, pgx.ErrNoRows) {
 		vaultError(w, 404, "not_found", "Piece not found.")
 		return

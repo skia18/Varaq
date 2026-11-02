@@ -8,6 +8,7 @@ import { toWriting, forms, type Writing } from '../../features/feed/writings';
 import { getFeed, type PieceType } from '@/lib/api';
 import { usePublicFeed } from '@/features/feed/usePublicFeed';
 import { FeedStatus } from '@/features/feed/FeedStatus';
+import { mediaDemoWritings } from '@/features/feed/media-demo';
 
 const filters = ['All pages', 'Poems', 'Short stories', 'Essays', 'Letters', 'Fragments'] as const;
 
@@ -19,7 +20,10 @@ export function HomePage() {
     | PieceType
     | undefined;
   const feed = usePublicFeed({ type });
-  const writings = feed.items.map(toWriting);
+  const writings = [
+    ...(filter === 'All pages' ? mediaDemoWritings : []),
+    ...feed.items.map(toWriting),
+  ];
   const [readingError, setReadingError] = useState<string | null>(null);
   const [reading, setReading] = useState<Writing | null>(null);
 
