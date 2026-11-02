@@ -1,10 +1,17 @@
 import { Dialog } from '@base-ui/react/dialog';
 import { Link } from 'react-router-dom';
 import type { Writing } from '@/features/feed/writings';
+import { mediumLabel } from '@/features/feed/writings';
+import { AudioPlayer } from './AudioPlayer';
 
 type Reading = Pick<Writing, 'title' | 'form' | 'minutes' | 'author' | 'date' | 'body'> & {
   handle?: string;
-};
+} & Partial<
+    Pick<
+      Writing,
+      'medium' | 'imageUrl' | 'imageAlt' | 'audioUrl' | 'coverUrl' | 'audioDuration' | 'credits'
+    >
+  >;
 
 export function ReadingDialog({
   reading,
@@ -30,7 +37,9 @@ export function ReadingDialog({
                   ×
                 </Dialog.Close>
                 <span className="eyebrow">
-                  {reading.form} · {reading.minutes} min read
+                  {(reading.medium ?? 'writing') === 'writing'
+                    ? `${reading.form} · ${reading.minutes} min read`
+                    : mediumLabel(reading.medium ?? 'writing')}
                 </span>
                 <Dialog.Title className="reading-title">{reading.title}</Dialog.Title>
                 <p className="reading-byline">
@@ -48,7 +57,36 @@ export function ReadingDialog({
                   )}{' '}
                   · {reading.date}
                 </p>
+                {(reading.medium === 'photography' || reading.medium === 'artwork') &&
+                  reading.imageUrl && (
+                    <figure className="reading-media">
+                      <img
+                        src={reading.imageUrl}
+                        alt={reading.imageAlt ?? reading.title}
+                        className="reading-media-image"
+                      />
+                    </figure>
+                  )}
+                {reading.medium === 'audio' && reading.coverUrl && (
+                  <figure className="reading-media reading-media-cover">
+                    <img
+                      src={reading.coverUrl}
+                      alt={`Cover art for ${reading.title}`}
+                      className="reading-media-image"
+                    />
+                  </figure>
+                )}
+                {reading.medium === 'audio' && reading.audioUrl && (
+                  <AudioPlayer src={reading.audioUrl} duration={reading.audioDuration} />
+                )}
                 <div className="reading-body">{reading.body}</div>
+                {reading.credits && reading.credits.length > 0 && (
+                  <ul className="media-credits">
+                    {reading.credits.map((credit) => (
+                      <li key={credit}>{credit}</li>
+                    ))}
+                  </ul>
+                )}
               </>
             )}
           </Dialog.Popup>

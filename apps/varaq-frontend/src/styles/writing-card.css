@@ -302,6 +302,70 @@
   color: var(--primary-foreground);
 }
 
+/* Media cards */
+
+.writing-card.media-card {
+  overflow: hidden;
+  padding: 0;
+  transform: rotate(-0.6deg);
+}
+
+.media-card-visual {
+  position: relative;
+}
+
+.media-card-open {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: var(--muted);
+  cursor: pointer;
+}
+
+.media-card-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform 350ms ease;
+}
+
+.media-audio .media-card-image {
+  aspect-ratio: 1;
+}
+
+.media-card:hover .media-card-image {
+  transform: scale(1.015);
+}
+
+.media-card-content {
+  padding: 18px 21px 14px;
+}
+
+.media-play {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: rgb(35 31 27 / 72%);
+  color: white;
+  cursor: pointer;
+  place-items: center;
+  backdrop-filter: blur(5px);
+}
+
+.media-play svg {
+  width: 17px;
+  height: 17px;
+  margin-left: 2px;
+}
+
 /* Photographic card */
 
 .card-photo-button {

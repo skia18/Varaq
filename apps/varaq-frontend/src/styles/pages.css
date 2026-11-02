@@ -357,3 +357,41 @@
     line-height: 1.7;
   }
 }
+/* Published media pieces */
+
+.published-piece {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+
+.published-piece > h1 {
+  margin: 12px 0 24px;
+  font-size: clamp(42px, 7vw, 72px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.piece-media {
+  margin: 32px 0 26px;
+}
+
+.piece-media img {
+  display: block;
+  width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+}
+
+.piece-media-cover {
+  width: min(500px, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.published-piece-body {
+  margin: 30px 0;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.95;
+  white-space: pre-wrap;
+}

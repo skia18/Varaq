@@ -1,6 +1,10 @@
 import { BookmarkPicker } from '../../features/collections/BookmarkPicker';
 import type { Writing } from '../../features/feed/writings';
 import { Link } from 'react-router-dom';
+import { Pause, Play } from 'lucide-react';
+import { formatDuration, mediumLabel } from '../../features/feed/writings';
+import { useEffect, useRef, useState } from 'react';
+import { pauseOtherAudioPlayers } from './audio-playback';
 
 type WritingCardProps = {
   writing: Writing;
@@ -8,6 +12,19 @@ type WritingCardProps = {
 };
 
 export function WritingCard({ writing, onRead }: WritingCardProps) {
+  const medium = writing.medium ?? 'writing';
+  const mediaImage = medium === 'audio' ? writing.coverUrl : writing.imageUrl;
+  const previewRef = useRef<HTMLAudioElement>(null);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+
+  useEffect(() => () => previewRef.current?.pause(), []);
+
+  function toggleAudioPreview() {
+    const audio = previewRef.current;
+    if (!audio) return;
+    if (audio.paused) void audio.play().catch(() => setPreviewPlaying(false));
+    else audio.pause();
+  }
   const content = (
     <>
       <div className="card-meta">
@@ -19,7 +36,11 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
           {writing.author}
         </Link>
         <span className="card-type">
-          {writing.form === 'Short stories' ? 'Short story' : writing.form.replace(/s$/, '')}
+          {medium === 'writing'
+            ? writing.form === 'Short stories'
+              ? 'Short story'
+              : writing.form.replace(/s$/, '')
+            : mediumLabel(medium)}
         </span>
       </div>
 
@@ -34,12 +55,68 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
       </button>
 
       <div className="card-footer">
-        <span>{writing.minutes} min read</span>
+        <span>
+          {medium === 'audio' && writing.audioDuration
+            ? formatDuration(writing.audioDuration)
+            : `${writing.minutes} min read`}
+        </span>
 
         <BookmarkPicker pieceId={writing.id} />
       </div>
     </>
   );
+
+  if (medium !== 'writing') {
+    return (
+      <article className={`writing-card media-card media-${medium}`}>
+        {mediaImage && (
+          <div className="media-card-visual">
+            <button
+              type="button"
+              className="media-card-open"
+              onClick={() => onRead(writing)}
+              aria-label={`Open ${writing.title}`}
+            >
+              <img
+                src={mediaImage}
+                alt={
+                  medium === 'audio'
+                    ? `Cover art for ${writing.title}`
+                    : (writing.imageAlt ?? writing.title)
+                }
+                className="media-card-image"
+                loading="lazy"
+              />
+            </button>
+            {medium === 'audio' && writing.audioUrl && (
+              <>
+                <button
+                  type="button"
+                  className="media-play"
+                  aria-label={previewPlaying ? `Pause ${writing.title}` : `Play ${writing.title}`}
+                  onClick={toggleAudioPreview}
+                >
+                  {previewPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+                </button>
+                <audio
+                  ref={previewRef}
+                  src={writing.audioUrl}
+                  preload="metadata"
+                  onPlay={(event) => {
+                    pauseOtherAudioPlayers(event.currentTarget);
+                    setPreviewPlaying(true);
+                  }}
+                  onPause={() => setPreviewPlaying(false)}
+                  onEnded={() => setPreviewPlaying(false)}
+                />
+              </>
+            )}
+          </div>
+        )}
+        <div className="media-card-content">{content}</div>
+      </article>
+    );
+  }
 
   return <article className={`writing-card tone-${writing.tone}`}>{content}</article>;
 }

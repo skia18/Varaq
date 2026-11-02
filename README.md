@@ -161,8 +161,9 @@ Run these from the repository root:
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev:web` | Start the frontend development server |
-| `npm run dev:go` | Start the Go API |
+| `npm run dev` | Start the frontend and Go API together |
+| `npm run dev:web` | Start only the frontend development server |
+| `npm run dev:go` | Start only the Go API |
 | `npm run build:web` | Type-check and build the frontend |
 | `npm test` | Run frontend and Go tests |
 | `npm run test:web` | Run frontend tests with Vitest |
