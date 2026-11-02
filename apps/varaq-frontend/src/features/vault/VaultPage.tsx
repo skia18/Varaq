@@ -1,15 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
-import { forms } from '@/features/feed/writings';
+import { forms, type Writing } from '@/features/feed/writings';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
+import { WritingCard } from '@/components/literary/WritingCard';
 import { Feather, Pencil, RefreshCw, Send, Trash2, ShieldAlert, X } from 'lucide-react';
 import { Dialog } from '@base-ui/react/dialog';
 import { useVault } from './VaultProvider';
 import { decryptDraft, type DraftContent } from './crypto';
 import * as api from './api';
+import {
+  copyMediaForPublication,
+  removePrivateMediaSource,
+  signedMediaUrl,
+} from '@/features/media/storage';
 
-type OpenDraft = api.EncryptedDraft & { content: DraftContent };
+type OpenDraft = api.EncryptedDraft & { content: DraftContent; mediaUrl?: string };
 export function VaultPage() {
   const { session } = useVault();
   const { persona } = useAuth();
@@ -44,17 +50,25 @@ export function VaultPage() {
       if (!cancelled) setPending(remaining);
       const page = await api.drafts();
       const opened = await Promise.all(
-        page.items.map(async (d) => ({
-          ...d,
-          content: await decryptDraft(
+        page.items.map(async (d) => {
+          const content = await decryptDraft(
             session.key,
             session.userId,
             d.id,
             d.personaId,
             d.revision,
             d.envelope,
-          ),
-        })),
+          );
+          let mediaUrl: string | undefined;
+          if (content.media) {
+            try {
+              mediaUrl = await signedMediaUrl(content.media);
+            } catch {
+              // Keep the draft readable when its preview URL is unavailable.
+            }
+          }
+          return { ...d, content, mediaUrl };
+        }),
       );
       if (!cancelled) setItems(opened);
     })()
@@ -79,7 +93,16 @@ export function VaultPage() {
     // Identity is durable on the server. No plaintext or keys are persisted here.
     const operationId = current.id;
     try {
+      if (current.content.media) await copyMediaForPublication(current.content.media);
       await api.publish(current.id, operationId, current.revision, current.content, visibility);
+      if (current.content.media) {
+        try {
+          await removePrivateMediaSource(current.content.media);
+        } catch {
+          // The public copy is authoritative after publication; stale private
+          // sources can be removed by maintenance without hiding the piece.
+        }
+      }
       setItems((xs) => xs.filter((d) => d.id !== current.id));
       setSelected(null);
       setMessage('Published. This piece has left your Vault.');
@@ -130,13 +153,44 @@ export function VaultPage() {
     }
   }
   const reading = items.find((d) => d.id === readingId);
-  const tones = ['paper', 'sage', 'plain', 'red'];
+  const tones: Writing['tone'][] = ['paper', 'sage', 'plain', 'red'];
   const date = (value: string) =>
     new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(
       new Date(value),
     );
   const minutes = (body: string) =>
     Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
+  const draftActions = (d: OpenDraft) => (
+    <div className="vault-card-actions">
+      <Link
+        className="vault-card-action"
+        aria-label={`Edit ${d.content.title}`}
+        to={`/write?pieceId=${d.id}`}
+      >
+        <Pencil size={14} />
+        Edit
+      </Link>
+      <button
+        className="vault-card-action vault-card-action--primary"
+        disabled={busy}
+        onClick={() => {
+          setSelected(d);
+          setVisibility('public');
+        }}
+      >
+        <Send size={14} />
+        Publish
+      </button>
+      <button
+        className="vault-card-action vault-card-delete"
+        disabled={busy}
+        onClick={() => void remove(d)}
+      >
+        <Trash2 size={14} />
+        Delete
+      </button>
+    </div>
+  );
   return (
     <div className="page-content">
       <section className="writer-profile">
@@ -218,65 +272,71 @@ export function VaultPage() {
             <div className="writing-column" key={column}>
               {items
                 .filter((_, index) => index % 3 === column)
-                .map((d) => (
-                  <article
-                    className={`writing-card tone-${tones[items.indexOf(d) % tones.length]}`}
-                    key={d.id}
-                  >
-                    <div className="card-meta">
-                      <span>{date(d.updatedAt)}</span>
-                      <span className="card-type">
-                        {d.content.type.charAt(0).toUpperCase() + d.content.type.slice(1)}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="card-read wall-card-content"
-                      aria-label={`Read ${d.content.title}`}
-                      onClick={() => setReadingId(d.id)}
+                .map((d) =>
+                  d.content.medium === 'audio' ? (
+                    <WritingCard
+                      key={d.id}
+                      writing={{
+                        id: d.id,
+                        title: d.content.title,
+                        author: persona?.displayName || 'You',
+                        handle: persona?.handle || '',
+                        form: forms[d.content.type],
+                        body: d.content.body,
+                        excerpt:
+                          d.content.body.length > 240
+                            ? `${d.content.body.slice(0, 240)}…`
+                            : d.content.body,
+                        date: date(d.updatedAt),
+                        minutes: minutes(d.content.body),
+                        tone: tones[items.indexOf(d) % tones.length],
+                        medium: 'audio',
+                        audioUrl: d.mediaUrl,
+                      }}
+                      onRead={() => setReadingId(d.id)}
+                      showBookmark={false}
+                      actions={draftActions(d)}
+                    />
+                  ) : (
+                    <article
+                      className={`writing-card tone-${tones[items.indexOf(d) % tones.length]}`}
+                      key={d.id}
                     >
-                      <h2>{d.content.title}</h2>
-                      <p className="card-excerpt">
-                        {d.content.body.length > 500
-                          ? `${d.content.body.slice(0, 500).trimEnd()}…`
-                          : d.content.body}
-                      </p>
-                    </button>
-                    <div className="card-footer wall-card-footer">
-                      <span>{minutes(d.content.body)} min read</span>
-                      <span>Draft</span>
-                    </div>
-                    <div className="vault-card-actions">
-                      <Link
-                        className="vault-card-action"
-                        aria-label={`Edit ${d.content.title}`}
-                        to={`/write?pieceId=${d.id}`}
-                      >
-                        <Pencil size={14} />
-                        Edit
-                      </Link>
+                      {d.mediaUrl &&
+                        (d.content.medium === 'photography' || d.content.medium === 'artwork') && (
+                          <img
+                            className="vault-media-preview vault-image-preview"
+                            src={d.mediaUrl}
+                            alt={`Draft preview for ${d.content.title}`}
+                          />
+                        )}
+                      <div className="card-meta">
+                        <span>{date(d.updatedAt)}</span>
+                        <span className="card-type">
+                          {d.content.type.charAt(0).toUpperCase() + d.content.type.slice(1)}
+                        </span>
+                      </div>
                       <button
-                        className="vault-card-action vault-card-action--primary"
-                        disabled={busy}
-                        onClick={() => {
-                          setSelected(d);
-                          setVisibility('public');
-                        }}
+                        type="button"
+                        className="card-read wall-card-content"
+                        aria-label={`Read ${d.content.title}`}
+                        onClick={() => setReadingId(d.id)}
                       >
-                        <Send size={14} />
-                        Publish
+                        <h2>{d.content.title}</h2>
+                        <p className="card-excerpt">
+                          {d.content.body.length > 500
+                            ? `${d.content.body.slice(0, 500).trimEnd()}…`
+                            : d.content.body}
+                        </p>
                       </button>
-                      <button
-                        className="vault-card-action vault-card-delete"
-                        disabled={busy}
-                        onClick={() => void remove(d)}
-                      >
-                        <Trash2 size={14} />
-                        Delete
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                      <div className="card-footer wall-card-footer">
+                        <span>{minutes(d.content.body)} min read</span>
+                        <span>Draft</span>
+                      </div>
+                      {draftActions(d)}
+                    </article>
+                  ),
+                )}
             </div>
           ))}
         </div>
@@ -291,6 +351,12 @@ export function VaultPage() {
                 minutes: minutes(reading.content.body),
                 author: persona?.displayName || 'You',
                 date: date(reading.updatedAt),
+                medium: reading.content.medium ?? 'writing',
+                imageUrl:
+                  reading.content.medium === 'photography' || reading.content.medium === 'artwork'
+                    ? reading.mediaUrl
+                    : undefined,
+                audioUrl: reading.content.medium === 'audio' ? reading.mediaUrl : undefined,
               }
             : null
         }

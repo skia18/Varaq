@@ -31,6 +31,11 @@ type Piece struct {
 	PublishedAt *time.Time `json:"publishedAt"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
+	Medium      string     `json:"medium"`
+	MediaPath   *string    `json:"mediaPath,omitempty"`
+	MediaMime   *string    `json:"mediaMimeType,omitempty"`
+	MediaBytes  *int64     `json:"mediaByteSize,omitempty"`
+	MediaUpload *string    `json:"mediaUploadId,omitempty"`
 }
 
 type PiecePage struct {
@@ -118,7 +123,8 @@ func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request)
 
 	query := `
 		SELECT id, persona_id, slug, title, body, type, status,
-		       visibility, published_at, created_at, updated_at
+		       visibility, published_at, created_at, updated_at,
+		       medium, media_path, media_mime_type, media_byte_size
 		FROM public.pieces
 		WHERE persona_id = $1
 		  AND status = 'published'
@@ -160,6 +166,10 @@ func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request)
 			&piece.PublishedAt,
 			&piece.CreatedAt,
 			&piece.UpdatedAt,
+			&piece.Medium,
+			&piece.MediaPath,
+			&piece.MediaMime,
+			&piece.MediaBytes,
 		); err != nil {
 			writeInternalError(w)
 			return
@@ -247,7 +257,8 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 	query := `
 		SELECT p.id, p.persona_id, p.slug, p.title, p.body,
 		       p.type, p.status, p.visibility, p.published_at,
-		       p.created_at, p.updated_at
+		       p.created_at, p.updated_at, p.medium, p.media_path,
+		       p.media_mime_type, p.media_byte_size
 		FROM public.pieces p
 		JOIN public.personas persona ON persona.id = p.persona_id
 		WHERE persona.user_id = $1::uuid AND p.status='published'
@@ -281,6 +292,10 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 			&piece.PublishedAt,
 			&piece.CreatedAt,
 			&piece.UpdatedAt,
+			&piece.Medium,
+			&piece.MediaPath,
+			&piece.MediaMime,
+			&piece.MediaBytes,
 		); err != nil {
 			writeInternalError(w)
 			return
@@ -337,9 +352,11 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		r.Context(),
 		`SELECT p.id, p.persona_id, p.slug, p.title, p.body,
 		        p.type, p.status, p.visibility, p.published_at,
-		        p.created_at, p.updated_at
+		        p.created_at, p.updated_at, p.medium, p.media_path,
+		        p.media_mime_type, p.media_byte_size, media.id
 		 FROM public.pieces p
 		 JOIN public.personas persona ON persona.id = p.persona_id
+		 LEFT JOIN public.media_uploads media ON media.piece_id=p.id AND media.status='published'
 		 WHERE p.id = $1::uuid
 		   AND persona.user_id = $2::uuid`,
 		pieceID,
@@ -356,6 +373,11 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		&piece.PublishedAt,
 		&piece.CreatedAt,
 		&piece.UpdatedAt,
+		&piece.Medium,
+		&piece.MediaPath,
+		&piece.MediaMime,
+		&piece.MediaBytes,
+		&piece.MediaUpload,
 	)
 
 	if err != nil {
@@ -447,7 +469,8 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
          AND p.status = 'published'
 		 RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
 		           p.type, p.status, p.visibility, p.published_at,
-		           p.created_at, p.updated_at`,
+		           p.created_at, p.updated_at, p.medium, p.media_path,
+		           p.media_mime_type, p.media_byte_size`,
 		pieceID,
 		user.ID,
 		req.Title,
@@ -465,6 +488,10 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		&piece.PublishedAt,
 		&piece.CreatedAt,
 		&piece.UpdatedAt,
+		&piece.Medium,
+		&piece.MediaPath,
+		&piece.MediaMime,
+		&piece.MediaBytes,
 	)
 
 	if err != nil {

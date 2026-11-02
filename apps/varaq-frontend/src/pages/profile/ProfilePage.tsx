@@ -6,31 +6,11 @@ import { ArrowRight, Feather, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 
 import { useAuth } from '@/auth/AuthProvider';
 import { deleteOwnerPiece, getOwnerPieces, type Piece } from '@/lib/api';
+import { WritingCard } from '@/components/literary/WritingCard';
 
 const PAGE_SIZE = 20;
 
 const CARD_TONES = ['paper', 'sage', 'plain', 'red'] as const;
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(date));
-}
-
-function formatType(type: Piece['type']) {
-  return type.charAt(0).toUpperCase() + type.slice(1);
-}
-
-function getExcerpt(body: string, maxLength = 500) {
-  if (body.length <= maxLength) return body;
-  return `${body.slice(0, maxLength).trimEnd()}…`;
-}
-
-function getReadTime(body: string) {
-  return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
-}
 
 export function ProfilePage() {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
@@ -311,38 +291,24 @@ export function ProfilePage() {
                   const pieceIndex = pieces.findIndex((item) => item.id === piece.id);
                   const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
 
-                  const displayDate =
-                    piece.status === 'published'
-                      ? (piece.publishedAt ?? piece.createdAt)
-                      : piece.updatedAt;
-
                   return (
-                    <article key={piece.id} className={`writing-card tone-${tone}`}>
-                      <div className="card-meta">
-                        <span>{formatDate(displayDate)}</span>
-                        <span className="card-type">{formatType(piece.type)}</span>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="card-read wall-card-content"
-                        aria-label={`Read ${piece.title}`}
-                        onClick={() => setReadingId(piece.id)}
-                      >
-                        <h2>{piece.title}</h2>
-                        <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                      </button>
-
-                      <div className="card-footer wall-card-footer">
-                        <span>{getReadTime(piece.body)} min read</span>
-                        <span>
-                          {piece.visibility === 'unlisted'
-                            ? 'Unlisted · only shown to you here'
-                            : 'Public'}
-                        </span>
-                      </div>
-
+                    <div key={piece.id} className="owner-media-card">
+                      <WritingCard
+                        writing={{
+                          ...toWriting({
+                            ...piece,
+                            author: persona.displayName,
+                            handle: persona.handle,
+                          }),
+                          tone,
+                        }}
+                        onRead={() => setReadingId(piece.id)}
+                        showBookmark={false}
+                      />
                       <div className="vault-card-actions">
+                        <span className="vault-card-action">
+                          {piece.visibility === 'unlisted' ? 'Unlisted' : 'Public'}
+                        </span>
                         {piece.status === 'published' && (
                           <>
                             <Link
@@ -371,7 +337,7 @@ export function ProfilePage() {
                           {pieceActionId === piece.id ? 'Working…' : 'Delete'}
                         </button>
                       </div>
-                    </article>
+                    </div>
                   );
                 })}
               </div>

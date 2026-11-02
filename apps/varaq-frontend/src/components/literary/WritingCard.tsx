@@ -1,17 +1,20 @@
 import { BookmarkPicker } from '../../features/collections/BookmarkPicker';
 import type { Writing } from '../../features/feed/writings';
 import { Link } from 'react-router-dom';
-import { Pause, Play } from 'lucide-react';
+import { AudioLines, Pause, Play } from 'lucide-react';
 import { formatDuration, mediumLabel } from '../../features/feed/writings';
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { pauseOtherAudioPlayers } from './audio-playback';
 
 type WritingCardProps = {
   writing: Writing;
   onRead: (writing: Writing) => void;
+  showBookmark?: boolean;
+  actions?: ReactNode;
 };
 
-export function WritingCard({ writing, onRead }: WritingCardProps) {
+export function WritingCard({ writing, onRead, showBookmark = true, actions }: WritingCardProps) {
   const medium = writing.medium ?? 'writing';
   const mediaImage = medium === 'audio' ? writing.coverUrl : writing.imageUrl;
   const previewRef = useRef<HTMLAudioElement>(null);
@@ -61,15 +64,16 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
             : `${writing.minutes} min read`}
         </span>
 
-        <BookmarkPicker pieceId={writing.id} />
+        {showBookmark && <BookmarkPicker pieceId={writing.id} />}
       </div>
+      {actions}
     </>
   );
 
   if (medium !== 'writing') {
     return (
       <article className={`writing-card media-card media-${medium}`}>
-        {mediaImage && (
+        {(mediaImage || medium === 'audio') && (
           <div className="media-card-visual">
             <button
               type="button"
@@ -77,16 +81,22 @@ export function WritingCard({ writing, onRead }: WritingCardProps) {
               onClick={() => onRead(writing)}
               aria-label={`Open ${writing.title}`}
             >
-              <img
-                src={mediaImage}
-                alt={
-                  medium === 'audio'
-                    ? `Cover art for ${writing.title}`
-                    : (writing.imageAlt ?? writing.title)
-                }
-                className="media-card-image"
-                loading="lazy"
-              />
+              {mediaImage ? (
+                <img
+                  src={mediaImage}
+                  alt={
+                    medium === 'audio'
+                      ? `Cover art for ${writing.title}`
+                      : (writing.imageAlt ?? writing.title)
+                  }
+                  className="media-card-image"
+                  loading="lazy"
+                />
+              ) : (
+                <span className="media-audio-placeholder" aria-hidden="true">
+                  <AudioLines />
+                </span>
+              )}
             </button>
             {medium === 'audio' && writing.audioUrl && (
               <>

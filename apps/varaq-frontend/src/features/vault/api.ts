@@ -1,6 +1,7 @@
 import { Configuration, PiecesApi } from '@/generated/api';
 import { createClient } from '@/lib/supabase/client';
 import type { Envelope, VaultConfig, DraftContent } from './crypto';
+import { apiRequest } from '@/lib/api';
 export type EncryptedDraft = {
   id: string;
   personaId: string;
@@ -50,10 +51,29 @@ export const publish = (
   content: DraftContent,
   visibility: 'public' | 'unlisted',
 ) =>
-  client.publishOwnerPiece({
-    pieceID: id,
-    vaultPublish: { operationId, sourceRevision, ...content, visibility },
-  });
+  apiRequest<{ pieceId: string; published: boolean }>(
+    `/api/v1/owner/pieces/${encodeURIComponent(id)}/publish`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        operationId,
+        sourceRevision,
+        title: content.title,
+        body: content.body,
+        type: content.type,
+        visibility,
+        medium: content.medium ?? 'writing',
+        media: content.media
+          ? {
+              uploadId: content.media.uploadId,
+              path: content.media.path,
+              mimeType: content.media.mimeType,
+              byteSize: content.media.byteSize,
+            }
+          : undefined,
+      }),
+    },
+  );
 
 export const returnStatus = (pieceID: string) => client.getVaultReturn({ pieceID });
 export const stageReturn = (

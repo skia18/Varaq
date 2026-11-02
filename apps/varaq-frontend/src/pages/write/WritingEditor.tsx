@@ -2,6 +2,7 @@ import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Feather, Globe, Lock, Save } from 'lucide-react';
 import type { DraftContent } from '@/features/vault/crypto';
+import { MediaUploadField } from '@/features/media/MediaUploadField';
 
 type Props = {
   content: DraftContent;
@@ -15,6 +16,7 @@ type Props = {
   error: string;
   message: string;
   onLock?: () => void;
+  pieceId?: string;
 };
 const types = [
   { value: 'poem', label: 'Poem' },
@@ -37,6 +39,7 @@ export function WritingEditor({
   error,
   message,
   onLock,
+  pieceId,
 }: Props) {
   const published = mode === 'published';
   return (
@@ -115,6 +118,14 @@ export function WritingEditor({
               </option>
             ))}
           </select>
+          {!published && pieceId && (
+            <MediaUploadField
+              pieceId={pieceId}
+              content={content}
+              onChange={onChange}
+              disabled={!loaded || busy}
+            />
+          )}
           <label htmlFor="piece-title" className="sr-only">
             Piece title
           </label>

@@ -72,4 +72,25 @@ describe('Vault envelopes', () => {
       ),
     ).rejects.toThrow('Enter a Vault passphrase.');
   });
+  it('roundtrips validated private media metadata inside the encrypted envelope', async () => {
+    const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    const withMedia = {
+      ...content,
+      medium: 'audio' as const,
+      media: {
+        uploadId: crypto.randomUUID(),
+        bucket: 'varaq-media-private' as const,
+        path: `${user}/${id}/track.mp3`,
+        mimeType: 'audio/mpeg',
+        byteSize: 1024,
+        originalName: 'track.mp3',
+      },
+    };
+    const envelope = await encryptDraft(key, user, id, persona, 1, withMedia);
+    expect(JSON.stringify(envelope)).not.toContain('track.mp3');
+    expect(await decryptDraft(key, user, id, persona, 1, envelope)).toEqual(withMedia);
+  });
 });

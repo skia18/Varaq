@@ -336,6 +336,32 @@
   aspect-ratio: 1;
 }
 
+.media-audio-placeholder {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  background:
+    radial-gradient(
+      circle at 72% 28%,
+      color-mix(in oklab, var(--primary) 45%, transparent),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      var(--foreground),
+      color-mix(in oklab, var(--foreground) 72%, var(--primary))
+    );
+  color: var(--primary-foreground);
+  place-items: center;
+}
+
+.media-audio-placeholder svg {
+  width: 54px;
+  height: 54px;
+  opacity: 0.78;
+  stroke-width: 1;
+}
+
 .media-card:hover .media-card-image {
   transform: scale(1.015);
 }

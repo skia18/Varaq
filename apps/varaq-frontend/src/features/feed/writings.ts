@@ -1,4 +1,5 @@
 import type { FeedPiece, PieceMedium, PieceType, TrailRelation } from '@/lib/api';
+import { publicMediaUrl } from '@/features/media/storage';
 
 export type WritingForm = 'Poems' | 'Short stories' | 'Essays' | 'Letters' | 'Fragments';
 export type WritingTone = 'paper' | 'sage' | 'red' | 'plain' | 'blue' | 'blush' | 'ochre';
@@ -30,6 +31,7 @@ export const forms: Record<PieceType, WritingForm> = {
   fragment: 'Fragments',
 };
 export function toWriting(piece: FeedPiece): Writing {
+  const storedMediaUrl = piece.mediaPath ? publicMediaUrl(piece.mediaPath) : undefined;
   return {
     id: piece.id,
     title: piece.title,
@@ -42,9 +44,11 @@ export function toWriting(piece: FeedPiece): Writing {
     minutes: Math.max(1, Math.ceil(piece.body.trim().split(/\s+/).length / 200)),
     tone: 'paper',
     medium: piece.medium ?? 'writing',
-    imageUrl: piece.imageUrl ?? undefined,
+    imageUrl:
+      piece.imageUrl ??
+      (piece.medium === 'photography' || piece.medium === 'artwork' ? storedMediaUrl : undefined),
     imageAlt: piece.imageAlt ?? undefined,
-    audioUrl: piece.audioUrl ?? undefined,
+    audioUrl: piece.audioUrl ?? (piece.medium === 'audio' ? storedMediaUrl : undefined),
     coverUrl: piece.coverUrl ?? undefined,
     audioDuration: piece.audioDuration ?? undefined,
     credits: piece.credits,

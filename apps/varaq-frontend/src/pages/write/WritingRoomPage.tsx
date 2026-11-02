@@ -151,6 +151,7 @@ export function WritingRoomPage() {
       error={error}
       message={message}
       onLock={lock}
+      pieceId={id}
     />
   );
 }

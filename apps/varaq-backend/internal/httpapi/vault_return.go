@@ -106,7 +106,8 @@ func (h PieceHandler) returnToVault(w http.ResponseWriter, r *http.Request, fina
 		return
 	}
 	var persona string
-	err = tx.QueryRow(r.Context(), `SELECT p.persona_id FROM public.pieces p JOIN public.personas a ON a.id=p.persona_id WHERE p.id=$1::uuid AND a.user_id=$2::uuid AND p.status='published' AND p.visibility IN ('public','unlisted') AND p.updated_at=$3 FOR UPDATE OF p`, source, u.ID, req.UpdatedAt).Scan(&persona)
+	var mediaPath *string
+	err = tx.QueryRow(r.Context(), `SELECT p.persona_id,p.media_path FROM public.pieces p JOIN public.personas a ON a.id=p.persona_id WHERE p.id=$1::uuid AND a.user_id=$2::uuid AND p.status='published' AND p.visibility IN ('public','unlisted') AND p.updated_at=$3 FOR UPDATE OF p`, source, u.ID, req.UpdatedAt).Scan(&persona, &mediaPath)
 	if errors.Is(err, pgx.ErrNoRows) {
 		vaultError(w, 409, "source_changed", "Publication changed or is unavailable. It has not been removed.")
 		return
@@ -136,6 +137,24 @@ func (h PieceHandler) returnToVault(w http.ResponseWriter, r *http.Request, fina
 		if err != nil {
 			writeInternalError(w)
 			return
+		}
+		if mediaPath != nil {
+			var restored string
+			err = tx.QueryRow(r.Context(), `UPDATE public.media_uploads m SET piece_id=$4::uuid,bucket_id='varaq-media-private',status='ready',updated_at=now()
+ FROM storage.objects o
+ WHERE m.piece_id=$1::uuid AND m.user_id=$2::uuid AND m.object_path=$3
+ AND m.bucket_id='varaq-media-public' AND m.status='published'
+ AND o.bucket_id='varaq-media-private' AND o.name=m.object_path
+ AND (o.metadata->>'size')::bigint=m.byte_size
+ RETURNING m.id`, source, u.ID, *mediaPath, req.DraftID).Scan(&restored)
+			if errors.Is(err, pgx.ErrNoRows) {
+				vaultError(w, 409, "media_unavailable", "The private media copy could not be verified. Publication preserved.")
+				return
+			}
+			if err != nil {
+				writeInternalError(w)
+				return
+			}
 		}
 		_, err = tx.Exec(r.Context(), `DELETE FROM public.pieces WHERE id=$1::uuid`, source)
 		if err != nil {

@@ -29,6 +29,10 @@ export type PieceMedia = {
     pieceId: string;
     relation: TrailRelation;
   } | null;
+  mediaPath?: string | null;
+  mediaMimeType?: string | null;
+  mediaByteSize?: number | null;
+  mediaUploadId?: string | null;
 };
 
 export class ApiError extends Error {

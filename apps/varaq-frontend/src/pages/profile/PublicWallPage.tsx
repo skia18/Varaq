@@ -6,33 +6,13 @@ import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
+import { WritingCard } from '@/components/literary/WritingCard';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
 
 const PAGE_SIZE = 20;
 
 const CARD_TONES = ['paper', 'sage', 'plain', 'red'] as const;
-
-function formatDate(date: string) {
-  return new Intl.DateTimeFormat('en', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date(date));
-}
-
-function formatType(type: Piece['type']) {
-  return type.charAt(0).toUpperCase() + type.slice(1);
-}
-
-function getExcerpt(body: string, maxLength = 500) {
-  if (body.length <= maxLength) return body;
-  return `${body.slice(0, maxLength).trimEnd()}…`;
-}
-
-function getReadTime(body: string) {
-  return Math.max(1, Math.ceil(body.trim().split(/\s+/).filter(Boolean).length / 200));
-}
 
 function PublicWallContent() {
   const { handle } = useParams<{ handle: string }>();
@@ -226,27 +206,19 @@ function PublicWallContent() {
                       const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
 
                       return (
-                        <article key={piece.id} className={`writing-card tone-${tone}`}>
-                          <div className="card-meta">
-                            <span>{formatDate(piece.publishedAt ?? piece.createdAt)}</span>
-                            <span className="card-type">{formatType(piece.type)}</span>
-                          </div>
-
-                          <button
-                            type="button"
-                            className="card-read wall-card-content"
-                            aria-label={`Read ${piece.title}`}
-                            onClick={() => setReadingId(piece.id)}
-                          >
-                            <h2>{piece.title}</h2>
-                            <p className="card-excerpt">{getExcerpt(piece.body)}</p>
-                          </button>
-
-                          <div className="card-footer wall-card-footer">
-                            <span>{getReadTime(piece.body)} min read</span>
-                            <span>Published</span>
-                          </div>
-                        </article>
+                        <WritingCard
+                          key={piece.id}
+                          writing={{
+                            ...toWriting({
+                              ...piece,
+                              author: persona.displayName,
+                              handle: persona.handle,
+                            }),
+                            tone,
+                          }}
+                          onRead={() => setReadingId(piece.id)}
+                          showBookmark={false}
+                        />
                       );
                     })}
                   </div>
