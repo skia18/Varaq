@@ -200,6 +200,12 @@ paths:
           description: Filter by literary piece type
           schema:
             $ref: "#/components/schemas/PieceType"
+        - name: medium
+          in: query
+          required: false
+          description: Filter by page medium
+          schema:
+            $ref: "#/components/schemas/PieceMedium"
         - name: q
           in: query
           description: Literal text search across title, body and writer (maximum 300

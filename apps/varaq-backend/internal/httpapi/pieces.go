@@ -66,6 +66,13 @@ var allowedPieceTypes = map[string]bool{
 	"essay":    true,
 }
 
+var allowedPieceMediums = map[string]bool{
+	"writing":     true,
+	"photography": true,
+	"artwork":     true,
+	"audio":       true,
+}
+
 func makePieceSlug(title string) string {
 	title = strings.ToLower(strings.TrimSpace(title))
 	slug := pieceSlugPattern.ReplaceAllString(title, "-")

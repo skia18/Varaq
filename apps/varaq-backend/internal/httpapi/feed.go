@@ -47,6 +47,12 @@ func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 		}
 		query += " AND p.type = " + add(kind)
 	}
+	if medium := values.Get("medium"); medium != "" {
+		if !allowedPieceMediums[medium] {
+			return "", nil, 0, fmt.Errorf("Invalid piece medium.")
+		}
+		query += " AND p.medium = " + add(medium)
+	}
 	if search := strings.TrimSpace(values.Get("q")); search != "" {
 		if len(search) > 300 {
 			return "", nil, 0, fmt.Errorf("Search must be at most 300 bytes.")

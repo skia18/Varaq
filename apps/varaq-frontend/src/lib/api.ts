@@ -222,6 +222,7 @@ export function getFeed(
     limit?: number;
     cursor?: string | null;
     type?: PieceType;
+    medium?: PieceMedium;
     query?: string;
     ids?: string[];
     signal?: AbortSignal;
@@ -230,6 +231,7 @@ export function getFeed(
   const params = new URLSearchParams({ limit: String(options.limit ?? 10) });
   if (options.cursor) params.set('cursor', options.cursor);
   if (options.type) params.set('type', options.type);
+  if (options.medium) params.set('medium', options.medium);
   if (options.query) params.set('q', options.query);
   if (options.ids?.length) params.set('ids', options.ids.join(','));
   return apiRequest<FeedPage>(`/api/v1/feed?${params}`, { signal: options.signal });
