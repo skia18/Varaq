@@ -332,6 +332,15 @@
   transition: transform 350ms ease;
 }
 
+.media-photography .media-card-image,
+.media-artwork .media-card-image {
+  height: auto;
+  max-height: 440px;
+  aspect-ratio: auto;
+  object-fit: contain;
+  background: color-mix(in oklab, var(--muted) 70%, var(--card));
+}
+
 .media-audio .media-card-image {
   aspect-ratio: 1;
 }

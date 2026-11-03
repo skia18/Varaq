@@ -36,6 +36,10 @@ type Piece struct {
 	MediaMime   *string    `json:"mediaMimeType,omitempty"`
 	MediaBytes  *int64     `json:"mediaByteSize,omitempty"`
 	MediaUpload *string    `json:"mediaUploadId,omitempty"`
+	CoverPath   *string    `json:"coverPath,omitempty"`
+	CoverMime   *string    `json:"coverMimeType,omitempty"`
+	CoverBytes  *int64     `json:"coverByteSize,omitempty"`
+	CoverUpload *string    `json:"coverUploadId,omitempty"`
 }
 
 type PiecePage struct {
@@ -124,7 +128,7 @@ func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request)
 	query := `
 		SELECT id, persona_id, slug, title, body, type, status,
 		       visibility, published_at, created_at, updated_at,
-		       medium, media_path, media_mime_type, media_byte_size
+		       medium, media_path, media_mime_type, media_byte_size, cover_path, cover_mime_type, cover_byte_size
 		FROM public.pieces
 		WHERE persona_id = $1
 		  AND status = 'published'
@@ -170,6 +174,7 @@ func (h PersonaHandler) ListPublicPieces(w http.ResponseWriter, r *http.Request)
 			&piece.MediaPath,
 			&piece.MediaMime,
 			&piece.MediaBytes,
+			&piece.CoverPath, &piece.CoverMime, &piece.CoverBytes,
 		); err != nil {
 			writeInternalError(w)
 			return
@@ -258,7 +263,7 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 		SELECT p.id, p.persona_id, p.slug, p.title, p.body,
 		       p.type, p.status, p.visibility, p.published_at,
 		       p.created_at, p.updated_at, p.medium, p.media_path,
-		       p.media_mime_type, p.media_byte_size
+		       p.media_mime_type, p.media_byte_size, p.cover_path, p.cover_mime_type, p.cover_byte_size
 		FROM public.pieces p
 		JOIN public.personas persona ON persona.id = p.persona_id
 		WHERE persona.user_id = $1::uuid AND p.status='published'
@@ -296,6 +301,7 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 			&piece.MediaPath,
 			&piece.MediaMime,
 			&piece.MediaBytes,
+			&piece.CoverPath, &piece.CoverMime, &piece.CoverBytes,
 		); err != nil {
 			writeInternalError(w)
 			return
@@ -353,10 +359,13 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		`SELECT p.id, p.persona_id, p.slug, p.title, p.body,
 		        p.type, p.status, p.visibility, p.published_at,
 		        p.created_at, p.updated_at, p.medium, p.media_path,
-		        p.media_mime_type, p.media_byte_size, media.id
+		        p.media_mime_type, p.media_byte_size, media.id, p.cover_path, p.cover_mime_type, p.cover_byte_size, cover.id
 		 FROM public.pieces p
 		 JOIN public.personas persona ON persona.id = p.persona_id
 		 LEFT JOIN public.media_uploads media ON media.piece_id=p.id AND media.status='published'
+		   AND media.object_path=p.media_path
+		 LEFT JOIN public.media_uploads cover ON cover.piece_id=p.id AND cover.status='published'
+		   AND cover.object_path=p.cover_path
 		 WHERE p.id = $1::uuid
 		   AND persona.user_id = $2::uuid`,
 		pieceID,
@@ -378,6 +387,8 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		&piece.MediaMime,
 		&piece.MediaBytes,
 		&piece.MediaUpload,
+		&piece.CoverPath, &piece.CoverMime, &piece.CoverBytes,
+		&piece.CoverUpload,
 	)
 
 	if err != nil {
@@ -470,7 +481,7 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		 RETURNING p.id, p.persona_id, p.slug, p.title, p.body,
 		           p.type, p.status, p.visibility, p.published_at,
 		           p.created_at, p.updated_at, p.medium, p.media_path,
-		           p.media_mime_type, p.media_byte_size`,
+		           p.media_mime_type, p.media_byte_size, p.cover_path, p.cover_mime_type, p.cover_byte_size`,
 		pieceID,
 		user.ID,
 		req.Title,
@@ -492,6 +503,7 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		&piece.MediaPath,
 		&piece.MediaMime,
 		&piece.MediaBytes,
+		&piece.CoverPath, &piece.CoverMime, &piece.CoverBytes,
 	)
 
 	if err != nil {

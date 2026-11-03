@@ -1,6 +1,6 @@
-import { AudioLines, Camera, FileAudio, Image, LoaderCircle, Trash2 } from 'lucide-react';
+import { Camera, FileAudio, LoaderCircle, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import type { DraftContent, DraftMedium } from '@/features/vault/crypto';
+import type { DraftContent, DraftMedia } from '@/features/vault/crypto';
 import {
   MEDIA_QUOTA,
   mediaUsage,
@@ -9,15 +9,112 @@ import {
   uploadDraftMedia,
 } from './storage';
 
-const options: { value: DraftMedium; label: string; icon: typeof Camera }[] = [
-  { value: 'writing', label: 'Writing', icon: Image },
-  { value: 'photography', label: 'Photo', icon: Camera },
-  { value: 'artwork', label: 'Artwork', icon: Image },
-  { value: 'audio', label: 'Audio', icon: AudioLines },
-];
+const megabytes = (bytes: number) =>
+  `${(bytes / 1024 / 1024).toFixed(bytes >= 10485760 ? 0 : 1)} MB`;
 
-function megabytes(bytes: number) {
-  return `${(bytes / 1024 / 1024).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+function Attachment({
+  kind,
+  media,
+  pieceId,
+  disabled,
+  onChange,
+}: {
+  kind: 'image' | 'audio';
+  media?: DraftMedia;
+  pieceId: string;
+  disabled: boolean;
+  onChange: (media?: DraftMedia) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    setPreview('');
+    if (media) void signedMediaUrl(media).then((url) => active && setPreview(url));
+    return () => {
+      active = false;
+    };
+  }, [media]);
+  async function choose(file?: File) {
+    if (!file) return;
+    setBusy(true);
+    setError('');
+    try {
+      const next = await uploadDraftMedia(
+        pieceId,
+        kind === 'audio' ? 'audio' : 'photography',
+        file,
+      );
+      if (media) await removeDraftMedia(media);
+      onChange(next);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Upload failed.');
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = '';
+    }
+  }
+  async function remove() {
+    if (!media) return;
+    setBusy(true);
+    setError('');
+    try {
+      await removeDraftMedia(media);
+      onChange();
+    } catch {
+      setError('The attachment could not be removed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="media-upload-zone">
+      <span className="eyebrow">{kind === 'audio' ? 'Audio' : 'Image'}</span>
+      {preview && kind === 'image' && <img src={preview} alt="Draft image preview" />}
+      {preview && kind === 'audio' && <audio src={preview} controls preload="metadata" />}
+      {!media && (
+        <button type="button" disabled={disabled || busy} onClick={() => input.current?.click()}>
+          {busy ? (
+            <LoaderCircle className="animate-spin" />
+          ) : kind === 'audio' ? (
+            <FileAudio />
+          ) : (
+            <Camera />
+          )}
+          {busy ? 'Uploading…' : `Add ${kind}`}
+        </button>
+      )}
+      {media && (
+        <div className="media-upload-meta">
+          <span>
+            {media.originalName} · {megabytes(media.byteSize)}
+          </span>
+          <button type="button" disabled={disabled || busy} onClick={() => void remove()}>
+            <Trash2 /> Remove
+          </button>
+        </div>
+      )}
+      <input
+        ref={input}
+        type="file"
+        hidden
+        accept={
+          kind === 'audio' ? 'audio/mpeg,audio/wav,audio/mp4' : 'image/jpeg,image/png,image/webp'
+        }
+        onChange={(e) => void choose(e.target.files?.[0])}
+      />
+      <small>
+        {kind === 'audio' ? 'MP3, WAV, or M4A · up to 25 MB' : 'JPEG, PNG, or WebP · up to 10 MB'}
+      </small>
+      {error && (
+        <p className="media-upload-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function MediaUploadField({
@@ -31,154 +128,45 @@ export function MediaUploadField({
   onChange: (content: DraftContent) => void;
   disabled: boolean;
 }) {
-  const medium = content.medium ?? 'writing';
-  const input = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState('');
   const [usage, setUsage] = useState(0);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-
+  const image =
+    content.image ?? (content.media && content.medium !== 'audio' ? content.media : undefined);
+  const audio =
+    content.audio ?? (content.media && content.medium === 'audio' ? content.media : undefined);
   useEffect(() => {
     void mediaUsage()
-      .then((value) => setUsage(value.used_bytes + value.reserved_bytes))
+      .then((v) => setUsage(v.used_bytes + v.reserved_bytes))
       .catch(() => {});
-  }, [content.media?.uploadId]);
-
-  useEffect(() => {
-    let active = true;
-    setPreview('');
-    if (content.media)
-      void signedMediaUrl(content.media).then((url) => {
-        if (active) setPreview(url);
-      });
-    return () => {
-      active = false;
-    };
-  }, [content.media]);
-
-  async function choose(file?: File) {
-    if (!file || medium === 'writing') return;
-    setUploading(true);
-    setError('');
-    try {
-      const next = await uploadDraftMedia(pieceId, medium, file);
-      if (content.media) await removeDraftMedia(content.media);
-      onChange({ ...content, medium, media: next });
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The upload could not be completed.');
-    } finally {
-      setUploading(false);
-      if (input.current) input.current.value = '';
-    }
-  }
-
-  async function remove() {
-    if (!content.media) return;
-    setUploading(true);
-    setError('');
-    try {
-      await removeDraftMedia(content.media);
-      onChange({ ...content, media: undefined });
-      setPreview('');
-    } catch {
-      setError('The media could not be removed. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  }
-
+  }, [image?.uploadId, audio?.uploadId]);
   return (
-    <section className="media-upload-field" aria-labelledby="medium-heading">
+    <section className="media-upload-field" aria-labelledby="attachments-heading">
       <div className="media-upload-heading">
         <div>
-          <span className="eyebrow" id="medium-heading">
-            Medium
+          <span className="eyebrow" id="attachments-heading">
+            Attachments
           </span>
-          <p>Choose what kind of page you are leaving behind.</p>
+          <p>Add an image, audio, text, or combine all three.</p>
         </div>
         <span>
           {megabytes(usage)} of {megabytes(MEDIA_QUOTA)} used
         </span>
       </div>
-      <div className="medium-options">
-        {options.map(({ value, label, icon: Icon }) => (
-          <button
-            type="button"
-            key={value}
-            className={medium === value ? 'is-selected' : ''}
-            aria-pressed={medium === value}
-            disabled={disabled || uploading}
-            onClick={() => {
-              if (content.media && value !== medium) {
-                setError('Remove the current media before changing the medium.');
-                return;
-              }
-              onChange({ ...content, medium: value });
-              setError('');
-            }}
-          >
-            <Icon aria-hidden="true" />
-            {label}
-          </button>
-        ))}
+      <div className="media-attachment-grid">
+        <Attachment
+          kind="image"
+          media={image}
+          pieceId={pieceId}
+          disabled={disabled}
+          onChange={(image) => onChange({ ...content, image, media: undefined, medium: undefined })}
+        />
+        <Attachment
+          kind="audio"
+          media={audio}
+          pieceId={pieceId}
+          disabled={disabled}
+          onChange={(audio) => onChange({ ...content, audio, media: undefined, medium: undefined })}
+        />
       </div>
-      {medium !== 'writing' && (
-        <div className="media-upload-zone">
-          {preview && medium !== 'audio' && <img src={preview} alt="Draft media preview" />}
-          {preview && medium === 'audio' && <audio src={preview} controls preload="metadata" />}
-          {!content.media && (
-            <button
-              type="button"
-              disabled={disabled || uploading}
-              onClick={() => input.current?.click()}
-            >
-              {uploading ? (
-                <LoaderCircle className="animate-spin" />
-              ) : medium === 'audio' ? (
-                <FileAudio />
-              ) : (
-                <Camera />
-              )}
-              {uploading
-                ? 'Uploading…'
-                : medium === 'audio'
-                  ? 'Choose an audio file'
-                  : 'Choose an image'}
-            </button>
-          )}
-          {content.media && (
-            <div className="media-upload-meta">
-              <span>
-                {content.media.originalName} · {megabytes(content.media.byteSize)}
-              </span>
-              <button type="button" disabled={disabled || uploading} onClick={() => void remove()}>
-                <Trash2 /> Remove
-              </button>
-            </div>
-          )}
-          <input
-            ref={input}
-            type="file"
-            hidden
-            accept={
-              medium === 'audio'
-                ? 'audio/mpeg,audio/wav,audio/mp4'
-                : 'image/jpeg,image/png,image/webp'
-            }
-            onChange={(event) => void choose(event.target.files?.[0])}
-          />
-          <small>
-            {medium === 'audio'
-              ? 'MP3, WAV, or M4A · up to 25 MB'
-              : 'JPEG, PNG, or WebP · up to 10 MB'}
-          </small>
-        </div>
-      )}
-      {error && (
-        <p className="media-upload-error" role="alert">
-          {error}
-        </p>
-      )}
     </section>
   );
 }

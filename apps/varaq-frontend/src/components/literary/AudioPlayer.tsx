@@ -1,4 +1,4 @@
-import { Pause, Play } from 'lucide-react';
+import { AudioLines, Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { formatDuration } from '@/features/feed/writings';
 import { pauseOtherAudioPlayers } from './audio-playback';
@@ -36,6 +36,12 @@ export function AudioPlayer({ src, duration }: { src: string; duration?: number 
         {playing ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
       </button>
       <div className="audio-track">
+        <div className="audio-player-heading">
+          <span>
+            <AudioLines aria-hidden="true" /> Listen
+          </span>
+          <span>{playing ? 'Playing' : 'Audio page'}</span>
+        </div>
         <input
           className="audio-seek"
           type="range"

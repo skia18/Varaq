@@ -1657,6 +1657,16 @@ components:
         mediaUploadId:
           type: [string, "null"]
           format: uuid
+        coverPath:
+          type: [string, "null"]
+        coverMimeType:
+          type: [string, "null"]
+        coverByteSize:
+          type: [integer, "null"]
+          format: int64
+        coverUploadId:
+          type: [string, "null"]
+          format: uuid
     FeedPiece:
       allOf:
         - $ref: "#/components/schemas/Piece"

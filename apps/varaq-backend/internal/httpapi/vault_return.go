@@ -107,7 +107,8 @@ func (h PieceHandler) returnToVault(w http.ResponseWriter, r *http.Request, fina
 	}
 	var persona string
 	var mediaPath *string
-	err = tx.QueryRow(r.Context(), `SELECT p.persona_id,p.media_path FROM public.pieces p JOIN public.personas a ON a.id=p.persona_id WHERE p.id=$1::uuid AND a.user_id=$2::uuid AND p.status='published' AND p.visibility IN ('public','unlisted') AND p.updated_at=$3 FOR UPDATE OF p`, source, u.ID, req.UpdatedAt).Scan(&persona, &mediaPath)
+	var coverPath *string
+	err = tx.QueryRow(r.Context(), `SELECT p.persona_id,p.media_path,p.cover_path FROM public.pieces p JOIN public.personas a ON a.id=p.persona_id WHERE p.id=$1::uuid AND a.user_id=$2::uuid AND p.status='published' AND p.visibility IN ('public','unlisted') AND p.updated_at=$3 FOR UPDATE OF p`, source, u.ID, req.UpdatedAt).Scan(&persona, &mediaPath, &coverPath)
 	if errors.Is(err, pgx.ErrNoRows) {
 		vaultError(w, 409, "source_changed", "Publication changed or is unavailable. It has not been removed.")
 		return
@@ -138,7 +139,10 @@ func (h PieceHandler) returnToVault(w http.ResponseWriter, r *http.Request, fina
 			writeInternalError(w)
 			return
 		}
-		if mediaPath != nil {
+		for _, path := range []*string{mediaPath, coverPath} {
+			if path == nil {
+				continue
+			}
 			var restored string
 			err = tx.QueryRow(r.Context(), `UPDATE public.media_uploads m SET piece_id=$4::uuid,bucket_id='varaq-media-private',status='ready',updated_at=now()
  FROM storage.objects o
@@ -146,7 +150,7 @@ func (h PieceHandler) returnToVault(w http.ResponseWriter, r *http.Request, fina
  AND m.bucket_id='varaq-media-public' AND m.status='published'
  AND o.bucket_id='varaq-media-private' AND o.name=m.object_path
  AND (o.metadata->>'size')::bigint=m.byte_size
- RETURNING m.id`, source, u.ID, *mediaPath, req.DraftID).Scan(&restored)
+			 RETURNING m.id`, source, u.ID, *path, req.DraftID).Scan(&restored)
 			if errors.Is(err, pgx.ErrNoRows) {
 				vaultError(w, 409, "media_unavailable", "The private media copy could not be verified. Publication preserved.")
 				return

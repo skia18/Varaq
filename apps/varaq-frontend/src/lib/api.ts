@@ -33,6 +33,10 @@ export type PieceMedia = {
   mediaMimeType?: string | null;
   mediaByteSize?: number | null;
   mediaUploadId?: string | null;
+  coverPath?: string | null;
+  coverMimeType?: string | null;
+  coverByteSize?: number | null;
+  coverUploadId?: string | null;
 };
 
 export class ApiError extends Error {

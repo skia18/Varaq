@@ -164,7 +164,10 @@ Run these from the repository root:
 | `npm run dev` | Start the frontend and Go API together |
 | `npm run dev:web` | Start only the frontend development server |
 | `npm run dev:go` | Start only the Go API |
+| `npm run build` | Build the frontend and Go API |
 | `npm run build:web` | Type-check and build the frontend |
+| `npm run build:go` | Build all Go packages |
+| `npm test` | Run all frontend and Go tests |
 | `npm test` | Run frontend and Go tests |
 | `npm run test:web` | Run frontend tests with Vitest |
 | `npm run test:watch` | Run frontend tests in Vitest watch mode |
@@ -172,6 +175,7 @@ Run these from the repository root:
 | `npm run format` | Format frontend and backend source |
 | `npm run format:web` | Format frontend source |
 | `npm run format:go` | Format backend Go source |
+| `npm run verify` | Format, lint, test, build, and validate the API spec |
 | `npm run lint` | Run frontend lint and Go vet |
 | `npm run lint:web` | Lint frontend code |
 | `npm run lint:go` | Run Go vet |

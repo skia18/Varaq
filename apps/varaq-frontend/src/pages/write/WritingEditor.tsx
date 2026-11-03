@@ -147,7 +147,6 @@ export function WritingEditor({
             value={content.body}
             onChange={(e) => onChange({ ...content, body: e.target.value })}
             maxLength={50000}
-            required
             disabled={!loaded || busy}
             placeholder="Let the words arrive in their own time…"
             className="mt-7 min-h-[380px] w-full resize-y border-0 bg-transparent font-serif text-lg leading-8 text-foreground outline-none placeholder:text-muted-foreground/50 sm:min-h-[480px]"
@@ -182,7 +181,12 @@ export function WritingEditor({
             </p>
             <button
               type="submit"
-              disabled={busy || !loaded || !content.title.trim() || !content.body.trim()}
+              disabled={
+                busy ||
+                !loaded ||
+                !content.title.trim() ||
+                (!content.body.trim() && !content.image && !content.audio && !content.media)
+              }
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save size={16} />
