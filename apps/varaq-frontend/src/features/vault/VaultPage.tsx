@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
-import { forms, type Writing } from '@/features/feed/writings';
+import { forms } from '@/features/feed/writings';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { WritingCard } from '@/components/literary/WritingCard';
+import { postItTone } from '@/features/feed/postItTones';
 import { Feather, Pencil, RefreshCw, Send, Trash2, ShieldAlert, X } from 'lucide-react';
 import { Dialog } from '@base-ui/react/dialog';
 import { useVault } from './VaultProvider';
@@ -15,7 +16,11 @@ import {
   signedMediaUrl,
 } from '@/features/media/storage';
 
-type OpenDraft = api.EncryptedDraft & { content: DraftContent; mediaUrl?: string };
+type OpenDraft = api.EncryptedDraft & {
+  content: DraftContent;
+  imageUrl?: string;
+  audioUrl?: string;
+};
 export function VaultPage() {
   const { session } = useVault();
   const { persona } = useAuth();
@@ -59,15 +64,13 @@ export function VaultPage() {
             d.revision,
             d.envelope,
           );
-          let mediaUrl: string | undefined;
-          if (content.media) {
-            try {
-              mediaUrl = await signedMediaUrl(content.media);
-            } catch {
-              // Keep the draft readable when its preview URL is unavailable.
-            }
-          }
-          return { ...d, content, mediaUrl };
+          const image = content.image ?? (content.medium !== 'audio' ? content.media : undefined);
+          const audio = content.audio ?? (content.medium === 'audio' ? content.media : undefined);
+          const [imageUrl, audioUrl] = await Promise.all([
+            image ? signedMediaUrl(image).catch(() => undefined) : undefined,
+            audio ? signedMediaUrl(audio).catch(() => undefined) : undefined,
+          ]);
+          return { ...d, content, imageUrl, audioUrl };
         }),
       );
       if (!cancelled) setItems(opened);
@@ -93,11 +96,19 @@ export function VaultPage() {
     // Identity is durable on the server. No plaintext or keys are persisted here.
     const operationId = current.id;
     try {
-      if (current.content.media) await copyMediaForPublication(current.content.media);
+      const attachments = [
+        current.content.image,
+        current.content.audio,
+        current.content.media,
+      ].filter(
+        (media, index, all) =>
+          media && all.findIndex((item) => item?.uploadId === media.uploadId) === index,
+      );
+      await Promise.all(attachments.map((media) => copyMediaForPublication(media!)));
       await api.publish(current.id, operationId, current.revision, current.content, visibility);
-      if (current.content.media) {
+      if (attachments.length) {
         try {
-          await removePrivateMediaSource(current.content.media);
+          await Promise.all(attachments.map((media) => removePrivateMediaSource(media!)));
         } catch {
           // The public copy is authoritative after publication; stale private
           // sources can be removed by maintenance without hiding the piece.
@@ -153,7 +164,6 @@ export function VaultPage() {
     }
   }
   const reading = items.find((d) => d.id === readingId);
-  const tones: Writing['tone'][] = ['paper', 'sage', 'plain', 'red'];
   const date = (value: string) =>
     new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(
       new Date(value),
@@ -273,7 +283,7 @@ export function VaultPage() {
               {items
                 .filter((_, index) => index % 3 === column)
                 .map((d) =>
-                  d.content.medium === 'audio' ? (
+                  d.content.audio || d.content.medium === 'audio' ? (
                     <WritingCard
                       key={d.id}
                       writing={{
@@ -289,9 +299,10 @@ export function VaultPage() {
                             : d.content.body,
                         date: date(d.updatedAt),
                         minutes: minutes(d.content.body),
-                        tone: tones[items.indexOf(d) % tones.length],
+                        tone: postItTone(items.indexOf(d)),
                         medium: 'audio',
-                        audioUrl: d.mediaUrl,
+                        audioUrl: d.audioUrl,
+                        coverUrl: d.imageUrl,
                       }}
                       onRead={() => setReadingId(d.id)}
                       showBookmark={false}
@@ -299,17 +310,16 @@ export function VaultPage() {
                     />
                   ) : (
                     <article
-                      className={`writing-card tone-${tones[items.indexOf(d) % tones.length]}`}
+                      className={`writing-card tone-${postItTone(items.indexOf(d))}`}
                       key={d.id}
                     >
-                      {d.mediaUrl &&
-                        (d.content.medium === 'photography' || d.content.medium === 'artwork') && (
-                          <img
-                            className="vault-media-preview vault-image-preview"
-                            src={d.mediaUrl}
-                            alt={`Draft preview for ${d.content.title}`}
-                          />
-                        )}
+                      {d.imageUrl && (
+                        <img
+                          className="vault-media-preview vault-image-preview"
+                          src={d.imageUrl}
+                          alt={`Draft preview for ${d.content.title}`}
+                        />
+                      )}
                       <div className="card-meta">
                         <span>{date(d.updatedAt)}</span>
                         <span className="card-type">
@@ -351,12 +361,9 @@ export function VaultPage() {
                 minutes: minutes(reading.content.body),
                 author: persona?.displayName || 'You',
                 date: date(reading.updatedAt),
-                medium: reading.content.medium ?? 'writing',
-                imageUrl:
-                  reading.content.medium === 'photography' || reading.content.medium === 'artwork'
-                    ? reading.mediaUrl
-                    : undefined,
-                audioUrl: reading.content.medium === 'audio' ? reading.mediaUrl : undefined,
+                medium: reading.audioUrl ? 'audio' : reading.imageUrl ? 'photography' : 'writing',
+                imageUrl: reading.imageUrl,
+                audioUrl: reading.audioUrl,
               }
             : null
         }

@@ -62,15 +62,25 @@ export const publish = (
         body: content.body,
         type: content.type,
         visibility,
-        medium: content.medium ?? 'writing',
-        media: content.media
-          ? {
-              uploadId: content.media.uploadId,
-              path: content.media.path,
-              mimeType: content.media.mimeType,
-              byteSize: content.media.byteSize,
-            }
-          : undefined,
+        medium: content.audio ? 'audio' : content.image ? 'photography' : 'writing',
+        media:
+          (content.audio ?? content.image ?? content.media)
+            ? {
+                uploadId: (content.audio ?? content.image ?? content.media)!.uploadId,
+                path: (content.audio ?? content.image ?? content.media)!.path,
+                mimeType: (content.audio ?? content.image ?? content.media)!.mimeType,
+                byteSize: (content.audio ?? content.image ?? content.media)!.byteSize,
+              }
+            : undefined,
+        cover:
+          content.audio && content.image
+            ? {
+                uploadId: content.image.uploadId,
+                path: content.image.path,
+                mimeType: content.image.mimeType,
+                byteSize: content.image.byteSize,
+              }
+            : undefined,
       }),
     },
   );

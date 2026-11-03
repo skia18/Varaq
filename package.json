@@ -11,7 +11,9 @@
     "api:validate-spec": "openapi-generator-cli validate -i apps/varaq-backend/apispec/openapi.yaml",
     "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/src/generated/api && node scripts/finalize-generated-api.mjs",
     "dev:web": "npm run dev --workspace=varaq-frontend",
+    "build": "npm run build:web && npm run build:go",
     "build:web": "npm run build --workspace=varaq-frontend",
+    "build:go": "cd apps/varaq-backend && go build ./...",
     "test": "npm run test:web && npm run test:go",
     "test:web": "npm run test --workspace=varaq-frontend",
     "test:watch": "npm run test:watch --workspace=varaq-frontend",
@@ -21,6 +23,7 @@
     "format": "npm run format:web && npm run format:go",
     "format:web": "npm run format --workspace=varaq-frontend",
     "format:go": "cd apps/varaq-backend && gofmt -w .",
+    "verify": "npm run format && npm run lint && npm test && npm run build && npm run api:validate-spec",
     "test:go": "cd apps/varaq-backend && go test ./...",
     "dev:go": "cd apps/varaq-backend && go run cmd/api/main.go"
   },

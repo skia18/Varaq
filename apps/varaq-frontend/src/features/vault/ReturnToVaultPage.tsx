@@ -6,7 +6,7 @@ import { Dialog } from '@base-ui/react/dialog';
 import { ResponseError } from '@/generated/api';
 import { getOwnerPiece, type Piece } from '@/lib/api';
 import { useVault } from './VaultProvider';
-import { encryptDraft, decryptDraft, type DraftContent } from './crypto';
+import { encryptDraft, decryptDraft, type DraftContent, type DraftMedia } from './crypto';
 import * as api from './api';
 import { copyPublishedMediaToPrivate, removePublicMediaSource } from '@/features/media/storage';
 
@@ -76,14 +76,26 @@ export function ReturnToVaultPage() {
         piece.mediaByteSize
       ) {
         await copyPublishedMediaToPrivate(piece.mediaPath);
-        content.medium = piece.medium;
-        content.media = {
+        const primary: DraftMedia = {
           uploadId: piece.mediaUploadId,
           bucket: 'varaq-media-private',
           path: piece.mediaPath,
           mimeType: piece.mediaMimeType,
           byteSize: piece.mediaByteSize,
           originalName: piece.mediaPath.split('/').at(-1) ?? 'media',
+        };
+        if (piece.medium === 'audio') content.audio = primary;
+        else content.image = primary;
+      }
+      if (piece.coverUploadId && piece.coverPath && piece.coverMimeType && piece.coverByteSize) {
+        await copyPublishedMediaToPrivate(piece.coverPath);
+        content.image = {
+          uploadId: piece.coverUploadId,
+          bucket: 'varaq-media-private',
+          path: piece.coverPath,
+          mimeType: piece.coverMimeType,
+          byteSize: piece.coverByteSize,
+          originalName: piece.coverPath.split('/').at(-1) ?? 'image',
         };
       }
       const existing = staged.current;
@@ -118,9 +130,10 @@ export function ReturnToVaultPage() {
         throw new Error('Encrypted copy did not match');
       if (n !== epoch.current) return;
       await api.finalizeReturn(pieceId, receipt.draftId, receipt.updatedAt);
-      if (content.media) {
+      const returnedMedia = [content.image, content.audio, content.media].filter(Boolean);
+      if (returnedMedia.length) {
         try {
-          await removePublicMediaSource(content.media.path);
+          await Promise.all(returnedMedia.map((media) => removePublicMediaSource(media!.path)));
         } catch {
           // The private copy is authoritative after the move commits.
         }

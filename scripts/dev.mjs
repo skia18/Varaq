@@ -3,10 +3,11 @@ import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const detached = process.platform !== 'win32';
 const root = process.cwd();
 const backend = resolve(root, 'apps/varaq-backend');
+const frontend = resolve(root, 'apps/varaq-frontend');
+const vite = resolve(root, 'node_modules/vite/bin/vite.js');
 const apiBinary = join(tmpdir(), `varaq-api-dev-${process.pid}`);
 
 console.log('[dev] Building the Go API…');
@@ -22,7 +23,7 @@ if (build.status !== 0) {
 
 const services = [
   ['api', apiBinary, [], backend],
-  ['web', npm, ['run', 'dev:web'], root],
+  ['web', process.execPath, [vite], frontend],
 ];
 const children = new Map();
 let shutdownPromise;

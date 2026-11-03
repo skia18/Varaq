@@ -18,6 +18,8 @@ export type DraftContent = {
   type: PieceType;
   medium?: DraftMedium;
   media?: DraftMedia;
+  image?: DraftMedia;
+  audio?: DraftMedia;
 };
 function validDraftMedia(value: unknown): value is DraftMedia {
   if (!value || typeof value !== 'object') return false;
@@ -219,7 +221,9 @@ export async function decryptDraft(
       (content.medium !== undefined &&
         !['writing', 'photography', 'artwork', 'audio'].includes(content.medium)) ||
       (content.media !== undefined && !validDraftMedia(content.media)) ||
-      (content.media !== undefined && (!content.medium || content.medium === 'writing'))
+      (content.media !== undefined && (!content.medium || content.medium === 'writing')) ||
+      (content.image !== undefined && !validDraftMedia(content.image)) ||
+      (content.audio !== undefined && !validDraftMedia(content.audio))
     )
       throw new Error('Invalid draft content.');
     return content;

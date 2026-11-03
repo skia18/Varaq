@@ -2,6 +2,8 @@
 
 .varaq-shell {
   min-height: 100vh;
+
+  --sidebar-width: 240px;
 }
 
 .sidebar {
@@ -13,7 +15,7 @@
 
   display: flex;
 
-  width: 224px;
+  width: var(--sidebar-width);
 
   height: 100vh;
 
@@ -23,23 +25,41 @@
 
   overflow-y: auto;
 
-  padding: 37px 25px 20px;
-
-  border-right: 1px solid var(--border);
+  padding: 42px 30px 24px;
 
   background: var(--background);
 
   background-image: var(--texture);
+
+  box-shadow:
+    6px 0 18px color-mix(in oklab, var(--foreground) 4%, transparent),
+    18px 0 42px color-mix(in oklab, var(--foreground) 4%, transparent);
+
+  transition:
+    width 220ms ease,
+    padding 220ms ease;
 }
 
 .brand {
   display: inline-flex;
 
-  align-items: baseline;
+  align-items: center;
 
   gap: 12px;
 
   color: var(--foreground);
+}
+
+.brand-mark {
+  width: 42px;
+
+  height: 42px;
+
+  flex-shrink: 0;
+
+  object-fit: contain;
+
+  transform: translateY(5px);
 }
 
 .brand-name {
@@ -319,6 +339,103 @@
   font-size: 10px;
 }
 
+.sidebar-toggle {
+  display: flex;
+
+  min-height: 36px;
+
+  flex-shrink: 0;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 16px;
+
+  padding: 8px 9px 0;
+
+  border: 0;
+
+  border-top: 1px solid var(--border);
+
+  background: transparent;
+
+  color: var(--muted-foreground);
+
+  font-size: 10px;
+
+  letter-spacing: 1.1px;
+
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover,
+.sidebar-toggle:focus-visible {
+  color: var(--primary);
+}
+
+.sidebar-toggle svg {
+  width: 17px;
+
+  height: 17px;
+
+  flex-shrink: 0;
+}
+
+@media (min-width: 681px) {
+  .sidebar-collapsed {
+    --sidebar-width: 76px;
+  }
+
+  .sidebar-collapsed .sidebar {
+    padding-right: 17px;
+
+    padding-left: 17px;
+  }
+
+  .sidebar-collapsed .sidebar:hover,
+  .sidebar-collapsed .sidebar:focus-within {
+    width: 240px;
+
+    padding-right: 30px;
+
+    padding-left: 30px;
+  }
+
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand {
+    display: flex;
+
+    justify-content: center;
+  }
+
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-name,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-urdu,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-caption,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .nav-item span,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-note,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user > span:not(.avatar-mark),
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user > svg,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .sidebar-toggle span {
+    display: none;
+  }
+
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-navigation {
+    margin-top: 47px;
+  }
+
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .nav-item,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .sidebar-toggle {
+    justify-content: center;
+
+    padding-right: 0;
+
+    padding-left: 0;
+  }
+}
+
 /* Main content and top navigation */
 
 .main-shell {
@@ -326,7 +443,9 @@
 
   min-height: 100vh;
 
-  margin-left: 224px;
+  margin-left: var(--sidebar-width);
+
+  transition: margin-left 220ms ease;
 }
 
 .topbar {
@@ -348,11 +467,17 @@
 
   padding: 0 42px;
 
-  border-bottom: 1px solid var(--border);
-
   background: color-mix(in oklab, var(--background) 92%, transparent);
 
   backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 6px 18px color-mix(in oklab, var(--foreground) 4%, transparent),
+    0 18px 42px color-mix(in oklab, var(--foreground) 3%, transparent);
+}
+
+.sidebar-collapsed .topbar {
+  padding-left: 24px;
 }
 
 .mobile-brand {
@@ -387,6 +512,8 @@
   align-items: center;
 
   gap: 13px;
+
+  margin-left: auto;
 }
 
 .icon-button,

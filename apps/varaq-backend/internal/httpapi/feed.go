@@ -35,7 +35,7 @@ func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 	}
 	query := `SELECT p.id, p.persona_id, p.slug, p.title, p.body, p.type,
  p.status, p.visibility, p.published_at, p.created_at, p.updated_at,
- p.medium, p.media_path, p.media_mime_type, p.media_byte_size,
+ p.medium, p.media_path, p.media_mime_type, p.media_byte_size, p.cover_path, p.cover_mime_type, p.cover_byte_size,
  persona.display_name, persona.handle
  FROM public.pieces p JOIN public.personas persona ON persona.id = p.persona_id
  WHERE p.status = 'published' AND p.visibility = 'public'`
@@ -46,6 +46,12 @@ func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 			return "", nil, 0, fmt.Errorf("Invalid piece type.")
 		}
 		query += " AND p.type = " + add(kind)
+	}
+	if medium := values.Get("medium"); medium != "" {
+		if !allowedPieceMediums[medium] {
+			return "", nil, 0, fmt.Errorf("Invalid piece medium.")
+		}
+		query += " AND p.medium = " + add(medium)
 	}
 	if search := strings.TrimSpace(values.Get("q")); search != "" {
 		if len(search) > 300 {
@@ -100,7 +106,7 @@ func (h PieceHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	items := make([]FeedPiece, 0, limit+1)
 	for rows.Next() {
 		var item FeedPiece
-		if err := rows.Scan(&item.ID, &item.PersonaID, &item.Slug, &item.Title, &item.Body, &item.Type, &item.Status, &item.Visibility, &item.PublishedAt, &item.CreatedAt, &item.UpdatedAt, &item.Medium, &item.MediaPath, &item.MediaMime, &item.MediaBytes, &item.Author, &item.Handle); err != nil {
+		if err := rows.Scan(&item.ID, &item.PersonaID, &item.Slug, &item.Title, &item.Body, &item.Type, &item.Status, &item.Visibility, &item.PublishedAt, &item.CreatedAt, &item.UpdatedAt, &item.Medium, &item.MediaPath, &item.MediaMime, &item.MediaBytes, &item.CoverPath, &item.CoverMime, &item.CoverBytes, &item.Author, &item.Handle); err != nil {
 			writeInternalError(w)
 			return
 		}

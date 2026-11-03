@@ -25,7 +25,7 @@ func TestFeedQueryVisibilityAndOrdering(t *testing.T) {
 }
 func TestFeedInvalidParameters(t *testing.T) {
 	cursor := base64.RawURLEncoding.EncodeToString([]byte(`{"publishedAt":"2026-10-18T12:00:00Z","id":"not-a-uuid"}`))
-	for _, params := range []string{"limit=0", "limit=51", "limit=oops", "type=unknown", "cursor=bad", "cursor=" + cursor, "ids=1", "q=" + strings.Repeat("a", 301)} {
+	for _, params := range []string{"limit=0", "limit=51", "limit=oops", "type=unknown", "medium=unknown", "cursor=bad", "cursor=" + cursor, "ids=1", "q=" + strings.Repeat("a", 301)} {
 		t.Run(params[:min(len(params), 40)], func(t *testing.T) {
 			w := httptest.NewRecorder()
 			PieceHandler{}.ListFeed(w, httptest.NewRequest("GET", "/api/v1/feed?"+params, nil))
@@ -39,7 +39,7 @@ func TestFeedCursorAndFiltersAreParameterized(t *testing.T) {
 	id := "00000000-0000-4000-8000-000000000001"
 	cursor := base64.RawURLEncoding.EncodeToString([]byte(`{"publishedAt":"2026-10-18T12:00:00Z","id":"` + id + `"}`))
 	search := "' OR TRUE --"
-	params := url.Values{"limit": {"10"}, "type": {"poem"}, "q": {search}, "ids": {id}, "cursor": {cursor}}
+	params := url.Values{"limit": {"10"}, "type": {"poem"}, "medium": {"photography"}, "q": {search}, "ids": {id}, "cursor": {cursor}}
 	query, args, _, err := buildFeedQuery(httptest.NewRequest("GET", "/api/v1/feed?"+params.Encode(), nil))
 	if err != nil {
 		t.Fatal(err)
@@ -47,12 +47,12 @@ func TestFeedCursorAndFiltersAreParameterized(t *testing.T) {
 	if strings.Contains(query, search) || strings.Contains(query, id) {
 		t.Fatal("user data interpolated into SQL")
 	}
-	for _, required := range []string{"p.type = $1", "lower($2)", "ANY($3::uuid[])", "(p.published_at, p.id) < ($4, $5::uuid)", "LIMIT $6"} {
+	for _, required := range []string{"p.type = $1", "p.medium = $2", "lower($3)", "ANY($4::uuid[])", "(p.published_at, p.id) < ($5, $6::uuid)", "LIMIT $7"} {
 		if !strings.Contains(query, required) {
 			t.Fatalf("missing %q in %s", required, query)
 		}
 	}
-	if len(args) != 6 {
+	if len(args) != 7 {
 		t.Fatalf("args: %v", args)
 	}
 }

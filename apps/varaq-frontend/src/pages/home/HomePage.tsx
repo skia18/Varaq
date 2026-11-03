@@ -5,12 +5,28 @@ import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { FeedGrid } from '@/features/feed/FeedGrid';
 import { toWriting, forms, type Writing } from '../../features/feed/writings';
 
-import { getFeed, type PieceType } from '@/lib/api';
+import { getFeed, type PieceMedium, type PieceType } from '@/lib/api';
 import { usePublicFeed } from '@/features/feed/usePublicFeed';
 import { FeedStatus } from '@/features/feed/FeedStatus';
 import { mediaDemoWritings } from '@/features/feed/media-demo';
 
-const filters = ['All pages', 'Poems', 'Short stories', 'Essays', 'Letters', 'Fragments'] as const;
+const filters = [
+  'All pages',
+  'Poems',
+  'Short stories',
+  'Essays',
+  'Letters',
+  'Fragments',
+  'Photography',
+  'Artwork',
+  'Audio',
+] as const;
+
+const mediaFilters: Partial<Record<FeedFilter, PieceMedium>> = {
+  Photography: 'photography',
+  Artwork: 'artwork',
+  Audio: 'audio',
+};
 
 type FeedFilter = (typeof filters)[number];
 
@@ -19,10 +35,16 @@ export function HomePage() {
   const type = Object.entries(forms).find(([, label]) => label === filter)?.[0] as
     | PieceType
     | undefined;
-  const feed = usePublicFeed({ type });
+  const medium = mediaFilters[filter];
+  const feed = usePublicFeed({ type, medium });
+  const filteredFeedItems = feed.items.filter(
+    (piece) => (!type || piece.type === type) && (!medium || piece.medium === medium),
+  );
   const writings = [
-    ...(filter === 'All pages' ? mediaDemoWritings : []),
-    ...feed.items.map(toWriting),
+    ...mediaDemoWritings.filter(
+      (writing) => filter === 'All pages' || writing.medium === medium,
+    ),
+    ...filteredFeedItems.map(toWriting),
   ];
   const [readingError, setReadingError] = useState<string | null>(null);
   const [reading, setReading] = useState<Writing | null>(null);
@@ -69,7 +91,7 @@ export function HomePage() {
       </header>
 
       <div className="feed-toolbar">
-        <div className="filter-list" aria-label="Filter writing">
+        <div className="filter-list" aria-label="Filter pages">
           {filters.map((item) => (
             <button
               type="button"
@@ -88,7 +110,7 @@ export function HomePage() {
 
       <FeedGrid writings={writings} onRead={setReading} loading={feed.isLoading} />
 
-      <FeedStatus feed={feed} />
+      <FeedStatus feed={feed} visibleItemCount={writings.length} />
       {readingError && <p role="alert">{readingError}</p>}
 
       <footer className="page-footer">

@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { getFeed, type FeedPiece, type PieceType } from '@/lib/api';
+import { getFeed, type FeedPiece, type PieceMedium, type PieceType } from '@/lib/api';
 import { createScrollPager } from './scroll-pagination';
 
 export function usePublicFeed({
   type,
+  medium,
   query,
   enabled = true,
 }: {
   type?: PieceType;
+  medium?: PieceMedium;
   query?: string;
   enabled?: boolean;
 } = {}) {
@@ -27,7 +29,8 @@ export function usePublicFeed({
     if (!enabled) return () => controller.abort();
     const pager = createScrollPager<FeedPiece>({
       initialY: window.scrollY,
-      fetchPage: (cursor) => getFeed({ limit: 10, cursor, type, query, signal: controller.signal }),
+      fetchPage: (cursor) =>
+        getFeed({ limit: 10, cursor, type, medium, query, signal: controller.signal }),
       onLoading: (loading) => {
         setIsLoading(loading);
         if (loading) setError(null);
@@ -124,7 +127,7 @@ export function usePublicFeed({
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [type, query, enabled, attempt]);
+  }, [type, medium, query, enabled, attempt]);
 
   return {
     items,

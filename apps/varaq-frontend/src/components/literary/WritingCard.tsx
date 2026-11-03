@@ -2,7 +2,7 @@ import { BookmarkPicker } from '../../features/collections/BookmarkPicker';
 import type { Writing } from '../../features/feed/writings';
 import { Link } from 'react-router-dom';
 import { AudioLines, Pause, Play } from 'lucide-react';
-import { formatDuration, mediumLabel } from '../../features/feed/writings';
+import { formatDuration, literaryFormLabel } from '../../features/feed/writings';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { pauseOtherAudioPlayers } from './audio-playback';
@@ -38,13 +38,7 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions }: W
         >
           {writing.author}
         </Link>
-        <span className="card-type">
-          {medium === 'writing'
-            ? writing.form === 'Short stories'
-              ? 'Short story'
-              : writing.form.replace(/s$/, '')
-            : mediumLabel(medium)}
-        </span>
+        <span className="card-type">{literaryFormLabel(writing.form)}</span>
       </div>
 
       <button

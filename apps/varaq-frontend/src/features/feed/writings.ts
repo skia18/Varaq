@@ -49,7 +49,7 @@ export function toWriting(piece: FeedPiece): Writing {
       (piece.medium === 'photography' || piece.medium === 'artwork' ? storedMediaUrl : undefined),
     imageAlt: piece.imageAlt ?? undefined,
     audioUrl: piece.audioUrl ?? (piece.medium === 'audio' ? storedMediaUrl : undefined),
-    coverUrl: piece.coverUrl ?? undefined,
+    coverUrl: piece.coverUrl ?? (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined),
     audioDuration: piece.audioDuration ?? undefined,
     credits: piece.credits,
     respondsTo: piece.respondsTo ?? undefined,
@@ -61,6 +61,10 @@ export function mediumLabel(medium: PieceMedium) {
   if (medium === 'artwork') return 'Artwork';
   if (medium === 'audio') return 'Audio';
   return 'Writing';
+}
+
+export function literaryFormLabel(form: WritingForm) {
+  return form === 'Short stories' ? 'Short story' : form.replace(/s$/, '');
 }
 
 export function formatDuration(seconds: number) {

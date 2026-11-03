@@ -3,7 +3,7 @@ import { BookmarkPicker } from '@/features/collections/BookmarkPicker';
 import { useParams } from 'react-router-dom';
 import { apiRequest, type Piece } from '@/lib/api';
 import { AudioPlayer } from '@/components/literary/AudioPlayer';
-import { forms, mediumLabel } from '@/features/feed/writings';
+import { forms, literaryFormLabel } from '@/features/feed/writings';
 import { publicMediaUrl } from '@/features/media/storage';
 export function PublishedPiecePage() {
   const { pieceId } = useParams();
@@ -30,11 +30,7 @@ export function PublishedPiecePage() {
         <p role="alert">{error}</p>
       ) : piece ? (
         <article className="published-piece">
-          <span className="eyebrow">
-            {piece.medium && piece.medium !== 'writing'
-              ? mediumLabel(piece.medium)
-              : forms[piece.type]}
-          </span>
+          <span className="eyebrow">{literaryFormLabel(forms[piece.type])}</span>
           <h1>{piece.title}</h1>
           {piece.visibility === 'public' && <BookmarkPicker pieceId={piece.id} />}
           {(piece.medium === 'photography' || piece.medium === 'artwork') && piece.mediaPath && (
@@ -42,9 +38,12 @@ export function PublishedPiecePage() {
               <img src={publicMediaUrl(piece.mediaPath)} alt={piece.imageAlt ?? piece.title} />
             </figure>
           )}
-          {piece.medium === 'audio' && piece.coverUrl && (
+          {piece.medium === 'audio' && (piece.coverUrl || piece.coverPath) && (
             <figure className="piece-media piece-media-cover">
-              <img src={piece.coverUrl} alt={`Cover art for ${piece.title}`} />
+              <img
+                src={piece.coverUrl ?? publicMediaUrl(piece.coverPath!)}
+                alt={`Cover art for ${piece.title}`}
+              />
             </figure>
           )}
           {piece.medium === 'audio' && piece.mediaPath && (

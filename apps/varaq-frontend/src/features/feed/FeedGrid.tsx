@@ -1,18 +1,6 @@
 import { WritingCard } from '@/components/literary/WritingCard';
-import type { Writing, WritingTone } from './writings';
-
-const wallTones: WritingTone[] = [
-  'paper',
-  'sage',
-  'blush',
-  'blue',
-  'ochre',
-  'paper',
-  'red',
-  'sage',
-  'blue',
-  'blush',
-];
+import { postItTone } from './postItTones';
+import type { Writing } from './writings';
 
 export function FeedGrid({
   writings,
@@ -32,7 +20,7 @@ export function FeedGrid({
       {writings.map((writing, index) => (
         <div className="commons-note" key={writing.id}>
           <WritingCard
-            writing={{ ...writing, tone: wallTones[index % wallTones.length] }}
+            writing={{ ...writing, tone: postItTone(index) }}
             onRead={onRead}
           />
         </div>

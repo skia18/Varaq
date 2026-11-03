@@ -6,14 +6,14 @@
   display: grid;
   overflow-y: auto;
   place-items: start center;
-  padding: max(9vh, 28px) 18px 24px;
+  padding: clamp(16px, 7vh, 64px) 18px;
   background: rgb(35 31 27 / 55%);
   backdrop-filter: blur(3px);
 }
 
 .search-modal {
   width: min(620px, 100%);
-  max-height: min(760px, 82vh);
+  max-height: min(760px, calc(100dvh - 32px));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -22,6 +22,15 @@
   background-color: var(--card);
   background-image: var(--texture);
   box-shadow: 0 20px 70px rgb(0 0 0 / 22%);
+}
+
+.search-modal > * {
+  flex-shrink: 0;
+}
+
+.search-modal > .search-results,
+.search-modal > .public-directory {
+  flex: 1 1 auto;
 }
 
 .search-modal-heading {
@@ -276,7 +285,8 @@
   }
 
   .search-modal {
-    max-height: 88dvh;
+    width: 100%;
+    max-height: calc(100dvh - 24px);
     padding: 24px 19px 14px;
   }
 
@@ -286,6 +296,30 @@
 
   .search-result-copy strong {
     font-size: 18px;
+  }
+}
+
+@media (max-height: 700px) {
+  .search-backdrop {
+    align-items: start;
+    padding-block: 10px;
+  }
+
+  .search-modal {
+    max-height: calc(100dvh - 20px);
+    padding-block: 20px 12px;
+  }
+
+  .search-description {
+    display: none;
+  }
+
+  .search-field {
+    margin-top: 14px;
+  }
+
+  .discovery-tabs {
+    margin-block: 10px;
   }
 }
 
@@ -321,6 +355,14 @@
   display: grid;
   gap: 1rem;
   padding-block: 1rem;
+}
+
+/* Writer results share the modal's bounded results area with page search. */
+.search-modal > .public-directory {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 .directory-card {
   display: grid;

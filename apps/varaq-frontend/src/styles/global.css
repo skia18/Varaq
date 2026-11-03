@@ -79,7 +79,7 @@
 :root {
   color-scheme: light;
 
-  --background: oklch(0.975 0.012 82);
+  --background: oklch(0.96 0.015 82);
   --foreground: oklch(0.25 0.018 45);
 
   --card: oklch(0.99 0.008 82);
