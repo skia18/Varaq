@@ -166,6 +166,15 @@
     --sidebar-width: 76px;
   }
 
+  .sidebar-collapsed .sidebar:hover,
+  .sidebar-collapsed .sidebar:focus-within {
+    width: 212px;
+
+    padding-right: 22px;
+
+    padding-left: 22px;
+  }
+
   .sidebar {
     padding-right: 22px;
 

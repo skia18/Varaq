@@ -384,57 +384,56 @@
   flex-shrink: 0;
 }
 
-.sidebar-collapsed {
-  --sidebar-width: 76px;
-}
+@media (min-width: 681px) {
+  .sidebar-collapsed {
+    --sidebar-width: 76px;
+  }
 
-.sidebar-collapsed .sidebar {
-  padding-right: 17px;
+  .sidebar-collapsed .sidebar {
+    padding-right: 17px;
 
-  padding-left: 17px;
-}
+    padding-left: 17px;
+  }
 
-.sidebar-collapsed .brand {
-  display: flex;
+  .sidebar-collapsed .sidebar:hover,
+  .sidebar-collapsed .sidebar:focus-within {
+    width: 240px;
 
-  justify-content: center;
-}
+    padding-right: 30px;
 
-.sidebar-collapsed .brand-name,
-.sidebar-collapsed .brand-urdu,
-.sidebar-collapsed .brand-caption,
-.sidebar-collapsed .nav-item span,
-.sidebar-collapsed .side-note,
-.sidebar-collapsed .side-user > span:not(.avatar-mark),
-.sidebar-collapsed .side-user > svg,
-.sidebar-collapsed .sidebar-toggle span {
-  display: none;
-}
+    padding-left: 30px;
+  }
 
-.sidebar-collapsed .side-navigation {
-  margin-top: 47px;
-}
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand {
+    display: flex;
 
-.sidebar-collapsed .nav-item,
-.sidebar-collapsed .side-user,
-.sidebar-collapsed .sidebar-toggle {
-  justify-content: center;
+    justify-content: center;
+  }
 
-  padding-right: 0;
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-name,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-urdu,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-caption,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .nav-item span,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-note,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user > span:not(.avatar-mark),
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user > svg,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .sidebar-toggle span {
+    display: none;
+  }
 
-  padding-left: 0;
-}
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-navigation {
+    margin-top: 47px;
+  }
 
-.sidebar-collapsed .sidebar [role='menu'] {
-  right: auto;
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .nav-item,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user,
+  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .sidebar-toggle {
+    justify-content: center;
 
-  bottom: 0;
+    padding-right: 0;
 
-  left: calc(100% + 14px);
-
-  width: 224px;
-
-  margin: 0;
+    padding-left: 0;
+  }
 }
 
 /* Main content and top navigation */
