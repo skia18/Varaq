@@ -9,14 +9,38 @@ import {
   ChevronUp,
   RefreshCw,
   Feather,
+  Sprout,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 import { SearchDialog } from './SearchDialog';
 import { useVault } from '@/features/vault/VaultProvider';
 import { useAuth } from '@/auth/AuthProvider';
+import varaqMark from '@/assets/varaq-mark.png';
 
-export function SiteHeader() {
+function Brand({ mobile = false }: { mobile?: boolean }) {
+  return (
+    <Link to="/" className={`brand${mobile ? ' mobile-brand' : ''}`} aria-label="Varaq home">
+      {!mobile && (
+        <img className="brand-mark" src={varaqMark} alt="" width={1024} height={1024} />
+      )}
+      <span className="brand-name">varaq</span>
+      <span className="brand-urdu" lang="ur">
+        ورق
+      </span>
+    </Link>
+  );
+}
+
+export function SiteHeader({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   const { lock } = useVault();
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
     useAuth();
@@ -56,12 +80,7 @@ export function SiteHeader() {
   return (
     <aside className="sidebar">
       <div>
-        <Link to="/" className="brand" aria-label="Varaq home">
-          <span className="brand-name">varaq</span>
-          <span className="brand-urdu" lang="ur">
-            ورق
-          </span>
-        </Link>
+        <Brand />
 
         <p className="brand-caption">a place for your words.</p>
       </div>
@@ -72,6 +91,8 @@ export function SiteHeader() {
             key={to}
             to={to}
             end={end}
+            aria-label={label}
+            title={label}
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
           >
             <Icon aria-hidden="true" />
@@ -79,6 +100,15 @@ export function SiteHeader() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="side-note" aria-hidden="true">
+        <p>
+          Some things are better
+          <br />
+          left on a page.
+        </p>
+        <Sprout />
+      </div>
 
       <div className="relative mt-auto">
         {isLoading ? (
@@ -196,6 +226,18 @@ export function SiteHeader() {
           </Link>
         )}
       </div>
+
+      <button
+        type="button"
+        className="sidebar-toggle"
+        aria-label={collapsed ? 'Pin sidebar open' : 'Unpin sidebar'}
+        title={collapsed ? 'Pin sidebar open' : 'Unpin sidebar'}
+        aria-pressed={!collapsed}
+        onClick={onToggle}
+      >
+        {collapsed ? <Pin aria-hidden="true" /> : <PinOff aria-hidden="true" />}
+        <span>{collapsed ? 'Pin sidebar' : 'Unpin sidebar'}</span>
+      </button>
     </aside>
   );
 }
@@ -225,12 +267,7 @@ export function Topbar() {
   return (
     <>
       <header className="topbar">
-        <Link to="/" className="brand mobile-brand" aria-label="Varaq home">
-          <span className="brand-name">varaq</span>
-          <span className="brand-urdu" lang="ur">
-            ورق
-          </span>
-        </Link>
+        <Brand mobile />
 
         <p className="topbar-note">
           <span aria-hidden="true">✳</span>

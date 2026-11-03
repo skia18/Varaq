@@ -7,12 +7,11 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
 import { WritingCard } from '@/components/literary/WritingCard';
+import { postItTone } from '@/features/feed/postItTones';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
 
 const PAGE_SIZE = 20;
-
-const CARD_TONES = ['paper', 'sage', 'plain', 'red'] as const;
 
 function PublicWallContent() {
   const { handle } = useParams<{ handle: string }>();
@@ -203,7 +202,7 @@ function PublicWallContent() {
                   <div className="writing-column" key={column}>
                     {columnPieces.map((piece) => {
                       const pieceIndex = pieces.findIndex((item) => item.id === piece.id);
-                      const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
+                      const tone = postItTone(pieceIndex);
 
                       return (
                         <WritingCard

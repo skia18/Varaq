@@ -125,6 +125,8 @@
   color: var(--muted-foreground);
 
   font-size: 9px;
+
+  font-weight: 600;
 }
 
 .card-author {
@@ -187,7 +189,7 @@
 
   font-size: 28px;
 
-  font-weight: 500;
+  font-weight: 600;
 
   line-height: 1.09;
 }
@@ -196,6 +198,8 @@
   font-family: var(--font-serif);
 
   font-size: 12px;
+
+  font-weight: 500;
 
   line-height: 1.95;
 
@@ -254,6 +258,8 @@
   color: var(--muted-foreground);
 
   font-size: 9px;
+
+  font-weight: 500;
 }
 
 .card-footer button {

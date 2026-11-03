@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
-import { forms, type Writing } from '@/features/feed/writings';
+import { forms } from '@/features/feed/writings';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { WritingCard } from '@/components/literary/WritingCard';
+import { postItTone } from '@/features/feed/postItTones';
 import { Feather, Pencil, RefreshCw, Send, Trash2, ShieldAlert, X } from 'lucide-react';
 import { Dialog } from '@base-ui/react/dialog';
 import { useVault } from './VaultProvider';
@@ -163,7 +164,6 @@ export function VaultPage() {
     }
   }
   const reading = items.find((d) => d.id === readingId);
-  const tones: Writing['tone'][] = ['paper', 'sage', 'plain', 'red'];
   const date = (value: string) =>
     new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(
       new Date(value),
@@ -299,7 +299,7 @@ export function VaultPage() {
                             : d.content.body,
                         date: date(d.updatedAt),
                         minutes: minutes(d.content.body),
-                        tone: tones[items.indexOf(d) % tones.length],
+                        tone: postItTone(items.indexOf(d)),
                         medium: 'audio',
                         audioUrl: d.audioUrl,
                         coverUrl: d.imageUrl,
@@ -310,7 +310,7 @@ export function VaultPage() {
                     />
                   ) : (
                     <article
-                      className={`writing-card tone-${tones[items.indexOf(d) % tones.length]}`}
+                      className={`writing-card tone-${postItTone(items.indexOf(d))}`}
                       key={d.id}
                     >
                       {d.imageUrl && (

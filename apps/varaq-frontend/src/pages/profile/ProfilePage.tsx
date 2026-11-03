@@ -7,10 +7,9 @@ import { ArrowRight, Feather, Pencil, RefreshCw, Trash2 } from 'lucide-react';
 import { useAuth } from '@/auth/AuthProvider';
 import { deleteOwnerPiece, getOwnerPieces, type Piece } from '@/lib/api';
 import { WritingCard } from '@/components/literary/WritingCard';
+import { postItTone } from '@/features/feed/postItTones';
 
 const PAGE_SIZE = 20;
-
-const CARD_TONES = ['paper', 'sage', 'plain', 'red'] as const;
 
 export function ProfilePage() {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
@@ -289,7 +288,7 @@ export function ProfilePage() {
               <div className="writing-column" key={column}>
                 {columnPieces.map((piece) => {
                   const pieceIndex = pieces.findIndex((item) => item.id === piece.id);
-                  const tone = CARD_TONES[pieceIndex % CARD_TONES.length];
+                  const tone = postItTone(pieceIndex);
 
                   return (
                     <div key={piece.id} className="owner-media-card">

@@ -158,16 +158,18 @@
 /* Responsive shell */
 
 @media (max-width: 900px) {
-  .sidebar {
-    width: 200px;
-
-    padding-right: 18px;
-
-    padding-left: 18px;
+  .varaq-shell {
+    --sidebar-width: 212px;
   }
 
-  .main-shell {
-    margin-left: 200px;
+  .varaq-shell.sidebar-collapsed {
+    --sidebar-width: 76px;
+  }
+
+  .sidebar {
+    padding-right: 22px;
+
+    padding-left: 22px;
   }
 
   .topbar {
@@ -196,13 +198,27 @@
 
     padding: 0;
 
-    border-top: 1px solid var(--border);
-
     border-right: 0;
 
     background: var(--background);
 
     background-image: var(--texture);
+
+    box-shadow:
+      0 -6px 18px color-mix(in oklab, var(--foreground) 4%, transparent),
+      0 -18px 42px color-mix(in oklab, var(--foreground) 3%, transparent);
+  }
+
+  .sidebar-toggle {
+    display: none;
+  }
+
+  .sidebar-collapsed .sidebar {
+    padding: 0;
+  }
+
+  .sidebar-collapsed .nav-item span {
+    display: inline;
   }
 
   .sidebar > div,
