@@ -12,12 +12,16 @@ import {
   Sprout,
   Pin,
   PinOff,
+  LockKeyhole,
+  Bookmark,
+  Folder,
 } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 
 import { SearchDialog } from './SearchDialog';
 import { useVault } from '@/features/vault/VaultProvider';
 import { useAuth } from '@/auth/AuthProvider';
+import { useCollections } from '@/features/collections/CollectionsContext';
 import varaqMark from '@/assets/varaq-mark.png';
 
 function Brand({ mobile = false }: { mobile?: boolean }) {
@@ -42,8 +46,10 @@ export function SiteHeader({
   onToggle: () => void;
 }) {
   const { lock } = useVault();
+  const { collections, loading: collectionsLoading } = useCollections();
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
     useAuth();
+  const publicCollections = collections.filter((collection) => collection.visibility === 'public');
 
   const navigation = [
     { label: 'The commons', to: '/', icon: BookOpen, end: true },
@@ -57,7 +63,7 @@ export function SiteHeader({
           },
         ]
       : []),
-    ...(user ? [{ label: 'My Vault', to: '/vault', icon: BookOpen }] : []),
+    ...(user ? [{ label: 'My Vault', to: '/vault', icon: LockKeyhole }] : []),
   ];
 
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -100,6 +106,43 @@ export function SiteHeader({
           </NavLink>
         ))}
       </nav>
+
+      {user && (
+        <div className="side-section">
+          <p className="eyebrow">Your little shelves</p>
+          {collectionsLoading ? (
+            <p className="side-collection side-collection-status">Loading collections…</p>
+          ) : publicCollections.length ? (
+            <>
+              {publicCollections.slice(0, 3).map((collection, index) => (
+                <Link
+                  to={`/collections/${collection.id}`}
+                  className="side-collection"
+                  title={collection.name}
+                  key={collection.id}
+                >
+                  <span
+                    className={`collection-icon${index === 0 ? ' red' : index === 1 ? ' sage' : ''}`}
+                    aria-hidden="true"
+                  >
+                    {collection.systemType === 'saved' ? <Bookmark /> : <Folder />}
+                  </span>
+                  <span className="side-collection-name">{collection.name}</span>
+                </Link>
+              ))}
+              {publicCollections.length > 3 && (
+                <Link to="/collections" className="side-collections-all">
+                  View all {publicCollections.length} public collections
+                </Link>
+              )}
+            </>
+          ) : (
+            <Link to="/collections" className="side-collection side-collection-status">
+              No public collections yet
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="side-note" aria-hidden="true">
         <p>

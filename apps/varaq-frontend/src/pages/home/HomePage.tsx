@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowDownLeft } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowDownLeft, ArrowRight, Sprout } from 'lucide-react';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { FeedGrid } from '@/features/feed/FeedGrid';
 import { toWriting, forms, type Writing } from '../../features/feed/writings';
@@ -108,9 +108,27 @@ export function HomePage() {
         <span className="sort-control">Most recently published</span>
       </div>
 
-      <FeedGrid writings={writings} onRead={setReading} loading={feed.isLoading} />
+      <div className="feed-layout">
+        <div>
+          <FeedGrid writings={writings} onRead={setReading} loading={feed.isLoading} />
+          <FeedStatus feed={feed} visibleItemCount={writings.length} />
+        </div>
+        <aside className="field-notes" aria-label="In the margins">
+          <h2 className="notes-heading"><Sprout aria-hidden="true" />In the margins</h2>
+          <div className="daily-line">
+            <span className="eyebrow">A line to live with</span>
+            <blockquote>“Let everything happen<br />to you: beauty and terror.<br />Just keep going.<br />No feeling is final.”</blockquote>
+            <cite>— Rainer Maria Rilke</cite>
+          </div>
+          <div className="prompt-note">
+            <span className="eyebrow">A small invitation</span>
+            <p>Write about a place<br />that no longer exists,<br />except in you.</p>
+            <Link to="/write">Take this to your page <ArrowRight aria-hidden="true" /></Link>
+          </div>
+          <p className="notes-bottom">No rush. Stay a little.</p>
+        </aside>
+      </div>
 
-      <FeedStatus feed={feed} visibleItemCount={writings.length} />
       {readingError && <p role="alert">{readingError}</p>}
 
       <footer className="page-footer">

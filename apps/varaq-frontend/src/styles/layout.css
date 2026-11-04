@@ -202,6 +202,29 @@
   color: var(--primary);
 }
 
+.side-collection-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-collection-status {
+  font-style: italic;
+}
+
+.side-collections-all {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--primary);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.side-collections-all:hover {
+  text-decoration: underline;
+}
+
 .collection-dot {
   width: 7px;
 
@@ -220,6 +243,33 @@
 
 .collection-dot.sage {
   background: var(--secondary);
+}
+
+.collection-icon {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--faded) 18%, transparent);
+  color: var(--faded);
+}
+
+.collection-icon.red {
+  background: color-mix(in oklab, var(--primary) 13%, transparent);
+  color: var(--primary);
+}
+
+.collection-icon.sage {
+  background: color-mix(in oklab, var(--secondary) 36%, transparent);
+  color: color-mix(in oklab, var(--foreground) 58%, var(--secondary));
+}
+
+.collection-icon svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 1.5;
 }
 
 .side-note {
