@@ -386,18 +386,10 @@
   display: grid;
   width: 100%;
   aspect-ratio: 1;
-  background:
-    radial-gradient(
-      circle at 72% 28%,
-      color-mix(in oklab, var(--primary) 45%, transparent),
-      transparent 32%
-    ),
-    linear-gradient(
-      145deg,
-      var(--foreground),
-      color-mix(in oklab, var(--foreground) 72%, var(--primary))
-    );
+  background: linear-gradient(125deg, #763b71, #bc543c, #c88a35, #426d73, #604283);
+  background-size: 400% 400%;
   color: var(--primary-foreground);
+  animation: audio-hue-shift 14s ease-in-out infinite;
   place-items: center;
 }
 
@@ -421,26 +413,68 @@
   padding: 18px 21px 14px;
 }
 
-.media-play {
+.media-audio-controls {
   position: absolute;
-  right: 16px;
-  bottom: 16px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 14px 16px;
+  border: 0;
+  background: rgb(25 21 20 / 38%);
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+}
+
+.media-play {
   display: grid;
   width: 42px;
   height: 42px;
+  grid-row: 1 / 3;
   border: 1px solid rgb(255 255 255 / 55%);
   border-radius: 50%;
-  background: rgb(35 31 27 / 72%);
+  background: var(--primary);
   color: white;
   cursor: pointer;
   place-items: center;
-  backdrop-filter: blur(5px);
 }
 
 .media-play svg {
   width: 17px;
   height: 17px;
   margin-left: 2px;
+}
+
+.media-waveform {
+  height: 48px;
+}
+
+.media-audio-time {
+  color: rgb(255 255 255 / 82%);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+@keyframes audio-hue-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-audio-placeholder {
+    animation: none;
+  }
 }
 
 /* Photographic card */

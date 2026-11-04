@@ -6,6 +6,7 @@ import { formatDuration, literaryFormLabel } from '../../features/feed/writings'
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { pauseOtherAudioPlayers } from './audio-playback';
+import { AudioWaveform } from './AudioWaveform';
 
 type WritingCardProps = {
   writing: Writing;
@@ -20,6 +21,8 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions, pie
   const mediaImage = medium === 'audio' ? writing.coverUrl : writing.imageUrl;
   const previewRef = useRef<HTMLAudioElement>(null);
   const [previewPlaying, setPreviewPlaying] = useState(false);
+  const [previewTime, setPreviewTime] = useState(0);
+  const [previewLength, setPreviewLength] = useState(writing.audioDuration ?? 0);
 
   useEffect(() => () => previewRef.current?.pause(), []);
 
@@ -28,6 +31,13 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions, pie
     if (!audio) return;
     if (audio.paused) void audio.play().catch(() => setPreviewPlaying(false));
     else audio.pause();
+  }
+
+  function seekAudioPreview(progress: number) {
+    const audio = previewRef.current;
+    if (!audio || !previewLength) return;
+    audio.currentTime = progress * previewLength;
+    setPreviewTime(audio.currentTime);
   }
   const content = (
     <>
@@ -88,14 +98,25 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions, pie
             </button>}
             {medium === 'audio' && writing.audioUrl && (
               <>
-                <button
-                  type="button"
-                  className="media-play"
-                  aria-label={previewPlaying ? `Pause ${writing.title}` : `Play ${writing.title}`}
-                  onClick={toggleAudioPreview}
-                >
-                  {previewPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
-                </button>
+                <div className="media-audio-controls">
+                  <button
+                    type="button"
+                    className="media-play"
+                    aria-label={previewPlaying ? `Pause ${writing.title}` : `Play ${writing.title}`}
+                    onClick={toggleAudioPreview}
+                  >
+                    {previewPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
+                  </button>
+                  <AudioWaveform
+                    className="media-waveform"
+                    progress={previewLength ? previewTime / previewLength : 0}
+                    onSeek={seekAudioPreview}
+                    label={`Seek through ${writing.title}`}
+                  />
+                  <span className="media-audio-time">
+                    {formatDuration(previewTime)} / {formatDuration(previewLength)}
+                  </span>
+                </div>
                 <audio
                   ref={previewRef}
                   src={writing.audioUrl}
@@ -105,7 +126,15 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions, pie
                     setPreviewPlaying(true);
                   }}
                   onPause={() => setPreviewPlaying(false)}
-                  onEnded={() => setPreviewPlaying(false)}
+                  onEnded={() => {
+                    setPreviewPlaying(false);
+                    setPreviewTime(0);
+                  }}
+                  onTimeUpdate={(event) => setPreviewTime(event.currentTarget.currentTime)}
+                  onLoadedMetadata={(event) => {
+                    const length = event.currentTarget.duration;
+                    if (Number.isFinite(length) && length > 0) setPreviewLength(length);
+                  }}
                 />
               </>
             )}

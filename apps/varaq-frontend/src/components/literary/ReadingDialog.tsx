@@ -55,7 +55,7 @@ export function ReadingDialog({
                   )}{' '}
                   · {reading.date}
                 </p>
-                {(reading.imageUrl || reading.coverUrl) && (
+                {(reading.imageUrl || (reading.coverUrl && !reading.audioUrl)) && (
                   <figure className="reading-media">
                     <img
                       src={reading.imageUrl ?? reading.coverUrl}
@@ -65,7 +65,7 @@ export function ReadingDialog({
                   </figure>
                 )}
                 {reading.audioUrl && (
-                  <AudioPlayer src={reading.audioUrl} duration={reading.audioDuration} />
+                  <AudioPlayer src={reading.audioUrl} duration={reading.audioDuration} artwork={reading.coverUrl} />
                 )}
                 <div className="reading-body">{reading.body}</div>
                 {reading.credits && reading.credits.length > 0 && (
