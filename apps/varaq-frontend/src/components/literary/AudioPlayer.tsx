@@ -4,7 +4,17 @@ import { formatDuration } from '@/features/feed/writings';
 import { pauseOtherAudioPlayers } from './audio-playback';
 import { AudioWaveform } from './AudioWaveform';
 
-export function AudioPlayer({ src, duration, artwork }: { src: string; duration?: number; artwork?: string }) {
+export function AudioPlayer({
+  src,
+  duration,
+  artwork,
+  fullscreen = false,
+}: {
+  src: string;
+  duration?: number;
+  artwork?: string;
+  fullscreen?: boolean;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
@@ -28,7 +38,7 @@ export function AudioPlayer({ src, duration, artwork }: { src: string; duration?
 
   return (
     <div
-      className={`audio-player${artwork ? ' has-artwork' : ' has-hue-background'}`}
+      className={`audio-player${artwork ? ' has-artwork' : ' has-hue-background'}${fullscreen ? ' audio-player--fullscreen' : ''}`}
       style={artwork ? { backgroundImage: `linear-gradient(rgb(20 16 13 / 38%), rgb(20 16 13 / 72%)), url("${artwork.replaceAll('"', '\\"')}")` } : undefined}
     >
       <button

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BookmarkPicker } from '@/features/collections/BookmarkPicker';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Globe2, Link2 } from 'lucide-react';
+import { ArrowLeft, Globe2, Link2, Play, X } from 'lucide-react';
 import { apiRequest, getTrail, type Piece, type TrailGraph } from '@/lib/api';
 import { AudioPlayer } from '@/components/literary/AudioPlayer';
 import { forms, literaryFormLabel } from '@/features/feed/writings';
@@ -14,6 +14,7 @@ export function PublishedPiecePage() {
   const [trail, setTrail] = useState<TrailGraph | null>(null);
   const [trailLoading, setTrailLoading] = useState(true);
   const [trailError, setTrailError] = useState('');
+  const [playerOpen, setPlayerOpen] = useState(false);
   useEffect(() => {
     let cancelled = false;
     setPiece(null);
@@ -23,7 +24,10 @@ export function PublishedPiecePage() {
     setTrailError('');
     void apiRequest<Piece>(`/api/v1/pieces/${encodeURIComponent(pieceId || '')}`)
       .then((p) => {
-        if (!cancelled) setPiece(p);
+        if (!cancelled) {
+          setPiece(p);
+          setPlayerOpen(false);
+        }
       })
       .catch(() => {
         if (!cancelled) setError('This piece is unavailable.');
@@ -45,6 +49,21 @@ export function PublishedPiecePage() {
       cancelled = true;
     };
   }, [pieceId]);
+
+  useEffect(() => {
+    if (!playerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPlayerOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [playerOpen]);
+
   return (
     <section className="page-content piece-page">
       {error ? (
@@ -72,10 +91,52 @@ export function PublishedPiecePage() {
             </figure>
           )}
           {piece.medium === 'audio' && piece.mediaPath && (
-            <AudioPlayer
-              src={publicMediaUrl(piece.mediaPath)}
-              duration={piece.audioDuration ?? undefined}
-            />
+            <>
+              <button
+                type="button"
+                className="varaq-action audio-listening-open"
+                onClick={() => setPlayerOpen(true)}
+              >
+                <Play aria-hidden="true" /> Play audio
+              </button>
+              {playerOpen && (
+                <div
+                  className="audio-listening-overlay"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`Listening to ${piece.title}`}
+                >
+                  {(piece.coverUrl || piece.coverPath) && (
+                    <div
+                      className="audio-listening-artwork"
+                      style={{
+                        backgroundImage: `url("${(piece.coverUrl ?? publicMediaUrl(piece.coverPath!)).replaceAll('"', '\\"')}")`,
+                      }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <div className="audio-listening-heading">
+                    <span className="eyebrow">Now listening</span>
+                    <h2>{piece.title}</h2>
+                  </div>
+                  <button
+                    type="button"
+                    className="audio-listening-close"
+                    aria-label="Close full-screen player"
+                    onClick={() => setPlayerOpen(false)}
+                    autoFocus
+                  >
+                    <X aria-hidden="true" />
+                  </button>
+                  <AudioPlayer
+                    src={publicMediaUrl(piece.mediaPath)}
+                    duration={piece.audioDuration ?? undefined}
+                    artwork={piece.coverUrl ?? (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined)}
+                    fullscreen
+                  />
+                </div>
+              )}
+            </>
           )}
           <div className="published-piece-body">{piece.body}</div>
           {piece.credits && piece.credits.length > 0 && (

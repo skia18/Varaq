@@ -134,6 +134,133 @@
   animation: audio-hue-shift 14s ease-in-out infinite;
 }
 
+.audio-listening-overlay {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  overflow: hidden;
+  background: #211d1b;
+  color: white;
+}
+
+.audio-listening-open {
+  margin: 0 0 26px;
+}
+
+.audio-listening-open svg {
+  width: 14px;
+  height: 14px;
+}
+
+.audio-player--fullscreen {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding: clamp(28px, 6vw, 88px);
+  align-items: flex-end;
+}
+
+.audio-player--fullscreen.has-artwork {
+  background-image: none !important;
+  background-color: transparent;
+}
+
+.audio-listening-artwork {
+  position: absolute;
+  z-index: 0;
+  inset: -28px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(22px);
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.audio-player--fullscreen::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(12 10 9 / 12%) 0%, rgb(12 10 9 / 8%) 42%, rgb(12 10 9 / 68%) 100%);
+  content: '';
+  pointer-events: none;
+}
+
+.audio-player--fullscreen .audio-toggle,
+.audio-player--fullscreen .audio-track {
+  position: relative;
+  z-index: 1;
+}
+
+.audio-player--fullscreen .audio-toggle {
+  width: 66px;
+  height: 66px;
+}
+
+.audio-player--fullscreen .audio-track {
+  max-width: 1100px;
+}
+
+.audio-player--fullscreen .audio-waveform {
+  height: clamp(90px, 16vh, 160px);
+}
+
+.audio-listening-heading,
+.audio-listening-close {
+  position: absolute;
+  z-index: 2;
+  top: clamp(24px, 5vw, 64px);
+}
+
+.audio-listening-heading {
+  left: clamp(24px, 6vw, 88px);
+  max-width: min(680px, calc(100% - 130px));
+  text-shadow: 0 2px 22px rgb(0 0 0 / 48%);
+}
+
+.audio-listening-heading .eyebrow {
+  color: rgb(255 255 255 / 76%);
+}
+
+.audio-listening-heading h2 {
+  margin: 8px 0 0;
+  font-size: clamp(38px, 7vw, 76px);
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.audio-listening-close {
+  right: clamp(24px, 5vw, 64px);
+  display: grid;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(20 17 15 / 44%);
+  color: white;
+  cursor: pointer;
+  place-items: center;
+  backdrop-filter: blur(8px);
+}
+
+.audio-listening-close svg {
+  width: 21px;
+  height: 21px;
+}
+
+@media (max-width: 600px) {
+  .audio-player--fullscreen {
+    gap: 14px;
+    padding: 24px 20px 36px;
+  }
+
+  .audio-player--fullscreen .audio-toggle {
+    width: 52px;
+    height: 52px;
+  }
+}
+
 .audio-toggle {
   display: grid;
   width: 48px;
