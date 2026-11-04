@@ -1,7 +1,8 @@
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Feather, Globe, Lock, Save } from 'lucide-react';
+import { ArrowLeft, Check, Feather, GitFork, Globe, Lock, Save } from 'lucide-react';
 import type { DraftContent } from '@/features/vault/crypto';
+import type { Piece } from '@/lib/api';
 import { MediaUploadField } from '@/features/media/MediaUploadField';
 
 type Props = {
@@ -17,6 +18,8 @@ type Props = {
   message: string;
   onLock?: () => void;
   pieceId?: string;
+  responseSource?: Piece | null;
+  trailSources?: Piece[];
 };
 const types = [
   { value: 'poem', label: 'Poem' },
@@ -40,8 +43,12 @@ export function WritingEditor({
   message,
   onLock,
   pieceId,
+  responseSource,
+  trailSources = [],
 }: Props) {
   const published = mode === 'published';
+  const selectedSource =
+    responseSource ?? trailSources.find((source) => source.id === content.respondsTo?.pieceId);
   return (
     <section className="page-content" aria-labelledby="writing-room-heading">
       <div className="mx-auto w-full max-w-3xl">
@@ -55,6 +62,16 @@ export function WritingEditor({
               <Lock size={14} />
               Lock Vault
             </button>
+          )}
+          {published && pieceId && (
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/piece/${pieceId}`} className="varaq-action varaq-action--small">
+                Read page
+              </Link>
+              <Link to={`/trail/${pieceId}`} className="varaq-action varaq-action--small">
+                <GitFork size={14} /> View Trail
+              </Link>
+            </div>
           )}
         </div>
         <header className="mb-10 mt-8">
@@ -87,6 +104,90 @@ export function WritingEditor({
           onSubmit={onSave}
           aria-label={published ? 'Edit published writing' : 'Write a private draft'}
         >
+          {published && !content.respondsTo && (
+            <section className="respond-banner" aria-labelledby="trail-relationship-heading">
+              <span className="eyebrow">Trail relationship</span>
+              <h2 id="trail-relationship-heading">Connect this page to another.</h2>
+              <p className="muted-copy">
+                Choose a public page that inspired this one or whose thread it continues.
+              </p>
+              <label className="trail-source-select">
+                Source page
+                <select
+                  value=""
+                  disabled={!loaded || busy || trailSources.length === 0}
+                  onChange={(event) => {
+                    if (!event.target.value) return;
+                    onChange({
+                      ...content,
+                      respondsTo: { pieceId: event.target.value, relation: 'inspired-by' },
+                    });
+                  }}
+                >
+                  <option value="">
+                    {trailSources.length ? 'Choose a public page…' : 'No public pages available'}
+                  </option>
+                  {trailSources.map((source) => (
+                    <option value={source.id} key={source.id}>
+                      {source.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
+          )}
+          {selectedSource && content.respondsTo && (
+            <section className="respond-banner" aria-labelledby="response-source-heading">
+              <span className="eyebrow">A response to</span>
+              <Link id="response-source-heading" to={`/piece/${selectedSource.id}`}>
+                <strong>{selectedSource.title}</strong>
+              </Link>
+              <fieldset className="relation-options">
+                <legend>This piece…</legend>
+                <label>
+                  <input
+                    type="radio"
+                    name="trail-relation"
+                    checked={content.respondsTo.relation === 'inspired-by'}
+                    onChange={() =>
+                      onChange({
+                        ...content,
+                        respondsTo: { ...content.respondsTo!, relation: 'inspired-by' },
+                      })
+                    }
+                  />
+                  <span>
+                    Inspired by<small>A new work carrying something of this one.</small>
+                  </span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="trail-relation"
+                    checked={content.respondsTo.relation === 'continues'}
+                    onChange={() =>
+                      onChange({
+                        ...content,
+                        respondsTo: { ...content.respondsTo!, relation: 'continues' },
+                      })
+                    }
+                  />
+                  <span>
+                    Continues<small>A continuation of the same thread.</small>
+                  </span>
+                </label>
+              </fieldset>
+              {published && (
+                <button
+                  type="button"
+                  className="varaq-action varaq-action--small trail-change-source"
+                  onClick={() => onChange({ ...content, respondsTo: undefined })}
+                >
+                  Remove or choose a different source
+                </button>
+              )}
+            </section>
+          )}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-y border-border/70 py-4">
             <span className="text-sm text-muted-foreground">
               {handle ? (

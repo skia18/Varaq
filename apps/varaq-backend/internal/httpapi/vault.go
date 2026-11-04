@@ -268,7 +268,11 @@ type publishVaultRequest struct {
 	Type           string `json:"type"`
 	Visibility     string `json:"visibility"`
 	Medium         string `json:"medium"`
-	Media          *struct {
+	RespondsTo     *struct {
+		PieceID  string `json:"pieceId"`
+		Relation string `json:"relation"`
+	} `json:"respondsTo"`
+	Media *struct {
 		UploadID string `json:"uploadId"`
 		Path     string `json:"path"`
 		MimeType string `json:"mimeType"`
@@ -298,7 +302,8 @@ func (h PieceHandler) PublishVault(w http.ResponseWriter, r *http.Request) {
 		validMedia = uuidPattern.MatchString(req.Media.UploadID) && req.Media.Path != "" && req.Media.MimeType != "" && req.Media.ByteSize > 0
 	}
 	validCover := req.Cover == nil || (req.Medium == "audio" && uuidPattern.MatchString(req.Cover.UploadID) && req.Cover.Path != "" && strings.HasPrefix(req.Cover.MimeType, "image/") && req.Cover.ByteSize > 0)
-	if !uuidPattern.MatchString(id) || !uuidPattern.MatchString(req.OperationID) || req.SourceRevision < 1 || !allowedPieceTypes[req.Type] || (req.Visibility != "public" && req.Visibility != "unlisted") || !validMedia || !validCover || utf8.RuneCountInString(strings.TrimSpace(req.Title)) < 1 || utf8.RuneCountInString(req.Title) > 200 || (strings.TrimSpace(req.Body) == "" && req.Media == nil) || utf8.RuneCountInString(req.Body) > 50000 {
+	validResponse := req.RespondsTo == nil || (uuidPattern.MatchString(req.RespondsTo.PieceID) && req.RespondsTo.PieceID != id && (req.RespondsTo.Relation == "inspired-by" || req.RespondsTo.Relation == "continues"))
+	if !uuidPattern.MatchString(id) || !uuidPattern.MatchString(req.OperationID) || req.SourceRevision < 1 || !allowedPieceTypes[req.Type] || (req.Visibility != "public" && req.Visibility != "unlisted") || !validMedia || !validCover || !validResponse || utf8.RuneCountInString(strings.TrimSpace(req.Title)) < 1 || utf8.RuneCountInString(req.Title) > 200 || (strings.TrimSpace(req.Body) == "" && req.Media == nil) || utf8.RuneCountInString(req.Body) > 50000 {
 		writeBadRequest(w, "Invalid publication snapshot or visibility.")
 		return
 	}
@@ -375,6 +380,19 @@ func (h PieceHandler) PublishVault(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeInternalError(w)
 		return
+	}
+	if req.RespondsTo != nil {
+		var available bool
+		err = tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM public.pieces WHERE id=$1::uuid AND status='published' AND visibility='public')`, req.RespondsTo.PieceID).Scan(&available)
+		if err != nil || !available {
+			vaultError(w, 409, "trail_source_unavailable", "The page you responded to is no longer publicly available.")
+			return
+		}
+		_, err = tx.Exec(r.Context(), `INSERT INTO public.piece_trails(response_id,source_id,relation) VALUES($1::uuid,$2::uuid,$3)`, id, req.RespondsTo.PieceID, req.RespondsTo.Relation)
+		if err != nil {
+			writeInternalError(w)
+			return
+		}
 	}
 	if req.Media != nil {
 		_, err = tx.Exec(r.Context(), `UPDATE public.media_uploads SET bucket_id='varaq-media-public',status='published',updated_at=now() WHERE id=$1::uuid AND user_id=$2::uuid`, req.Media.UploadID, u.ID)

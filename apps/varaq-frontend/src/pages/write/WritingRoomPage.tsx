@@ -5,12 +5,14 @@ import { useAuth } from '@/auth/AuthProvider';
 import { useVault } from '@/features/vault/VaultProvider';
 import { decryptDraft, encryptDraft, type DraftContent } from '@/features/vault/crypto';
 import * as api from '@/features/vault/api';
+import { apiRequest, type Piece } from '@/lib/api';
 
 export function WritingRoomPage() {
   const { persona } = useAuth();
   const { session, lock } = useVault();
   const [params, setParams] = useSearchParams();
   const paramId = params.get('pieceId');
+  const respondTo = params.get('respondTo');
   const [id, setId] = useState(() => paramId || crypto.randomUUID());
   const [revision, setRevision] = useState(0);
   const [content, setContent] = useState<DraftContent>({ title: '', body: '', type: 'fragment' });
@@ -18,6 +20,7 @@ export function WritingRoomPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [responseSource, setResponseSource] = useState<Piece | null>(null);
   const epoch = useRef(0);
   const owner = useRef('');
   const unsaved = useRef(false);
@@ -53,11 +56,33 @@ export function WritingRoomPage() {
         setId(d.id);
         setRevision(d.revision);
         setContent(c);
+        if (c.respondsTo) {
+          const source = await apiRequest<Piece>(
+            `/api/v1/pieces/${encodeURIComponent(c.respondsTo.pieceId)}`,
+          );
+          setResponseSource(source);
+        } else {
+          setResponseSource(null);
+        }
       } else {
         owner.current = persona.id;
         setId(crypto.randomUUID());
         setRevision(0);
-        setContent({ title: '', body: '', type: 'fragment' });
+        if (respondTo) {
+          const source = await apiRequest<Piece>(`/api/v1/pieces/${encodeURIComponent(respondTo)}`);
+          if (source.visibility !== 'public')
+            throw new Error('Only public pieces can begin a Trail.');
+          setResponseSource(source);
+          setContent({
+            title: '',
+            body: '',
+            type: 'fragment',
+            respondsTo: { pieceId: source.id, relation: 'inspired-by' },
+          });
+        } else {
+          setResponseSource(null);
+          setContent({ title: '', body: '', type: 'fragment' });
+        }
       }
       if (n === epoch.current) setLoaded(true);
     })().catch((e) => {
@@ -66,7 +91,7 @@ export function WritingRoomPage() {
     return () => {
       epoch.current++;
     };
-  }, [paramId, session, persona?.id]);
+  }, [paramId, respondTo, session, persona?.id]);
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (unsaved.current) {
@@ -152,6 +177,7 @@ export function WritingRoomPage() {
       message={message}
       onLock={lock}
       pieceId={id}
+      responseSource={responseSource}
     />
   );
 }

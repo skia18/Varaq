@@ -151,6 +151,22 @@ export type PiecePage = {
   nextCursor: string | null;
 };
 
+export type TrailEdge = {
+  sourceId: string;
+  responseId: string;
+  relation: TrailRelation;
+};
+
+export type TrailGraph = {
+  rootId: string;
+  nodes: FeedPiece[];
+  edges: TrailEdge[];
+};
+
+export function getTrail(pieceId: string) {
+  return apiRequest<TrailGraph>(`/api/v1/pieces/${encodeURIComponent(pieceId)}/trail`);
+}
+
 export async function getPublicPieces(
   handle: string,
   options: {
@@ -196,6 +212,8 @@ export type UpdatePieceInput = {
   title: string;
   body: string;
   type: PieceType;
+  respondsTo?: { pieceId: string; relation: TrailRelation };
+  clearTrail?: boolean;
 };
 
 export async function updateOwnerPiece(pieceId: string, input: UpdatePieceInput): Promise<Piece> {

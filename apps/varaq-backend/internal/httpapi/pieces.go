@@ -20,26 +20,32 @@ import (
 )
 
 type Piece struct {
-	ID          string     `json:"id"`
-	PersonaID   string     `json:"personaId"`
-	Slug        string     `json:"slug"`
-	Title       string     `json:"title"`
-	Body        string     `json:"body"`
-	Type        string     `json:"type"`
-	Status      string     `json:"status"`
-	Visibility  string     `json:"visibility"`
-	PublishedAt *time.Time `json:"publishedAt"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
-	Medium      string     `json:"medium"`
-	MediaPath   *string    `json:"mediaPath,omitempty"`
-	MediaMime   *string    `json:"mediaMimeType,omitempty"`
-	MediaBytes  *int64     `json:"mediaByteSize,omitempty"`
-	MediaUpload *string    `json:"mediaUploadId,omitempty"`
-	CoverPath   *string    `json:"coverPath,omitempty"`
-	CoverMime   *string    `json:"coverMimeType,omitempty"`
-	CoverBytes  *int64     `json:"coverByteSize,omitempty"`
-	CoverUpload *string    `json:"coverUploadId,omitempty"`
+	ID          string      `json:"id"`
+	PersonaID   string      `json:"personaId"`
+	Slug        string      `json:"slug"`
+	Title       string      `json:"title"`
+	Body        string      `json:"body"`
+	Type        string      `json:"type"`
+	Status      string      `json:"status"`
+	Visibility  string      `json:"visibility"`
+	PublishedAt *time.Time  `json:"publishedAt"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+	Medium      string      `json:"medium"`
+	MediaPath   *string     `json:"mediaPath,omitempty"`
+	MediaMime   *string     `json:"mediaMimeType,omitempty"`
+	MediaBytes  *int64      `json:"mediaByteSize,omitempty"`
+	MediaUpload *string     `json:"mediaUploadId,omitempty"`
+	CoverPath   *string     `json:"coverPath,omitempty"`
+	CoverMime   *string     `json:"coverMimeType,omitempty"`
+	CoverBytes  *int64      `json:"coverByteSize,omitempty"`
+	CoverUpload *string     `json:"coverUploadId,omitempty"`
+	RespondsTo  *RespondsTo `json:"respondsTo,omitempty"`
+}
+
+type RespondsTo struct {
+	PieceID  string `json:"pieceId"`
+	Relation string `json:"relation"`
 }
 
 type PiecePage struct {
@@ -341,9 +347,11 @@ func (h PieceHandler) ListOwnerPieces(w http.ResponseWriter, r *http.Request) {
 }
 
 type updatePieceRequest struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-	Type  string `json:"type"`
+	Title      string      `json:"title"`
+	Body       string      `json:"body"`
+	Type       string      `json:"type"`
+	RespondsTo *RespondsTo `json:"respondsTo"`
+	ClearTrail bool        `json:"clearTrail"`
 }
 
 func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
@@ -361,23 +369,27 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 	pieceID := chi.URLParam(r, "pieceID")
 
 	var piece Piece
-	err := h.DB.QueryRow(
+	row := h.DB.QueryRow(
 		r.Context(),
 		`SELECT p.id, p.persona_id, p.slug, p.title, p.body,
 		        p.type, p.status, p.visibility, p.published_at,
 		        p.created_at, p.updated_at, p.medium, p.media_path,
-		        p.media_mime_type, p.media_byte_size, media.id, p.cover_path, p.cover_mime_type, p.cover_byte_size, cover.id
+		        p.media_mime_type, p.media_byte_size, media.id, p.cover_path, p.cover_mime_type, p.cover_byte_size, cover.id,
+		        trail.source_id, trail.relation
 		 FROM public.pieces p
 		 JOIN public.personas persona ON persona.id = p.persona_id
 		 LEFT JOIN public.media_uploads media ON media.piece_id=p.id AND media.status='published'
 		   AND media.object_path=p.media_path
 		 LEFT JOIN public.media_uploads cover ON cover.piece_id=p.id AND cover.status='published'
 		   AND cover.object_path=p.cover_path
+		 LEFT JOIN public.piece_trails trail ON trail.response_id=p.id
 		 WHERE p.id = $1::uuid
 		   AND persona.user_id = $2::uuid`,
 		pieceID,
 		user.ID,
-	).Scan(
+	)
+	var trailSource, trailRelation *string
+	err := row.Scan(
 		&piece.ID,
 		&piece.PersonaID,
 		&piece.Slug,
@@ -396,7 +408,11 @@ func (h PieceHandler) GetOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		&piece.MediaUpload,
 		&piece.CoverPath, &piece.CoverMime, &piece.CoverBytes,
 		&piece.CoverUpload,
+		&trailSource, &trailRelation,
 	)
+	if trailSource != nil && trailRelation != nil {
+		piece.RespondsTo = &RespondsTo{PieceID: *trailSource, Relation: *trailRelation}
+	}
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -469,11 +485,50 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 		writeBadRequest(w, "Type must be poem, fragment, story, letter, or essay.")
 		return
 	}
+	if req.RespondsTo != nil && (!uuidPattern.MatchString(req.RespondsTo.PieceID) || (req.RespondsTo.Relation != "inspired-by" && req.RespondsTo.Relation != "continues")) {
+		writeBadRequest(w, "Invalid Trail relationship.")
+		return
+	}
+	if req.RespondsTo != nil && req.ClearTrail {
+		writeBadRequest(w, "Choose a Trail relationship or remove it, not both.")
+		return
+	}
 
 	pieceID := chi.URLParam(r, "pieceID")
+	if req.RespondsTo != nil && req.RespondsTo.PieceID == pieceID {
+		writeBadRequest(w, "A piece cannot respond to itself.")
+		return
+	}
+	tx, err := h.DB.Begin(r.Context())
+	if err != nil {
+		writeInternalError(w)
+		return
+	}
+	defer tx.Rollback(r.Context())
+	if req.RespondsTo != nil {
+		var valid bool
+		err = tx.QueryRow(r.Context(), `WITH RECURSIVE descendants(id) AS (
+		 SELECT response_id FROM public.piece_trails WHERE source_id=$1::uuid
+		 UNION SELECT t.response_id FROM public.piece_trails t JOIN descendants d ON t.source_id=d.id
+		) SELECT EXISTS(
+		 SELECT 1 FROM public.pieces source, public.pieces response
+		 JOIN public.personas persona ON persona.id=response.persona_id
+		 WHERE source.id=$2::uuid AND source.status='published' AND source.visibility='public'
+		 AND response.id=$1::uuid AND response.status='published' AND response.visibility='public'
+		 AND persona.user_id=$3::uuid AND NOT EXISTS(SELECT 1 FROM descendants WHERE id=$2::uuid)
+		)`, pieceID, req.RespondsTo.PieceID, user.ID).Scan(&valid)
+		if err != nil {
+			writeInternalError(w)
+			return
+		}
+		if !valid {
+			writeJSON(w, http.StatusConflict, map[string]any{"error": map[string]string{"code": "invalid_trail_relationship", "message": "The selected pieces cannot be connected. Both must be public and the relationship cannot form a cycle."}})
+			return
+		}
+	}
 
 	var piece Piece
-	err := h.DB.QueryRow(
+	err = tx.QueryRow(
 		r.Context(),
 		`UPDATE public.pieces AS p
 		 SET title = $3,
@@ -530,6 +585,25 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		writeInternalError(w)
+		return
+	}
+	if req.RespondsTo != nil {
+		_, err = tx.Exec(r.Context(), `INSERT INTO public.piece_trails(response_id,source_id,relation) VALUES($1::uuid,$2::uuid,$3)
+		 ON CONFLICT(response_id) DO UPDATE SET source_id=EXCLUDED.source_id,relation=EXCLUDED.relation`, pieceID, req.RespondsTo.PieceID, req.RespondsTo.Relation)
+		if err != nil {
+			writeInternalError(w)
+			return
+		}
+		piece.RespondsTo = req.RespondsTo
+	} else if req.ClearTrail {
+		_, err = tx.Exec(r.Context(), `DELETE FROM public.piece_trails WHERE response_id=$1::uuid`, pieceID)
+		if err != nil {
+			writeInternalError(w)
+			return
+		}
+	}
+	if err = tx.Commit(r.Context()); err != nil {
 		writeInternalError(w)
 		return
 	}

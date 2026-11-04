@@ -115,18 +115,13 @@ async function click(element) {
   });
   await flushDialogUpdates();
 }
-async function openReader() {
-  const button = host.querySelector('button[aria-label="Read A page to read"]');
-  await click(button);
-  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
-  const dialog = document.querySelector('[role="dialog"]');
-  expect(dialog.textContent).toContain(piece.body);
-  expect(dialog.textContent).toContain(persona.displayName);
-  expect(dialog.querySelector('.reading-body').textContent).toBe(piece.body);
-  return button;
+function expectPiecePageLink() {
+  const link = host.querySelector('a[aria-label="Read A page to read"]');
+  expect(link).not.toBeNull();
+  expect(link.getAttribute('href')).toBe('/piece/piece-1');
 }
 
-test('public wall opens the full piece in place and closes with the close button', async () => {
+test('public wall opens the full piece page where Trails are visible', async () => {
   mocks.useAuth.mockReturnValue({
     user: null,
     persona: null,
@@ -149,18 +144,14 @@ test('public wall opens the full piece in place and closes with the close button
       ),
     ),
   );
-  await openReader();
+  expectPiecePageLink();
   expect(mocks.getPublicPieces).toHaveBeenCalledTimes(1);
   expect(mocks.getFeed).not.toHaveBeenCalled();
-  await click(document.querySelector('button[aria-label="Close reading"]'));
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-test('commons continues to open the full piece with the shared reader', async () => {
+test('commons opens the full piece page where Trails are visible', async () => {
   await mount(React.createElement(HomePage), '/');
-  await openReader();
-  await click(document.querySelector('button[aria-label="Close reading"]'));
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expectPiecePageLink();
 });
 
 async function mountWall(handle = 'quiet_stranger') {

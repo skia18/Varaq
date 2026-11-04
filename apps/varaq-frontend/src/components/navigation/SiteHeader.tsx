@@ -27,9 +27,7 @@ import varaqMark from '@/assets/varaq-mark.png';
 function Brand({ mobile = false }: { mobile?: boolean }) {
   return (
     <Link to="/" className={`brand${mobile ? ' mobile-brand' : ''}`} aria-label="Varaq home">
-      {!mobile && (
-        <img className="brand-mark" src={varaqMark} alt="" width={1024} height={1024} />
-      )}
+      {!mobile && <img className="brand-mark" src={varaqMark} alt="" width={1024} height={1024} />}
       <span className="brand-name">varaq</span>
       <span className="brand-urdu" lang="ur">
         ورق
@@ -38,13 +36,7 @@ function Brand({ mobile = false }: { mobile?: boolean }) {
   );
 }
 
-export function SiteHeader({
-  collapsed,
-  onToggle,
-}: {
-  collapsed: boolean;
-  onToggle: () => void;
-}) {
+export function SiteHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const { lock } = useVault();
   const { collections, loading: collectionsLoading } = useCollections();
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =

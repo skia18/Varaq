@@ -19,6 +19,8 @@ import { SignUpForm } from '@/components/login/sign-up-form';
 import { ForgotPasswordForm } from '@/components/login/forgot-password-form';
 import { UpdatePasswordForm } from '@/components/login/update-password-form';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
+import { TrailPage } from '../pages/trails/TrailPage';
+import { VaultDraftPage } from '@/features/vault/VaultDraftPage';
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +42,7 @@ export const router = createBrowserRouter([
       // Public writer wall.
       { path: '/wall/:handle', element: <PublicWallPage /> },
       { path: '/piece/:pieceId', element: <PublishedPiecePage /> },
+      { path: '/trail/:pieceId', element: <TrailPage /> },
 
       {
         element: <ProtectedRoute />,
@@ -55,6 +58,7 @@ export const router = createBrowserRouter([
             element: <VaultGate />,
             children: [
               { path: '/vault', element: <VaultPage /> },
+              { path: '/vault/draft/:pieceId', element: <VaultDraftPage /> },
               { path: '/vault/return/:pieceId', element: <ReturnToVaultPage /> },
 
               // Writing room.

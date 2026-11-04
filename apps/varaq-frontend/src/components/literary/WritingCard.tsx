@@ -12,9 +12,10 @@ type WritingCardProps = {
   onRead: (writing: Writing) => void;
   showBookmark?: boolean;
   actions?: ReactNode;
+  pieceHref?: string;
 };
 
-export function WritingCard({ writing, onRead, showBookmark = true, actions }: WritingCardProps) {
+export function WritingCard({ writing, onRead, showBookmark = true, actions, pieceHref }: WritingCardProps) {
   const medium = writing.medium ?? 'writing';
   const mediaImage = medium === 'audio' ? writing.coverUrl : writing.imageUrl;
   const previewRef = useRef<HTMLAudioElement>(null);
@@ -31,25 +32,21 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions }: W
   const content = (
     <>
       <div className="card-meta">
-        <Link
-          className="card-author"
-          to={`/wall/${encodeURIComponent(writing.handle)}`}
-          aria-label={`Visit ${writing.author}’s wall`}
-        >
+        <Link className="card-author" to={`/wall/${encodeURIComponent(writing.handle)}`} aria-label={`Visit ${writing.author}’s wall`}>
           {writing.author}
         </Link>
         <span className="card-type">{literaryFormLabel(writing.form)}</span>
       </div>
 
-      <button
-        type="button"
-        className="card-read"
-        onClick={() => onRead(writing)}
-        aria-label={`Read ${writing.title}`}
-      >
-        <h2>{writing.title}</h2>
-        <p className="card-excerpt">{writing.excerpt}</p>
-      </button>
+      {pieceHref ? (
+        <Link className="card-read" to={pieceHref} aria-label={`Read ${writing.title}`}>
+          <h2>{writing.title}</h2><p className="card-excerpt">{writing.excerpt}</p>
+        </Link>
+      ) : (
+        <button type="button" className="card-read" onClick={() => onRead(writing)} aria-label={`Read ${writing.title}`}>
+          <h2>{writing.title}</h2><p className="card-excerpt">{writing.excerpt}</p>
+        </button>
+      )}
 
       <div className="card-footer">
         <span>
@@ -69,12 +66,7 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions }: W
       <article className={`writing-card media-card media-${medium}`}>
         {(mediaImage || medium === 'audio') && (
           <div className="media-card-visual">
-            <button
-              type="button"
-              className="media-card-open"
-              onClick={() => onRead(writing)}
-              aria-label={`Open ${writing.title}`}
-            >
+            {pieceHref ? <Link className="media-card-open" to={pieceHref} aria-label={`Open ${writing.title}`}>
               {mediaImage ? (
                 <img
                   src={mediaImage}
@@ -91,7 +83,9 @@ export function WritingCard({ writing, onRead, showBookmark = true, actions }: W
                   <AudioLines />
                 </span>
               )}
-            </button>
+            </Link> : <button type="button" className="media-card-open" onClick={() => onRead(writing)} aria-label={`Open ${writing.title}`}>
+              {mediaImage ? <img src={mediaImage} alt={medium === 'audio' ? `Cover art for ${writing.title}` : (writing.imageAlt ?? writing.title)} className="media-card-image" loading="lazy" /> : <span className="media-audio-placeholder" aria-hidden="true"><AudioLines /></span>}
+            </button>}
             {medium === 'audio' && writing.audioUrl && (
               <>
                 <button

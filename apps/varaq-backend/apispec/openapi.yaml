@@ -579,6 +579,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /api/v1/pieces/{pieceID}/trail:
+    parameters:
+      - name: pieceID
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getTrail
+      tags: [Pieces]
+      summary: Read the connected public Trail containing a published piece
+      security: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrailGraph"
+        "400":
+          description: Invalid piece ID
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+        "404":
+          description: Public Trail unavailable
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+        "500":
+          description: Request failed
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
   /api/v1/owner/pieces/{pieceID}/publish:
     parameters:
       - name: pieceID
@@ -1522,6 +1555,16 @@ components:
     PieceMedium:
       type: string
       enum: [writing, photography, artwork, audio]
+    TrailRelation:
+      type: string
+      enum: [inspired-by, continues]
+    RespondsTo:
+      type: object
+      additionalProperties: false
+      required: [pieceId, relation]
+      properties:
+        pieceId: {type: string, format: uuid}
+        relation: {$ref: "#/components/schemas/TrailRelation"}
     PieceStatus:
       type: string
       enum:
@@ -1607,6 +1650,11 @@ components:
           maxLength: 50000
         type:
           $ref: "#/components/schemas/PieceType"
+        respondsTo:
+          $ref: "#/components/schemas/RespondsTo"
+        clearTrail:
+          type: boolean
+          default: false
     Piece:
       type: object
       required:
@@ -1673,6 +1721,8 @@ components:
         coverUploadId:
           type: [string, "null"]
           format: uuid
+        respondsTo:
+          $ref: "#/components/schemas/RespondsTo"
     FeedPiece:
       allOf:
         - $ref: "#/components/schemas/Piece"
@@ -1699,6 +1749,26 @@ components:
           type:
             - string
             - "null"
+    TrailEdge:
+      type: object
+      additionalProperties: false
+      required: [sourceId, responseId, relation]
+      properties:
+        sourceId: {type: string, format: uuid}
+        responseId: {type: string, format: uuid}
+        relation: {$ref: "#/components/schemas/TrailRelation"}
+    TrailGraph:
+      type: object
+      additionalProperties: false
+      required: [rootId, nodes, edges]
+      properties:
+        rootId: {type: string, format: uuid}
+        nodes:
+          type: array
+          items: {$ref: "#/components/schemas/FeedPiece"}
+        edges:
+          type: array
+          items: {$ref: "#/components/schemas/TrailEdge"}
     PiecePage:
       type: object
       required:
@@ -1943,6 +2013,8 @@ components:
             - unlisted
         medium:
           $ref: "#/components/schemas/PieceMedium"
+        respondsTo:
+          $ref: "#/components/schemas/RespondsTo"
         media:
           type: object
           additionalProperties: false

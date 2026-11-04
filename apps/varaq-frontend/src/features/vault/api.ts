@@ -62,6 +62,7 @@ export const publish = (
         body: content.body,
         type: content.type,
         visibility,
+        respondsTo: content.respondsTo,
         medium: content.audio ? 'audio' : content.image ? 'photography' : 'writing',
         media:
           (content.audio ?? content.image ?? content.media)

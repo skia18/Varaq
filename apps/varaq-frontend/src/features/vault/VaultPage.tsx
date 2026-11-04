@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { forms } from '@/features/feed/writings';
-import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { WritingCard } from '@/components/literary/WritingCard';
 import { postItTone } from '@/features/feed/postItTones';
 import { Feather, Pencil, RefreshCw, Send, Trash2, ShieldAlert, X } from 'lucide-react';
@@ -24,7 +23,6 @@ type OpenDraft = api.EncryptedDraft & {
 export function VaultPage() {
   const { session } = useVault();
   const { persona } = useAuth();
-  const [readingId, setReadingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<OpenDraft[]>([]);
   const [error, setError] = useState('');
@@ -39,7 +37,6 @@ export function VaultPage() {
     let cancelled = false;
     if (!session) return;
     setItems([]);
-    setReadingId(null);
     setLoading(true);
     setError('');
     void (async () => {
@@ -163,7 +160,6 @@ export function VaultPage() {
       setBusy(false);
     }
   }
-  const reading = items.find((d) => d.id === readingId);
   const date = (value: string) =>
     new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' }).format(
       new Date(value),
@@ -304,7 +300,8 @@ export function VaultPage() {
                         audioUrl: d.audioUrl,
                         coverUrl: d.imageUrl,
                       }}
-                      onRead={() => setReadingId(d.id)}
+                      onRead={() => undefined}
+                      pieceHref={`/vault/draft/${encodeURIComponent(d.id)}`}
                       showBookmark={false}
                       actions={draftActions(d)}
                     />
@@ -326,11 +323,10 @@ export function VaultPage() {
                           {d.content.type.charAt(0).toUpperCase() + d.content.type.slice(1)}
                         </span>
                       </div>
-                      <button
-                        type="button"
+                      <Link
+                        to={`/vault/draft/${encodeURIComponent(d.id)}`}
                         className="card-read wall-card-content"
                         aria-label={`Read ${d.content.title}`}
-                        onClick={() => setReadingId(d.id)}
                       >
                         <h2>{d.content.title}</h2>
                         <p className="card-excerpt">
@@ -338,7 +334,7 @@ export function VaultPage() {
                             ? `${d.content.body.slice(0, 500).trimEnd()}…`
                             : d.content.body}
                         </p>
-                      </button>
+                      </Link>
                       <div className="card-footer wall-card-footer">
                         <span>{minutes(d.content.body)} min read</span>
                         <span>Draft</span>
@@ -351,24 +347,6 @@ export function VaultPage() {
           ))}
         </div>
       )}
-      <ReadingDialog
-        reading={
-          reading
-            ? {
-                title: reading.content.title,
-                body: reading.content.body,
-                form: forms[reading.content.type],
-                minutes: minutes(reading.content.body),
-                author: persona?.displayName || 'You',
-                date: date(reading.updatedAt),
-                medium: reading.audioUrl ? 'audio' : reading.imageUrl ? 'photography' : 'writing',
-                imageUrl: reading.imageUrl,
-                audioUrl: reading.audioUrl,
-              }
-            : null
-        }
-        onClose={() => setReadingId(null)}
-      />
       <footer className="page-footer">
         <span>A little less noise. A little more meaning.</span>
         <span>Varaq · Words belong to their writers.</span>
