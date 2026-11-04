@@ -216,6 +216,7 @@ function PublicWallContent() {
                             tone,
                           }}
                           onRead={() => setReadingId(piece.id)}
+                          pieceHref={`/piece/${encodeURIComponent(piece.id)}`}
                           showBookmark={false}
                         />
                       );

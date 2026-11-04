@@ -22,6 +22,7 @@ export function FeedGrid({
           <WritingCard
             writing={{ ...writing, tone: postItTone(index) }}
             onRead={onRead}
+            pieceHref={`/piece/${encodeURIComponent(writing.id)}`}
           />
         </div>
       ))}

@@ -8,7 +8,6 @@ import { toWriting, forms, type Writing } from '../../features/feed/writings';
 import { getFeed, type PieceMedium, type PieceType } from '@/lib/api';
 import { usePublicFeed } from '@/features/feed/usePublicFeed';
 import { FeedStatus } from '@/features/feed/FeedStatus';
-import { mediaDemoWritings } from '@/features/feed/media-demo';
 
 const filters = [
   'All pages',
@@ -40,12 +39,7 @@ export function HomePage() {
   const filteredFeedItems = feed.items.filter(
     (piece) => (!type || piece.type === type) && (!medium || piece.medium === medium),
   );
-  const writings = [
-    ...mediaDemoWritings.filter(
-      (writing) => filter === 'All pages' || writing.medium === medium,
-    ),
-    ...filteredFeedItems.map(toWriting),
-  ];
+  const writings = filteredFeedItems.map(toWriting);
   const [readingError, setReadingError] = useState<string | null>(null);
   const [reading, setReading] = useState<Writing | null>(null);
 
@@ -114,16 +108,35 @@ export function HomePage() {
           <FeedStatus feed={feed} visibleItemCount={writings.length} />
         </div>
         <aside className="field-notes" aria-label="In the margins">
-          <h2 className="notes-heading"><Sprout aria-hidden="true" />In the margins</h2>
+          <h2 className="notes-heading">
+            <Sprout aria-hidden="true" />
+            In the margins
+          </h2>
           <div className="daily-line">
             <span className="eyebrow">A line to live with</span>
-            <blockquote>“Let everything happen<br />to you: beauty and terror.<br />Just keep going.<br />No feeling is final.”</blockquote>
+            <blockquote>
+              “Let everything happen
+              <br />
+              to you: beauty and terror.
+              <br />
+              Just keep going.
+              <br />
+              No feeling is final.”
+            </blockquote>
             <cite>— Rainer Maria Rilke</cite>
           </div>
           <div className="prompt-note">
             <span className="eyebrow">A small invitation</span>
-            <p>Write about a place<br />that no longer exists,<br />except in you.</p>
-            <Link to="/write">Take this to your page <ArrowRight aria-hidden="true" /></Link>
+            <p>
+              Write about a place
+              <br />
+              that no longer exists,
+              <br />
+              except in you.
+            </p>
+            <Link to="/write">
+              Take this to your page <ArrowRight aria-hidden="true" />
+            </Link>
           </div>
           <p className="notes-bottom">No rush. Stay a little.</p>
         </aside>

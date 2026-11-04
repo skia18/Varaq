@@ -110,5 +110,7 @@ test('Vault keeps the private profile and original writing-card layout', async (
   expect(host.querySelector('.wall-handle').textContent).toBe('@writer');
   expect(host.querySelector('.bio').textContent).toBe('A private profile');
   expect(host.querySelector('.writing-grid .writing-card')).not.toBeNull();
-  expect(host.querySelector('button[aria-label="Read Secret title"]')).not.toBeNull();
+  expect(host.querySelector('a[aria-label="Read Secret title"]')?.getAttribute('href')).toBe(
+    '/vault/draft/draft',
+  );
 });

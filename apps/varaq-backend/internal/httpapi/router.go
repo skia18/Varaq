@@ -65,6 +65,7 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 			c.Delete("/collections/{collectionID}/pieces/{pieceID}", collections.Membership)
 		})
 		api.Get("/pieces/{pieceID}", pieces.GetPublishedPiece)
+		api.Get("/pieces/{pieceID}/trail", pieces.GetTrail)
 		api.Group(func(v chi.Router) {
 			v.Use(authmiddleware.RequireAuth(verifier))
 			v.Get("/owner/pieces/{pieceID}/vault", pieces.ReturnToVault)

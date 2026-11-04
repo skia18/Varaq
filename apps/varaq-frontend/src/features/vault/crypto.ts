@@ -1,5 +1,5 @@
 import { argon2idAsync } from '@noble/hashes/argon2.js';
-import type { PieceType } from '@/lib/api';
+import type { PieceType, TrailRelation } from '@/lib/api';
 
 import type { Sealed, VaultConfig, VaultEnvelope as Envelope } from '@/generated/api';
 export type { Sealed, VaultConfig, Envelope };
@@ -20,6 +20,7 @@ export type DraftContent = {
   media?: DraftMedia;
   image?: DraftMedia;
   audio?: DraftMedia;
+  respondsTo?: { pieceId: string; relation: TrailRelation };
 };
 function validDraftMedia(value: unknown): value is DraftMedia {
   if (!value || typeof value !== 'object') return false;
@@ -223,7 +224,11 @@ export async function decryptDraft(
       (content.media !== undefined && !validDraftMedia(content.media)) ||
       (content.media !== undefined && (!content.medium || content.medium === 'writing')) ||
       (content.image !== undefined && !validDraftMedia(content.image)) ||
-      (content.audio !== undefined && !validDraftMedia(content.audio))
+      (content.audio !== undefined && !validDraftMedia(content.audio)) ||
+      (content.respondsTo !== undefined &&
+        (typeof content.respondsTo !== 'object' ||
+          typeof content.respondsTo.pieceId !== 'string' ||
+          !['inspired-by', 'continues'].includes(content.respondsTo.relation)))
     )
       throw new Error('Invalid draft content.');
     return content;

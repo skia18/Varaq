@@ -101,6 +101,8 @@ test('published editor uses the same writing layout and clearly saves readable p
   await mount(PublishedWritingRoomPage, '/wall/manage/edit?pieceId=published');
   expect(host.querySelector('h1').textContent).toContain('published words');
   expect(host.textContent).toContain('Published piece');
+  expect(host.textContent).toContain('Trail relationship');
+  expect(host.textContent).toContain('View Trail');
   expect(host.textContent).not.toContain('Encrypted draft');
   expect(host.querySelector('textarea').value).toBe(content.body);
   await save();

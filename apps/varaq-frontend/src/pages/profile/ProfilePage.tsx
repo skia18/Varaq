@@ -302,6 +302,7 @@ export function ProfilePage() {
                           tone,
                         }}
                         onRead={() => setReadingId(piece.id)}
+                        pieceHref={`/piece/${encodeURIComponent(piece.id)}`}
                         showBookmark={false}
                       />
                       <div className="vault-card-actions">
