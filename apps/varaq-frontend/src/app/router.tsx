@@ -20,6 +20,7 @@ import { ForgotPasswordForm } from '@/components/login/forgot-password-form';
 import { UpdatePasswordForm } from '@/components/login/update-password-form';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { TrailPage } from '../pages/trails/TrailPage';
+import { TrailsPage } from '../pages/trails/TrailsPage';
 import { VaultDraftPage } from '@/features/vault/VaultDraftPage';
 
 export const router = createBrowserRouter([
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
       // Public writer wall.
       { path: '/wall/:handle', element: <PublicWallPage /> },
       { path: '/piece/:pieceId', element: <PublishedPiecePage /> },
+      { path: '/trails', element: <TrailsPage /> },
       { path: '/trail/:pieceId', element: <TrailPage /> },
 
       {
