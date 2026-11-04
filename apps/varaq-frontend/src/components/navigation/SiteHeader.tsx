@@ -23,6 +23,7 @@ import { useVault } from '@/features/vault/VaultProvider';
 import { useAuth } from '@/auth/AuthProvider';
 import { useCollections } from '@/features/collections/CollectionsContext';
 import varaqMark from '@/assets/varaq-mark.png';
+import { TrailPathIcon } from '@/components/icons/TrailPathIcon';
 
 function Brand({ mobile = false }: { mobile?: boolean }) {
   return (
@@ -45,6 +46,7 @@ export function SiteHeader({ collapsed, onToggle }: { collapsed: boolean; onTogg
 
   const navigation = [
     { label: 'The commons', to: '/', icon: BookOpen, end: true },
+    { label: 'Trails', to: '/trails', icon: TrailPathIcon },
     { label: 'Collections', to: '/collections', icon: Library },
     ...(user && persona
       ? [

@@ -163,6 +163,16 @@ export type TrailGraph = {
   edges: TrailEdge[];
 };
 
+export type TrailSummary = {
+  root: FeedPiece;
+  pieceCount: number;
+  updatedAt: string;
+};
+
+export function getTrails() {
+  return apiRequest<{ items: TrailSummary[] }>('/api/v1/trails');
+}
+
 export function getTrail(pieceId: string) {
   return apiRequest<TrailGraph>(`/api/v1/pieces/${encodeURIComponent(pieceId)}/trail`);
 }

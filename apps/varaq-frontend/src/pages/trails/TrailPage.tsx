@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Feather } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { getTrail, type TrailGraph } from '@/lib/api';
 import { TrailGraphView, TrailLegend } from '@/components/literary/TrailView';
 
 export function TrailPage() {
   const { pieceId = '' } = useParams();
+  const [searchParams] = useSearchParams();
+  const openedFromDirectory = searchParams.get('from') === 'trails';
   const [graph, setGraph] = useState<TrailGraph | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -31,9 +33,12 @@ export function TrailPage() {
           <p>How one work inspired another. Every page remains its own.</p>
         </div>
       </header>
-      <Link className="varaq-action varaq-action--small" to={`/piece/${pieceId}`}>
+      <Link
+        className="varaq-action varaq-action--small"
+        to={openedFromDirectory ? '/trails' : `/piece/${pieceId}`}
+      >
         <ArrowLeft />
-        Back to the page
+        {openedFromDirectory ? 'Back to all Trails' : 'Back to the page'}
       </Link>
       {error ? (
         <p role="alert">{error}</p>

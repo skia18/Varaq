@@ -54,6 +54,7 @@ func NewRouter(db *pgxpool.Pool, verifier auth.Verifier) http.Handler {
 			Post("/personas", personas.Create)
 
 		api.Get("/feed", pieces.ListFeed)
+		api.Get("/trails", pieces.ListTrails)
 		api.Get("/collections/{collectionID}/public", collections.Public)
 		api.Group(func(c chi.Router) {
 			c.Use(authmiddleware.RequireAuth(verifier))
