@@ -100,9 +100,9 @@
 
 .reading-media {
   margin: 28px 0 22px;
-  padding: 0;
+  padding: clamp(10px, 3vw, 24px);
   border: 0;
-  background: transparent;
+  background: color-mix(in oklab, var(--muted) 72%, var(--card));
 }
 
 .reading-media-image {
@@ -111,6 +111,7 @@
   max-height: min(58vh, 620px);
   border: 0;
   object-fit: contain;
+  box-shadow: 0 10px 30px rgb(36 28 20 / 12%);
 }
 
 .audio-player {
