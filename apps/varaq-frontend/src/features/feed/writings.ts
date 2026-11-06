@@ -22,6 +22,7 @@ export type Writing = {
   audioDuration?: number;
   credits?: string[];
   respondsTo?: { pieceId: string; relation: TrailRelation };
+  trailConnected?: boolean;
 };
 export const forms: Record<PieceType, WritingForm> = {
   poem: 'Poems',
@@ -53,6 +54,7 @@ export function toWriting(piece: FeedPiece): Writing {
     audioDuration: piece.audioDuration ?? undefined,
     credits: piece.credits,
     respondsTo: piece.respondsTo ?? undefined,
+    trailConnected: piece.trailConnected,
   };
 }
 

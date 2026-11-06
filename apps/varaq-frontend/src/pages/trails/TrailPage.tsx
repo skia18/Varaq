@@ -35,10 +35,10 @@ export function TrailPage() {
       </header>
       <Link
         className="varaq-action varaq-action--small"
-        to={openedFromDirectory ? '/trails' : `/piece/${pieceId}`}
+        to={openedFromDirectory ? '/?view=trails' : `/piece/${pieceId}`}
       >
         <ArrowLeft />
-        {openedFromDirectory ? 'Back to all Trails' : 'Back to the page'}
+        {openedFromDirectory ? 'Back to Trails' : 'Back to the page'}
       </Link>
       {error ? (
         <p role="alert">{error}</p>

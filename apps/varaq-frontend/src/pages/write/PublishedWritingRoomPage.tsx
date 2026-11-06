@@ -123,9 +123,11 @@ export function PublishedWritingRoomPage() {
         type: choice.type,
         respondsTo: { pieceId: respondTo!, relation },
       });
-      navigate(`/trail/${encodeURIComponent(respondTo!)}`);
+      void navigate(`/trail/${encodeURIComponent(respondTo!)}`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'The piece could not be added to this Trail.');
+      setError(
+        cause instanceof Error ? cause.message : 'The piece could not be added to this Trail.',
+      );
     } finally {
       setConnectingId('');
     }
@@ -144,14 +146,15 @@ export function PublishedWritingRoomPage() {
             </p>
           </div>
         </header>
-        {error && <p className="collection-notice collection-notice--error" role="alert">{error}</p>}
+        {error && (
+          <p className="collection-notice collection-notice--error" role="alert">
+            {error}
+          </p>
+        )}
         {choices.length ? (
           <div className="existing-piece-choices">
             {choices.map((choice) => (
-              <article
-                className="existing-piece-card"
-                key={choice.id}
-              >
+              <article className="existing-piece-card" key={choice.id}>
                 <strong>{choice.title}</strong>
                 <small>
                   {choice.type} ·{' '}
@@ -162,10 +165,20 @@ export function PublishedWritingRoomPage() {
                   {choice.body.length > 150 ? '…' : ''}
                 </p>
                 <div className="existing-piece-relations">
-                  <button type="button" className="varaq-action varaq-action--small" disabled={Boolean(connectingId)} onClick={() => void connectExisting(choice, 'inspired-by')}>
+                  <button
+                    type="button"
+                    className="varaq-action varaq-action--small"
+                    disabled={Boolean(connectingId)}
+                    onClick={() => void connectExisting(choice, 'inspired-by')}
+                  >
                     {connectingId === choice.id ? 'Connecting…' : 'Inspired by'}
                   </button>
-                  <button type="button" className="varaq-action varaq-action--small" disabled={Boolean(connectingId)} onClick={() => void connectExisting(choice, 'continues')}>
+                  <button
+                    type="button"
+                    className="varaq-action varaq-action--small"
+                    disabled={Boolean(connectingId)}
+                    onClick={() => void connectExisting(choice, 'continues')}
+                  >
                     Continues
                   </button>
                 </div>

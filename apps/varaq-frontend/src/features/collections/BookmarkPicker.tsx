@@ -92,7 +92,7 @@ export function BookmarkPicker({ pieceId }: { pieceId: string }) {
         ref={trigger}
         type="button"
         className={`bookmark-trigger ${saved ? 'is-active' : ''}`}
-        aria-label="Save and organize piece"
+        aria-label="Save to collections"
         aria-expanded={open}
         aria-controls={panelId}
         disabled={busy || (!!user && loading)}

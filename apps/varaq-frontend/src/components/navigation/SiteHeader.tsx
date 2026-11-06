@@ -1,292 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   BookOpen,
+  Feather,
   Library,
-  Search,
-  UserRound,
+  LockKeyhole,
   LogIn,
   LogOut,
-  ChevronUp,
-  RefreshCw,
-  Feather,
-  Sprout,
-  Pin,
-  PinOff,
-  LockKeyhole,
-  Bookmark,
-  Folder,
+  Search,
+  UserRound,
 } from 'lucide-react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import { SearchDialog } from './SearchDialog';
-import { useVault } from '@/features/vault/VaultProvider';
-import { useAuth } from '@/auth/AuthProvider';
-import { useCollections } from '@/features/collections/CollectionsContext';
 import varaqMark from '@/assets/varaq-mark.png';
-import { TrailPathIcon } from '@/components/icons/TrailPathIcon';
+import { useAuth } from '@/auth/AuthProvider';
+import { useVault } from '@/features/vault/VaultProvider';
+import { SearchDialog } from './SearchDialog';
 
-function Brand({ mobile = false }: { mobile?: boolean }) {
+const dockSpring = { type: 'spring', stiffness: 420, damping: 34 } as const;
+
+function Brand() {
   return (
-    <Link to="/" className={`brand${mobile ? ' mobile-brand' : ''}`} aria-label="Varaq home">
-      {!mobile && <img className="brand-mark" src={varaqMark} alt="" width={1024} height={1024} />}
-      <span className="brand-name">varaq</span>
-      <span className="brand-urdu" lang="ur">
-        ورق
-      </span>
+    <Link to="/" className="dock-brand" aria-label="Varaq home">
+      <img src={varaqMark} alt="" width={1024} height={1024} />
+      <span>varaq</span>
+      <small lang="ur">ورق</small>
     </Link>
   );
 }
 
-export function SiteHeader({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+export function FloatingDock() {
   const { lock } = useVault();
-  const { collections, loading: collectionsLoading } = useCollections();
-  const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona, signOut } =
-    useAuth();
-  const publicCollections = collections.filter((collection) => collection.visibility === 'public');
+  const { user, persona, isLoading, isPersonaLoading, signOut } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
 
   const navigation = [
-    { label: 'The commons', to: '/', icon: BookOpen, end: true },
-    { label: 'Trails', to: '/trails', icon: TrailPathIcon },
-    { label: 'Collections', to: '/collections', icon: Library },
+    { label: 'The commons', shortLabel: 'Commons', to: '/', icon: BookOpen, end: true },
+    { label: 'Collections', shortLabel: 'Collections', to: '/collections', icon: Library },
     ...(user && persona
       ? [
           {
             label: 'My Wall',
+            shortLabel: 'Wall',
             to: `/wall/${encodeURIComponent(persona.handle)}`,
             icon: UserRound,
           },
         ]
       : []),
-    ...(user ? [{ label: 'My Vault', to: '/vault', icon: LockKeyhole }] : []),
+    ...(user
+      ? [
+          {
+            label: 'My Vault',
+            shortLabel: 'Vault',
+            to: '/vault',
+            icon: LockKeyhole,
+          },
+        ]
+      : []),
   ];
 
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [signOutError, setSignOutError] = useState<string | null>(null);
-  const navigate = useNavigate();
-
-  async function handleSignOut() {
-    setSignOutError(null);
-    lock();
-
-    try {
-      await signOut();
-      setProfileMenuOpen(false);
-      navigate('/', { replace: true });
-    } catch {
-      setSignOutError('Could not sign out. Please try again.');
-    }
-  }
-
-  return (
-    <aside className="sidebar">
-      <div>
-        <Brand />
-
-        <p className="brand-caption">a place for your words.</p>
-      </div>
-
-      <nav className="side-navigation" aria-label="Main navigation">
-        {navigation.map(({ label, to, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            aria-label={label}
-            title={label}
-            className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-          >
-            <Icon aria-hidden="true" />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
-
-      {user && (
-        <div className="side-section">
-          <p className="eyebrow">Your little shelves</p>
-          {collectionsLoading ? (
-            <p className="side-collection side-collection-status">Loading collections…</p>
-          ) : publicCollections.length ? (
-            <>
-              {publicCollections.slice(0, 3).map((collection, index) => (
-                <Link
-                  to={`/collections/${collection.id}`}
-                  className="side-collection"
-                  title={collection.name}
-                  key={collection.id}
-                >
-                  <span
-                    className={`collection-icon${index === 0 ? ' red' : index === 1 ? ' sage' : ''}`}
-                    aria-hidden="true"
-                  >
-                    {collection.systemType === 'saved' ? <Bookmark /> : <Folder />}
-                  </span>
-                  <span className="side-collection-name">{collection.name}</span>
-                </Link>
-              ))}
-              {publicCollections.length > 3 && (
-                <Link to="/collections" className="side-collections-all">
-                  View all {publicCollections.length} public collections
-                </Link>
-              )}
-            </>
-          ) : (
-            <Link to="/collections" className="side-collection side-collection-status">
-              No public collections yet
-            </Link>
-          )}
-        </div>
-      )}
-
-      <div className="side-note" aria-hidden="true">
-        <p>
-          Some things are better
-          <br />
-          left on a page.
-        </p>
-        <Sprout />
-      </div>
-
-      <div className="relative mt-auto">
-        {isLoading ? (
-          <div className="side-user" aria-label="Loading account">
-            <span className="avatar-mark">·</span>
-            <span>
-              <strong>One moment</strong>
-              <small>Loading your account…</small>
-            </span>
-          </div>
-        ) : user ? (
-          <>
-            <button
-              type="button"
-              className="side-user w-full text-left"
-              aria-haspopup="menu"
-              aria-expanded={profileMenuOpen}
-              aria-label="Open account menu"
-              onClick={() => setProfileMenuOpen((open) => !open)}
-            >
-              <span className="avatar-mark">
-                {(persona?.displayName?.[0] ?? user.email?.[0] ?? 'v').toLowerCase()}
-              </span>
-
-              <span className="min-w-0 flex-1">
-                <strong className="block truncate">
-                  {isPersonaLoading ? 'Loading persona…' : (persona?.displayName ?? 'Your profile')}
-                </strong>
-
-                <small className="block truncate">
-                  {persona
-                    ? `@${persona.handle}`
-                    : personaError
-                      ? 'Profile unavailable'
-                      : user.email}
-                </small>
-              </span>
-
-              <ChevronUp
-                aria-hidden="true"
-                className={`shrink-0 transition-transform ${profileMenuOpen ? '' : 'rotate-180'}`}
-                size={16}
-              />
-            </button>
-
-            {profileMenuOpen && (
-              <div
-                role="menu"
-                aria-label="Account menu"
-                className="absolute bottom-full left-0 z-50 mb-2 w-full rounded-lg border border-border bg-background p-1 shadow-lg"
-              >
-                {personaError && (
-                  <div className="px-3 py-2">
-                    <p className="text-xs text-destructive">Could not load your profile.</p>
-
-                    <button
-                      type="button"
-                      className="mt-1 flex items-center gap-2 text-xs underline"
-                      onClick={() => void refreshPersona()}
-                    >
-                      <RefreshCw size={12} aria-hidden="true" />
-                      Try again
-                    </button>
-                  </div>
-                )}
-
-                {persona && (
-                  <Link
-                    to={`/wall/${encodeURIComponent(persona.handle)}`}
-                    role="menuitem"
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => setProfileMenuOpen(false)}
-                  >
-                    <UserRound size={16} aria-hidden="true" />
-                    My Wall
-                  </Link>
-                )}
-
-                <Link
-                  to="/vault"
-                  role="menuitem"
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => setProfileMenuOpen(false)}
-                >
-                  <BookOpen size={16} aria-hidden="true" />
-                  Vault
-                </Link>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => void handleSignOut()}
-                >
-                  <LogOut size={16} aria-hidden="true" />
-                  Sign out
-                </button>
-
-                {signOutError && (
-                  <p className="px-3 py-2 text-xs text-destructive">{signOutError}</p>
-                )}
-              </div>
-            )}
-          </>
-        ) : (
-          <Link to="/login" className="side-user">
-            <span className="avatar-mark">
-              <LogIn size={18} aria-hidden="true" />
-            </span>
-
-            <span>
-              <strong>Sign in</strong>
-              <small>Access your profile</small>
-            </span>
-          </Link>
-        )}
-      </div>
-
-      <button
-        type="button"
-        className="sidebar-toggle"
-        aria-label={collapsed ? 'Pin sidebar open' : 'Unpin sidebar'}
-        title={collapsed ? 'Pin sidebar open' : 'Unpin sidebar'}
-        aria-pressed={!collapsed}
-        onClick={onToggle}
-      >
-        {collapsed ? <Pin aria-hidden="true" /> : <PinOff aria-hidden="true" />}
-        <span>{collapsed ? 'Pin sidebar' : 'Unpin sidebar'}</span>
-      </button>
-    </aside>
-  );
-}
-
-export function Topbar() {
-  const { lock } = useVault();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [signOutError, setSignOutError] = useState<string | null>(null);
-
-  const { user, persona, isLoading, isPersonaLoading, signOut } = useAuth();
-  const navigate = useNavigate();
+  useEffect(() => {
+    setAccountMenuOpen(false);
+  }, [location.pathname]);
 
   async function handleSignOut() {
     setSignOutError(null);
@@ -295,7 +75,7 @@ export function Topbar() {
     try {
       await signOut();
       setAccountMenuOpen(false);
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     } catch {
       setSignOutError('Could not sign out. Please try again.');
     }
@@ -303,118 +83,130 @@ export function Topbar() {
 
   return (
     <>
-      <header className="topbar">
-        <Brand mobile />
+      <div className="floating-dock-frame">
+        <motion.header
+          className="floating-dock"
+          aria-label="Varaq navigation"
+          initial={reduceMotion ? false : { opacity: 0, y: -24, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={dockSpring}
+        >
+          <Brand />
 
-        <p className="topbar-note">
-          <span aria-hidden="true">✳</span>
-          Leave a page of yourself behind.
-        </p>
+          <LayoutGroup id="primary-navigation">
+            <nav className="dock-navigation" aria-label="Main navigation">
+              {navigation.map(({ label, shortLabel, to, icon: Icon, end }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  aria-label={label}
+                  title={label}
+                  className={({ isActive }) => `dock-link${isActive ? ' is-active' : ''}`}
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <motion.span
+                          className="dock-active-pill"
+                          layoutId="dock-active-pill"
+                          transition={reduceMotion ? { duration: 0 } : dockSpring}
+                        />
+                      )}
+                      <Icon aria-hidden="true" />
+                      <span>{shortLabel}</span>
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </nav>
+          </LayoutGroup>
 
-        <div className="topbar-actions">
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Search writing"
-            title="Search writing"
-            onClick={() => setSearchOpen(true)}
-          >
-            <Search aria-hidden="true" />
-          </button>
-
-          <div className="relative">
+          <div className="dock-actions">
             <button
               type="button"
-              className="icon-button"
-              aria-label="Account menu"
-              title="Account"
-              aria-haspopup="menu"
-              aria-expanded={accountMenuOpen}
-              onClick={() => setAccountMenuOpen((open) => !open)}
+              className="dock-icon-button"
+              aria-label="Search writing"
+              title="Search writing"
+              onClick={() => setSearchOpen(true)}
             >
-              <UserRound aria-hidden="true" />
+              <Search aria-hidden="true" />
             </button>
 
-            {accountMenuOpen && (
-              <div
-                role="menu"
+            <div className="dock-account">
+              <button
+                type="button"
+                className={`dock-icon-button${accountMenuOpen ? ' is-active' : ''}`}
                 aria-label="Account menu"
-                className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-border bg-background p-1 shadow-lg"
+                title="Account"
+                aria-haspopup="menu"
+                aria-expanded={accountMenuOpen}
+                onClick={() => setAccountMenuOpen((open) => !open)}
               >
-                {isLoading ? (
-                  <p className="px-3 py-2 text-sm text-muted-foreground">Loading account…</p>
-                ) : user ? (
-                  <>
-                    <div className="px-3 py-2">
-                      <p className="truncate text-sm font-medium">
-                        {persona?.displayName ?? user.email ?? 'Your account'}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {isPersonaLoading
-                          ? 'Loading profile…'
-                          : persona
-                            ? `@${persona.handle}`
-                            : 'No public profile yet'}
-                      </p>
-                    </div>
+                <UserRound aria-hidden="true" />
+              </button>
 
-                    {persona && (
-                      <Link
-                        to={`/wall/${encodeURIComponent(persona.handle)}`}
-                        role="menuitem"
-                        className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                        onClick={() => setAccountMenuOpen(false)}
-                      >
-                        <UserRound size={16} aria-hidden="true" />
-                        My Wall
+              <AnimatePresence>
+                {accountMenuOpen && (
+                  <motion.div
+                    role="menu"
+                    aria-label="Account menu"
+                    className="dock-account-menu"
+                    initial={reduceMotion ? false : { opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: reduceMotion ? 0 : 0.16, ease: 'easeOut' }}
+                  >
+                    {isLoading ? (
+                      <p className="dock-menu-status">Loading account…</p>
+                    ) : user ? (
+                      <>
+                        <div className="dock-account-summary">
+                          <span className="avatar-mark">
+                            {(persona?.displayName?.[0] ?? user.email?.[0] ?? 'v').toLowerCase()}
+                          </span>
+                          <span>
+                            <strong>{persona?.displayName ?? user.email ?? 'Your account'}</strong>
+                            <small>
+                              {isPersonaLoading
+                                ? 'Loading profile…'
+                                : persona
+                                  ? `@${persona.handle}`
+                                  : 'No public profile yet'}
+                            </small>
+                          </span>
+                        </div>
+
+                        {persona && (
+                          <Link to={`/wall/${encodeURIComponent(persona.handle)}`} role="menuitem">
+                            <UserRound aria-hidden="true" /> My Wall
+                          </Link>
+                        )}
+                        <Link to="/vault" role="menuitem">
+                          <LockKeyhole aria-hidden="true" /> My Vault
+                        </Link>
+                        <button type="button" role="menuitem" onClick={() => void handleSignOut()}>
+                          <LogOut aria-hidden="true" /> Sign out
+                        </button>
+                        {signOutError && <p className="dock-menu-error">{signOutError}</p>}
+                      </>
+                    ) : (
+                      <Link to="/login" role="menuitem">
+                        <LogIn aria-hidden="true" /> Sign in
                       </Link>
                     )}
-
-                    <Link
-                      to="/vault"
-                      role="menuitem"
-                      className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => setAccountMenuOpen(false)}
-                    >
-                      <BookOpen size={16} aria-hidden="true" />
-                      My Vault
-                    </Link>
-
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                      onClick={() => void handleSignOut()}
-                    >
-                      <LogOut size={16} aria-hidden="true" />
-                      Sign out
-                    </button>
-
-                    {signOutError && (
-                      <p className="px-3 py-2 text-xs text-destructive">{signOutError}</p>
-                    )}
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    role="menuitem"
-                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => setAccountMenuOpen(false)}
-                  >
-                    <LogIn size={16} aria-hidden="true" />
-                    Sign in
-                  </Link>
+                  </motion.div>
                 )}
-              </div>
-            )}
-          </div>
+              </AnimatePresence>
+            </div>
 
-          <Link to="/write" className="literary-button write-button">
-            <Feather aria-hidden="true" size={16} strokeWidth={1.7} />
-            <span>Leave a page</span>
-          </Link>
-        </div>
-      </header>
+            <Link to="/write" className="dock-write-button">
+              <Feather aria-hidden="true" />
+              <span>Leave a page</span>
+            </Link>
+          </div>
+        </motion.header>
+      </div>
 
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>

@@ -71,7 +71,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
 
   function openWriting(id: string) {
     onClose();
-    navigate('/', { state: { openWritingId: id } });
+    void navigate('/', { state: { openWritingId: id } });
   }
 
   return (

@@ -29,7 +29,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       });
       if (error) throw error;
       const next = new URLSearchParams(window.location.search).get('next');
-      navigate(safeNextPath(next, '/'), { replace: true });
+      void navigate(safeNextPath(next, '/'), { replace: true });
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {

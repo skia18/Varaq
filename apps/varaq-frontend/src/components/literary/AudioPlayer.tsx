@@ -1,9 +1,20 @@
-import { AudioLines, Pause, Play } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { formatDuration } from '@/features/feed/writings';
 import { pauseOtherAudioPlayers } from './audio-playback';
+import { AudioWaveform } from './AudioWaveform';
 
-export function AudioPlayer({ src, duration }: { src: string; duration?: number }) {
+export function AudioPlayer({
+  src,
+  duration,
+  artwork,
+  fullscreen = false,
+}: {
+  src: string;
+  duration?: number;
+  artwork?: string;
+  fullscreen?: boolean;
+}) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
@@ -26,7 +37,16 @@ export function AudioPlayer({ src, duration }: { src: string; duration?: number 
   }
 
   return (
-    <div className="audio-player">
+    <div
+      className={`audio-player${artwork ? ' has-artwork' : ' has-hue-background'}${fullscreen ? ' audio-player--fullscreen' : ''}`}
+      style={
+        artwork
+          ? {
+              backgroundImage: `linear-gradient(rgb(20 16 13 / 38%), rgb(20 16 13 / 72%)), url("${artwork.replaceAll('"', '\\"')}")`,
+            }
+          : undefined
+      }
+    >
       <button
         type="button"
         className="audio-toggle"
@@ -37,20 +57,12 @@ export function AudioPlayer({ src, duration }: { src: string; duration?: number 
       </button>
       <div className="audio-track">
         <div className="audio-player-heading">
-          <span>
-            <AudioLines aria-hidden="true" /> Listen
-          </span>
+          <span>Listen</span>
           <span>{playing ? 'Playing' : 'Audio page'}</span>
         </div>
-        <input
-          className="audio-seek"
-          type="range"
-          min={0}
-          max={length || 1}
-          step={0.1}
-          value={Math.min(time, length || 1)}
-          aria-label="Seek through recording"
-          onChange={(event) => seek(Number(event.target.value))}
+        <AudioWaveform
+          progress={length ? time / length : 0}
+          onSeek={(progress) => seek(progress * length)}
         />
         <div className="audio-times">
           <span>{formatDuration(time)}</span>
