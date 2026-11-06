@@ -36,7 +36,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
       });
       if (error) throw error;
       if (data.session) {
-        navigate('/', { replace: true });
+        void navigate('/', { replace: true });
         return;
       }
       setSuccess(true);

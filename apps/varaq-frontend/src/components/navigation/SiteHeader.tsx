@@ -14,7 +14,6 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import varaqMark from '@/assets/varaq-mark.png';
 import { useAuth } from '@/auth/AuthProvider';
-import { TrailPathIcon } from '@/components/icons/TrailPathIcon';
 import { useVault } from '@/features/vault/VaultProvider';
 import { SearchDialog } from './SearchDialog';
 
@@ -42,7 +41,6 @@ export function FloatingDock() {
 
   const navigation = [
     { label: 'The commons', shortLabel: 'Commons', to: '/', icon: BookOpen, end: true },
-    { label: 'Trails', shortLabel: 'Trails', to: '/trails', icon: TrailPathIcon },
     { label: 'Collections', shortLabel: 'Collections', to: '/collections', icon: Library },
     ...(user && persona
       ? [
@@ -77,7 +75,7 @@ export function FloatingDock() {
     try {
       await signOut();
       setAccountMenuOpen(false);
-      navigate('/', { replace: true });
+      void navigate('/', { replace: true });
     } catch {
       setSignOutError('Could not sign out. Please try again.');
     }

@@ -39,7 +39,7 @@ export function ReturnToVaultPage() {
       }
       if (n !== epoch.current) return;
       if (receipt?.completed) {
-        navigate('/vault', { replace: true });
+        void navigate('/vault', { replace: true });
         return;
       }
       const source = await getOwnerPiece(pieceId);
@@ -108,7 +108,7 @@ export function ReturnToVaultPage() {
       const receipt = await api.returnStatus(pieceId);
       if (n !== epoch.current) return;
       if (receipt.completed) {
-        navigate('/vault', { replace: true });
+        void navigate('/vault', { replace: true });
         return;
       }
       staged.current = receipt;
@@ -138,14 +138,14 @@ export function ReturnToVaultPage() {
           // The private copy is authoritative after the move commits.
         }
       }
-      if (n === epoch.current) navigate('/vault', { replace: true });
+      if (n === epoch.current) void navigate('/vault', { replace: true });
     } catch {
       // A timeout may occur after commit. The durable receipt resolves that outcome.
       try {
         const receipt = await api.returnStatus(pieceId);
         if (n !== epoch.current) return;
         if (receipt.completed) {
-          navigate('/vault', { replace: true });
+          void navigate('/vault', { replace: true });
           return;
         }
         staged.current = receipt;

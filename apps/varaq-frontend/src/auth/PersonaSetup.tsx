@@ -44,7 +44,7 @@ function AccountRecovery({ message, retry }: { message: string; retry: () => Pro
     try {
       const result = await createClient().auth.signOut({ scope: 'local' });
       if (result.error) throw result.error;
-      navigate('/login', { replace: true });
+      void navigate('/login', { replace: true });
     } catch {
       setError('Could not clear your session. Please try again.');
     } finally {

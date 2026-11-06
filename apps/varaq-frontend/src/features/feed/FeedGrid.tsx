@@ -6,23 +6,23 @@ export function FeedGrid({
   writings,
   onRead,
   loading = false,
+  ariaLabel = 'Recent writing',
+  hrefForWriting = (writing) => `/piece/${encodeURIComponent(writing.id)}`,
 }: {
   writings: Writing[];
   onRead: (writing: Writing) => void;
   loading?: boolean;
+  ariaLabel?: string;
+  hrefForWriting?: (writing: Writing) => string;
 }) {
   return (
-    <section
-      aria-label="Recent writing"
-      className="saved-writing-grid commons-wall"
-      aria-busy={loading}
-    >
+    <section aria-label={ariaLabel} className="saved-writing-grid commons-wall" aria-busy={loading}>
       {writings.map((writing, index) => (
         <div className="commons-note" key={writing.id}>
           <WritingCard
             writing={{ ...writing, tone: postItTone(index) }}
             onRead={onRead}
-            pieceHref={`/piece/${encodeURIComponent(writing.id)}`}
+            pieceHref={hrefForWriting(writing)}
           />
         </div>
       ))}

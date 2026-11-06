@@ -85,7 +85,7 @@ test('dock contains the complete phase-one navigation and marks the current rout
   const destinations = [...mainNavigation.querySelectorAll('a')].map((link) =>
     link.getAttribute('href'),
   );
-  expect(destinations).toEqual(['/', '/trails', '/collections', '/wall/quiet-writer', '/vault']);
+  expect(destinations).toEqual(['/', '/collections', '/wall/quiet-writer', '/vault']);
   expect(mainNavigation.querySelector('a.is-active')?.getAttribute('href')).toBe('/collections');
   expect(host.querySelector('a[href="/write"]')).not.toBeNull();
 });

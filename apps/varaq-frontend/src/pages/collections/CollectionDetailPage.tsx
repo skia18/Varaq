@@ -77,7 +77,7 @@ export function CollectionDetailPage() {
     setBusy(true);
     try {
       await remove(owned.id);
-      navigate('/collections');
+      void navigate('/collections');
     } catch {
       setMessage('Could not delete the collection. Please try again.');
     } finally {

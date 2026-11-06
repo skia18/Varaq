@@ -1,50 +1,45 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownLeft, ArrowRight, Sprout } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+
+import { TrailPathIcon } from '@/components/icons/TrailPathIcon';
 import { ReadingDialog } from '@/components/literary/ReadingDialog';
+import { CommonsControls } from '@/features/feed/CommonsControls';
 import { FeedGrid } from '@/features/feed/FeedGrid';
-import { toWriting, forms, type Writing } from '../../features/feed/writings';
-
-import { getFeed, type PieceMedium, type PieceType } from '@/lib/api';
-import { usePublicFeed } from '@/features/feed/usePublicFeed';
 import { FeedStatus } from '@/features/feed/FeedStatus';
-
-const filters = [
-  'All pages',
-  'Poems',
-  'Short stories',
-  'Essays',
-  'Letters',
-  'Fragments',
-  'Photography',
-  'Artwork',
-  'Audio',
-] as const;
-
-const mediaFilters: Partial<Record<FeedFilter, PieceMedium>> = {
-  Photography: 'photography',
-  Artwork: 'artwork',
-  Audio: 'audio',
-};
-
-type FeedFilter = (typeof filters)[number];
+import { feedCategory, type FeedCategoryId } from '@/features/feed/categories';
+import { usePublicFeed } from '@/features/feed/usePublicFeed';
+import { useTrailStarts } from '@/features/feed/useTrailStarts';
+import { toWriting, type Writing } from '@/features/feed/writings';
+import { getFeed } from '@/lib/api';
 
 export function HomePage() {
-  const [filter, setFilter] = useState<FeedFilter>('All pages');
-  const type = Object.entries(forms).find(([, label]) => label === filter)?.[0] as
-    | PieceType
-    | undefined;
-  const medium = mediaFilters[filter];
-  const feed = usePublicFeed({ type, medium });
-  const filteredFeedItems = feed.items.filter(
-    (piece) => (!type || piece.type === type) && (!medium || piece.medium === medium),
-  );
-  const writings = filteredFeedItems.map(toWriting);
+  const [selectedCategory, setSelectedCategory] = useState<FeedCategoryId>('all');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [readingError, setReadingError] = useState<string | null>(null);
   const [reading, setReading] = useState<Writing | null>(null);
-
+  const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
+  const trailsActive = searchParams.get('view') === 'trails';
+  const category = feedCategory(selectedCategory);
+  const feed = usePublicFeed({
+    type: category.type,
+    medium: category.medium,
+    enabled: !trailsActive,
+  });
+  const writings = feed.items.map(toWriting);
+  const trailStarts = useTrailStarts(trailsActive);
+  const trailWritings = trailStarts.items.map(({ root }) => toWriting(root));
+
+  function setTrailsActive(active: boolean) {
+    const nextParams = new URLSearchParams(searchParams);
+    if (active) nextParams.set('view', 'trails');
+    else nextParams.delete('view');
+    setSearchParams(nextParams, { replace: true });
+  }
 
   // Saved pages and search may open a piece outside the first feed page.
   useEffect(() => {
@@ -57,7 +52,7 @@ export function HomePage() {
         if (controller.signal.aborted) return;
         if (page.items[0]) setReading(toWriting(page.items[0]));
         else setReadingError('This page is no longer publicly available.');
-        navigate(location.pathname + location.search, { replace: true, state: null });
+        void navigate(location.pathname + location.search, { replace: true, state: null });
       })
       .catch(() => {
         if (!controller.signal.aborted)
@@ -66,12 +61,32 @@ export function HomePage() {
     return () => controller.abort();
   }, [location.key, location.pathname, location.search, location.state, navigate]);
 
+  const viewMotion = {
+    initial: reduceMotion ? false : { opacity: 0, filter: 'blur(3px)' },
+    animate: { opacity: 1, filter: 'blur(0px)' },
+    exit: reduceMotion ? { opacity: 1 } : { opacity: 0, filter: 'blur(2px)' },
+    transition: { duration: reduceMotion ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] },
+  } as const;
+
   return (
-    <div className="page-content">
+    <div className="page-content commons-page">
+      <CommonsControls
+        selectedCategory={selectedCategory}
+        filtersOpen={filtersOpen}
+        trailsActive={trailsActive}
+        onCategoryChange={setSelectedCategory}
+        onFiltersOpenChange={setFiltersOpen}
+        onTrailsActiveChange={setTrailsActive}
+      />
+
       <header className="page-intro">
         <div>
           <h1>The commons</h1>
-          <p>Words from strangers. Feelings that aren’t so strange.</p>
+          <p>
+            {trailsActive
+              ? 'Where connected pages begin. Choose a Post-it and follow its Trail.'
+              : 'Words from strangers. Feelings that aren’t so strange.'}
+          </p>
         </div>
 
         <div className="intro-note">
@@ -84,29 +99,48 @@ export function HomePage() {
         </div>
       </header>
 
-      <div className="feed-toolbar">
-        <div className="filter-list" aria-label="Filter pages">
-          {filters.map((item) => (
-            <button
-              type="button"
-              key={item}
-              className={filter === item ? 'filter-active' : 'filter-button'}
-              onClick={() => setFilter(item)}
-              aria-pressed={filter === item}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        <span className="sort-control">Most recently published</span>
-      </div>
-
       <div className="feed-layout">
-        <div>
-          <FeedGrid writings={writings} onRead={setReading} loading={feed.isLoading} />
-          <FeedStatus feed={feed} visibleItemCount={writings.length} />
+        <div className="commons-feed-stack">
+          <AnimatePresence initial={false}>
+            {trailsActive ? (
+              <motion.div className="commons-feed-view" key="trails" {...viewMotion}>
+                {trailStarts.isLoading ? (
+                  <p className="commons-mode-status" role="status">
+                    Following the threads…
+                  </p>
+                ) : trailStarts.error ? (
+                  <div className="commons-mode-status" role="alert">
+                    <p>{trailStarts.error}</p>
+                    <button type="button" className="varaq-action" onClick={trailStarts.retry}>
+                      Try again
+                    </button>
+                  </div>
+                ) : trailWritings.length ? (
+                  <FeedGrid
+                    writings={trailWritings}
+                    onRead={setReading}
+                    ariaLabel="Trail beginnings"
+                    hrefForWriting={(writing) =>
+                      `/trail/${encodeURIComponent(writing.id)}?from=trails`
+                    }
+                  />
+                ) : (
+                  <div className="empty-page commons-trails-empty">
+                    <TrailPathIcon aria-hidden="true" />
+                    <h2>No Trails have been made yet.</h2>
+                    <p>When one public page responds to another, its beginning will appear here.</p>
+                  </div>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div className="commons-feed-view" key="pages" {...viewMotion}>
+                <FeedGrid writings={writings} onRead={setReading} loading={feed.isLoading} />
+                <FeedStatus feed={feed} visibleItemCount={writings.length} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
         <aside className="field-notes" aria-label="In the margins">
           <h2 className="notes-heading">
             <Sprout aria-hidden="true" />

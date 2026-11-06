@@ -44,7 +44,7 @@ export function DiscoverPage() {
           </button>
         ))}
       </div>
-      <div className="feed-toolbar">
+      <div className="discovery-search-toolbar">
         <label>
           {writers ? 'Search writers' : 'Search the pages'}{' '}
           <input
