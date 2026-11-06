@@ -7,6 +7,7 @@ import * as api from './api';
 import { signedMediaUrl } from '@/features/media/storage';
 import { AudioPlayer } from '@/components/literary/AudioPlayer';
 import { forms, literaryFormLabel } from '@/features/feed/writings';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 type OpenDraft = { content: DraftContent; imageUrl?: string; audioUrl?: string };
 
@@ -104,7 +105,11 @@ export function VaultDraftPage() {
           </p>
         </article>
       ) : (
-        <p role="status">Opening your page…</p>
+        <LoadingState
+          variant="page"
+          label="Opening your private page…"
+          detail="Decrypting it only for this Vault session."
+        />
       )}
     </section>
   );

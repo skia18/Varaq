@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { deleteOwnerPiece, getOwnerPieces, type Piece } from '@/lib/api';
 import { WritingCard } from '@/components/literary/WritingCard';
 import { postItTone } from '@/features/feed/postItTones';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 
 const PAGE_SIZE = 20;
 
@@ -137,11 +138,11 @@ export function ProfilePage() {
 
   if (isLoading || isPersonaLoading) {
     return (
-      <section className="page-section">
-        <p className="eyebrow">A writer’s wall</p>
-        <h1 className="font-heading text-4xl">A moment, please…</h1>
-        <p className="mt-4 text-muted-foreground">Gathering your little corner of Varaq.</p>
-      </section>
+      <LoadingState
+        variant="page"
+        label="Gathering your wall…"
+        detail="Your little corner of Varaq is taking shape."
+      />
     );
   }
 
@@ -229,8 +230,13 @@ export function ProfilePage() {
           className="wall-refresh varaq-action varaq-action--small"
           aria-label="Refresh your pages"
         >
-          <RefreshCw size={14} className={isPiecesLoading ? 'animate-spin' : ''} />
-          Refresh
+          {isPiecesLoading ? (
+            <LoadingLabel>Refreshing</LoadingLabel>
+          ) : (
+            <>
+              <RefreshCw size={14} /> Refresh
+            </>
+          )}
         </button>
       </div>
 
@@ -247,9 +253,7 @@ export function ProfilePage() {
       )}
 
       {isPiecesLoading && (
-        <p className="wall-status" role="status">
-          Turning the pages…
-        </p>
+        <LoadingState label="Turning your pages…" detail="Gathering everything you have shared." />
       )}
 
       {!isPiecesLoading && piecesError && pieces.length === 0 && (
@@ -334,7 +338,11 @@ export function ProfilePage() {
                           disabled={pieceActionId !== null}
                         >
                           <Trash2 size={14} />
-                          {pieceActionId === piece.id ? 'Working…' : 'Delete'}
+                          {pieceActionId === piece.id ? (
+                            <LoadingLabel>Deleting</LoadingLabel>
+                          ) : (
+                            'Delete'
+                          )}
                         </button>
                       </div>
                     </div>
@@ -359,7 +367,7 @@ export function ProfilePage() {
             disabled={loadingMore || isPiecesLoading}
             onClick={() => void loadMore()}
           >
-            {loadingMore ? 'Loading…' : 'Load more pages'}
+            {loadingMore ? <LoadingLabel>Turning more pages</LoadingLabel> : 'Load more pages'}
           </button>
         </div>
       )}

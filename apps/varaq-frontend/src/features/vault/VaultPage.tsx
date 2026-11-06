@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { forms } from '@/features/feed/writings';
 import { WritingCard } from '@/components/literary/WritingCard';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 import { postItTone } from '@/features/feed/postItTones';
 import { Feather, Pencil, RefreshCw, Send, Trash2, ShieldAlert, X } from 'lucide-react';
 import { Dialog } from '@base-ui/react/dialog';
@@ -226,8 +227,13 @@ export function VaultPage() {
           onClick={() => setReload((x) => x + 1)}
           disabled={busy || loading}
         >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          Refresh
+          {loading ? (
+            <LoadingLabel>Refreshing</LoadingLabel>
+          ) : (
+            <>
+              <RefreshCw size={14} /> Refresh
+            </>
+          )}
         </button>
       </div>
       {error && (
@@ -257,9 +263,7 @@ export function VaultPage() {
         </div>
       )}
       {loading && (
-        <p className="wall-status" role="status">
-          Turning the pages…
-        </p>
+        <LoadingState label="Turning your private pages…" detail="Decrypting this Vault session." />
       )}
       {!loading && !error && items.length === 0 && (
         <div className="empty-page">
@@ -405,7 +409,7 @@ export function VaultPage() {
                   disabled={busy}
                   onClick={() => void publish()}
                 >
-                  {busy ? 'Publishing…' : 'Confirm publication'}
+                  {busy ? <LoadingLabel>Publishing</LoadingLabel> : 'Confirm publication'}
                 </button>
                 <button className="varaq-action" disabled={busy} onClick={() => setSelected(null)}>
                   Cancel

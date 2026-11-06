@@ -1,4 +1,4 @@
-import { Lock, KeyRound, LoaderCircle } from 'lucide-react';
+import { Lock, KeyRound } from 'lucide-react';
 import {
   createContext,
   useContext,
@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 import {
   setupVault,
   unlockVaultSession,
@@ -235,10 +236,7 @@ function VaultUnlock() {
           </p>
         </header>
         {config === undefined && !error ? (
-          <p className="vault-unlock-loading" role="status">
-            <LoaderCircle aria-hidden="true" className="animate-spin" />
-            Preparing your Vault…
-          </p>
+          <LoadingState variant="compact" label="Preparing your Vault…" />
         ) : (
           <form onSubmit={submit} className="vault-unlock-form" aria-busy={busy}>
             {kit ? (
@@ -319,20 +317,18 @@ function VaultUnlock() {
                 className="varaq-action varaq-action--primary"
                 disabled={busy || config === undefined || Boolean(kit && !ack)}
               >
+                {!busy && <Lock aria-hidden="true" />}
                 {busy ? (
-                  <LoaderCircle aria-hidden="true" className="animate-spin" />
+                  <LoadingLabel>Preparing Vault</LoadingLabel>
+                ) : kit ? (
+                  'Finish setup'
+                ) : recover ? (
+                  'Recover Vault'
+                ) : config ? (
+                  'Unlock'
                 ) : (
-                  <Lock aria-hidden="true" />
+                  'Create Vault'
                 )}
-                {busy
-                  ? 'Working…'
-                  : kit
-                    ? 'Finish setup'
-                    : recover
-                      ? 'Recover Vault'
-                      : config
-                        ? 'Unlock'
-                        : 'Create Vault'}
               </button>
               {config && !kit && (
                 <button

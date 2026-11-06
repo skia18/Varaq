@@ -7,6 +7,7 @@ import { AudioPlayer } from '@/components/literary/AudioPlayer';
 import { forms, literaryFormLabel } from '@/features/feed/writings';
 import { publicMediaUrl } from '@/features/media/storage';
 import { TrailTeaser } from '@/components/literary/TrailView';
+import { LoadingState } from '@/components/ui/LoadingState';
 export function PublishedPiecePage() {
   const { pieceId } = useParams();
   const [piece, setPiece] = useState<Piece | null>(null);
@@ -165,7 +166,11 @@ export function PublishedPiecePage() {
           )}
         </article>
       ) : (
-        <p>Loading…</p>
+        <LoadingState
+          variant="page"
+          label="Opening this page…"
+          detail="Gathering its words and media."
+        />
       )}
     </section>
   );

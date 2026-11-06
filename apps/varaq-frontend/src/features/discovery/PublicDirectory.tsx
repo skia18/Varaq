@@ -6,6 +6,7 @@ import {
   type Persona,
   type PublicCollectionSummary,
 } from '@/lib/api';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 // Key this component by query/handle so pending pagination cannot affect another directory.
 export function PublicDirectory({
@@ -103,7 +104,12 @@ export function PublicDirectory({
           </span>
         </Link>
       ))}
-      {loading && <p role="status">Loading {handle ? 'collections' : 'writers'}…</p>}
+      {loading && (
+        <LoadingState
+          variant={people.length || collections.length ? 'compact' : 'section'}
+          label={handle ? 'Gathering collections…' : 'Looking for writers…'}
+        />
+      )}
       {error && (
         <p role="alert">
           {error}{' '}

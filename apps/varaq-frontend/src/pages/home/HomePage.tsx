@@ -13,6 +13,7 @@ import { usePublicFeed } from '@/features/feed/usePublicFeed';
 import { useTrailStarts } from '@/features/feed/useTrailStarts';
 import { toWriting, type Writing } from '@/features/feed/writings';
 import { getFeed } from '@/lib/api';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 export function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<FeedCategoryId>('all');
@@ -105,9 +106,10 @@ export function HomePage() {
             {trailsActive ? (
               <motion.div className="commons-feed-view" key="trails" {...viewMotion}>
                 {trailStarts.isLoading ? (
-                  <p className="commons-mode-status" role="status">
-                    Following the threads…
-                  </p>
+                  <LoadingState
+                    label="Following the threads…"
+                    detail="Finding where the connected pages begin."
+                  />
                 ) : trailStarts.error ? (
                   <div className="commons-mode-status" role="alert">
                     <p>{trailStarts.error}</p>

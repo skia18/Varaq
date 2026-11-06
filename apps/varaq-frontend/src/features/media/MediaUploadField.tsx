@@ -1,4 +1,4 @@
-import { Camera, FileAudio, LoaderCircle, Trash2 } from 'lucide-react';
+import { Camera, FileAudio, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { DraftContent, DraftMedia } from '@/features/vault/crypto';
 import {
@@ -8,6 +8,7 @@ import {
   signedMediaUrl,
   uploadDraftMedia,
 } from './storage';
+import { LoadingLabel } from '@/components/ui/LoadingState';
 
 const megabytes = (bytes: number) =>
   `${(bytes / 1024 / 1024).toFixed(bytes >= 10485760 ? 0 : 1)} MB`;
@@ -76,14 +77,8 @@ function Attachment({
       {preview && kind === 'audio' && <audio src={preview} controls preload="metadata" />}
       {!media && (
         <button type="button" disabled={disabled || busy} onClick={() => input.current?.click()}>
-          {busy ? (
-            <LoaderCircle className="animate-spin" />
-          ) : kind === 'audio' ? (
-            <FileAudio />
-          ) : (
-            <Camera />
-          )}
-          {busy ? 'Uploading…' : `Add ${kind}`}
+          {!busy && (kind === 'audio' ? <FileAudio /> : <Camera />)}
+          {busy ? <LoadingLabel>Uploading {kind}</LoadingLabel> : `Add ${kind}`}
         </button>
       )}
       {media && (

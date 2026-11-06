@@ -1,4 +1,5 @@
 import { WritingEditor } from './WritingEditor';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 import { useAuth } from '@/auth/AuthProvider';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -140,9 +141,11 @@ export function PublishedWritingRoomPage() {
             <span className="eyebrow">Add an existing piece</span>
             <h1>Choose a page</h1>
             <p>
-              {responseSource
-                ? `Connect one of your public pages to “${responseSource.title}”.`
-                : 'Loading the source page…'}
+              {responseSource ? (
+                `Connect one of your public pages to “${responseSource.title}”.`
+              ) : (
+                <LoadingLabel>Loading the source page</LoadingLabel>
+              )}
             </p>
           </div>
         </header>
@@ -171,7 +174,11 @@ export function PublishedWritingRoomPage() {
                     disabled={Boolean(connectingId)}
                     onClick={() => void connectExisting(choice, 'inspired-by')}
                   >
-                    {connectingId === choice.id ? 'Connecting…' : 'Inspired by'}
+                    {connectingId === choice.id ? (
+                      <LoadingLabel>Connecting</LoadingLabel>
+                    ) : (
+                      'Inspired by'
+                    )}
                   </button>
                   <button
                     type="button"
@@ -190,7 +197,10 @@ export function PublishedWritingRoomPage() {
             You do not have another public piece available to add.
           </p>
         ) : (
-          <p role="status">Gathering your pages…</p>
+          <LoadingState
+            label="Gathering your pages…"
+            detail="Finding the ones ready to join this Trail."
+          />
         )}
       </section>
     );

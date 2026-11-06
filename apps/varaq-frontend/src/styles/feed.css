@@ -225,13 +225,16 @@
 
 @media (max-width: 680px) {
   .commons-controls {
+    align-items: flex-start;
     gap: 10px;
     margin-bottom: 20px;
   }
 
   .filter-control {
+    flex-direction: column;
+    align-items: flex-start;
     max-width: calc(100% - 82px);
-    gap: 5px;
+    gap: 7px;
   }
 
   .browse-mode-button {
@@ -244,7 +247,26 @@
   }
 
   .category-filter-list {
-    max-width: calc(100vw - 190px);
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    overflow: visible;
+    padding: 0 2px;
+  }
+
+  .category-filter {
+    width: auto;
+    min-height: 38px;
+    justify-content: flex-start;
+    padding-inline: 12px;
+  }
+
+  .category-filter > span {
+    text-align: left;
   }
 }
 

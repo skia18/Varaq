@@ -6,6 +6,7 @@ import { CollectionForm } from '@/features/collections/CollectionForm';
 import { apiRequest, getFeed, type FeedPiece } from '@/lib/api';
 import { toWriting } from '@/features/feed/writings';
 import { WritingCard } from '@/components/literary/WritingCard';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 export function CollectionDetailPage() {
   const { collectionId } = useParams();
@@ -116,9 +117,10 @@ export function CollectionDetailPage() {
             : 'Discover'}
       </Link>
       {loading ? (
-        <p className="collection-notice" role="status">
-          Loading collection…
-        </p>
+        <LoadingState
+          label="Opening this collection…"
+          detail="Gathering its pages onto the shelf."
+        />
       ) : error ? (
         <p className="collection-notice collection-notice--error" role="alert">
           {error}{' '}

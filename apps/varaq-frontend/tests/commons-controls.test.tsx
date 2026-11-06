@@ -94,3 +94,27 @@ test('category labels wait for hover intent before expanding', async () => {
   await act(async () => vi.advanceTimersByTimeAsync(1));
   expect(essays.textContent).toContain('Essays');
 });
+
+test('mobile filters unfold as a vertical stack of desktop-style labelled pills', async () => {
+  await act(async () => root?.unmount());
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query === '(max-width: 680px)',
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+  root = createRoot(host!);
+  await act(async () => root?.render(<ControlsHarness />));
+  await act(async () => button('Filters').click());
+
+  expect(host?.querySelector('.filter-control.is-mobile')).not.toBeNull();
+  const panel = host?.querySelector('.category-filter-list');
+  expect(panel).not.toBeNull();
+  for (const label of ['All pages', 'Poems', 'Short stories', 'Photography', 'Audio']) {
+    expect(panel?.textContent).toContain(label);
+  }
+});

@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Feather, GitFork, Globe, Lock, Save } from 'lucide-re
 import type { DraftContent } from '@/features/vault/crypto';
 import type { Piece } from '@/lib/api';
 import { MediaUploadField } from '@/features/media/MediaUploadField';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 
 type Props = {
   content: DraftContent;
@@ -96,9 +97,11 @@ export function WritingEditor({
           </p>
         </header>
         {!loaded && !error && (
-          <p className="mb-5 text-sm text-muted-foreground" role="status">
-            {published ? 'Opening your piece…' : 'Preparing your notebook…'}
-          </p>
+          <LoadingState
+            variant="section"
+            label={published ? 'Opening your piece…' : 'Preparing your notebook…'}
+            detail="Making a quiet place for your words."
+          />
         )}
         <form
           onSubmit={onSave}
@@ -195,7 +198,7 @@ export function WritingEditor({
                   Writing as <span className="font-medium text-foreground">@{handle}</span>
                 </>
               ) : (
-                'Preparing your writing identity…'
+                <LoadingLabel>Preparing your writing identity</LoadingLabel>
               )}
             </span>
             <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground">
@@ -291,13 +294,15 @@ export function WritingEditor({
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save size={16} />
-              {busy
-                ? 'Saving…'
-                : published
-                  ? 'Save published changes'
-                  : mode === 'new'
-                    ? 'Save draft'
-                    : 'Save changes'}
+              {busy ? (
+                <LoadingLabel>Saving your words</LoadingLabel>
+              ) : published ? (
+                'Save published changes'
+              ) : mode === 'new' ? (
+                'Save draft'
+              ) : (
+                'Save changes'
+              )}
             </button>
           </div>
         </form>

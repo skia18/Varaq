@@ -6,6 +6,7 @@ import { Dialog } from '@base-ui/react/dialog';
 import { ResponseError } from '@/generated/api';
 import { getOwnerPiece, type Piece } from '@/lib/api';
 import { useVault } from './VaultProvider';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 import { encryptDraft, decryptDraft, type DraftContent, type DraftMedia } from './crypto';
 import * as api from './api';
 import { copyPublishedMediaToPrivate, removePublicMediaSource } from '@/features/media/storage';
@@ -196,7 +197,12 @@ export function ReturnToVaultPage() {
             </button>
           </>
         )}
-        {!piece && !error && <p>Loading…</p>}
+        {!piece && !error && (
+          <LoadingState
+            label="Preparing this page…"
+            detail="Checking that it can return safely to your Vault."
+          />
+        )}
         {error && (
           <p role="alert">
             {error}{' '}
@@ -251,7 +257,7 @@ export function ReturnToVaultPage() {
                     disabled={busy}
                     onClick={() => void move()}
                   >
-                    {busy ? 'Moving…' : 'Confirm move to Vault'}
+                    {busy ? <LoadingLabel>Moving to Vault</LoadingLabel> : 'Confirm move to Vault'}
                   </button>
                   <button
                     className="varaq-action"

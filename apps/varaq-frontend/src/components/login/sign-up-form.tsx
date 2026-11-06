@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingLabel } from '@/components/ui/LoadingState';
 
 export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const navigate = useNavigate();
@@ -132,7 +133,7 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Creating an account...' : 'Sign up'}
+                  {isLoading ? <LoadingLabel>Creating your account</LoadingLabel> : 'Sign up'}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
