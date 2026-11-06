@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { BookmarkPicker } from '@/features/collections/BookmarkPicker';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Globe2, Link2, Play, X } from 'lucide-react';
@@ -106,46 +107,48 @@ export function PublishedPiecePage() {
               >
                 <Play aria-hidden="true" /> Play audio
               </button>
-              {playerOpen && (
-                <div
-                  className="audio-listening-overlay"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label={`Listening to ${piece.title}`}
-                >
-                  {(piece.coverUrl || piece.coverPath) && (
-                    <div
-                      className="audio-listening-artwork"
-                      style={{
-                        backgroundImage: `url("${(piece.coverUrl ?? publicMediaUrl(piece.coverPath!)).replaceAll('"', '\\"')}")`,
-                      }}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="audio-listening-heading">
-                    <span className="eyebrow">Now listening</span>
-                    <h2>{piece.title}</h2>
-                  </div>
-                  <button
-                    type="button"
-                    className="audio-listening-close"
-                    aria-label="Close full-screen player"
-                    onClick={() => setPlayerOpen(false)}
-                    autoFocus
+              {playerOpen &&
+                createPortal(
+                  <div
+                    className="audio-listening-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Listening to ${piece.title}`}
                   >
-                    <X aria-hidden="true" />
-                  </button>
-                  <AudioPlayer
-                    src={publicMediaUrl(piece.mediaPath)}
-                    duration={piece.audioDuration ?? undefined}
-                    artwork={
-                      piece.coverUrl ??
-                      (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined)
-                    }
-                    fullscreen
-                  />
-                </div>
-              )}
+                    {(piece.coverUrl || piece.coverPath) && (
+                      <div
+                        className="audio-listening-artwork"
+                        style={{
+                          backgroundImage: `url("${(piece.coverUrl ?? publicMediaUrl(piece.coverPath!)).replaceAll('"', '\\"')}")`,
+                        }}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="audio-listening-heading">
+                      <span className="eyebrow">Now listening</span>
+                      <h2>{piece.title}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      className="audio-listening-close"
+                      aria-label="Close full-screen player"
+                      onClick={() => setPlayerOpen(false)}
+                      autoFocus
+                    >
+                      <X aria-hidden="true" />
+                    </button>
+                    <AudioPlayer
+                      src={publicMediaUrl(piece.mediaPath)}
+                      duration={piece.audioDuration ?? undefined}
+                      artwork={
+                        piece.coverUrl ??
+                        (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined)
+                      }
+                      fullscreen
+                    />
+                  </div>,
+                  document.body,
+                )}
             </>
           )}
           <div className="published-piece-body">{piece.body}</div>
