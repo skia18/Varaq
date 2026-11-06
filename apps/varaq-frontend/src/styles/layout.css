@@ -1,619 +1,450 @@
-/* Application shell */
+/* Floating application shell */
+
+html {
+  scrollbar-gutter: stable;
+}
 
 .varaq-shell {
   min-height: 100vh;
-
-  --sidebar-width: 240px;
 }
 
-.sidebar {
+.main-shell {
+  min-width: 0;
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+.route-transition-stack {
+  display: grid;
+}
+
+.route-transition {
+  grid-area: 1 / 1;
+  min-height: calc(100vh - 80px);
+  will-change: opacity, filter;
+}
+
+.floating-dock-frame {
   position: fixed;
-
-  z-index: 20;
-
-  inset: 0 auto 0 0;
-
+  z-index: 60;
+  top: 10px;
+  right: 0;
+  left: 0;
   display: flex;
-
-  width: var(--sidebar-width);
-
-  height: 100vh;
-
-  height: 100dvh;
-
-  flex-direction: column;
-
-  overflow-y: auto;
-
-  padding: 42px 30px 24px;
-
-  background: var(--background);
-
-  background-image: var(--texture);
-
-  box-shadow:
-    6px 0 18px color-mix(in oklab, var(--foreground) 4%, transparent),
-    18px 0 42px color-mix(in oklab, var(--foreground) 4%, transparent);
-
-  transition:
-    width 220ms ease,
-    padding 220ms ease;
+  justify-content: center;
+  padding-inline: 16px;
+  pointer-events: none;
 }
 
-.brand {
-  display: inline-flex;
-
+.floating-dock {
+  display: grid;
+  width: min(1080px, 100%);
+  min-width: 0;
+  min-height: 54px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-
   gap: 12px;
+  padding: 5px 7px 5px 9px;
+  border: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+  border-radius: 24px;
+  background-color: color-mix(in oklab, var(--background) 78%, transparent);
+  background-image: var(--texture);
+  box-shadow:
+    0 4px 12px color-mix(in oklab, var(--foreground) 8%, transparent),
+    0 18px 46px color-mix(in oklab, var(--foreground) 9%, transparent);
+  backdrop-filter: blur(18px) saturate(115%);
+  pointer-events: auto;
+}
 
+.dock-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 2px;
   color: var(--foreground);
 }
 
-.brand-mark {
-  width: 42px;
-
-  height: 42px;
-
-  flex-shrink: 0;
-
+.dock-brand img {
+  width: 30px;
+  height: 30px;
   object-fit: contain;
-
-  transform: translateY(5px);
 }
 
-.brand-name {
+.dock-brand > span {
   font-family: var(--font-display);
-
-  font-size: 49px;
-
+  font-size: 22px;
   font-weight: 600;
-
   line-height: 1;
-
-  letter-spacing: -1.8px;
+  letter-spacing: -0.8px;
 }
 
-.brand-urdu {
+.dock-brand small {
   color: var(--primary);
-
   font-family: serif;
-
-  font-size: 25px;
-
-  line-height: 1;
+  font-size: 14px;
 }
 
-.brand-caption {
-  margin-top: 11px;
-
-  color: var(--muted-foreground);
-
-  font-family: var(--font-serif);
-
-  font-size: 12px;
-
-  font-style: italic;
-}
-
-.side-navigation {
+.dock-navigation {
   display: flex;
-
-  flex-direction: column;
-
-  gap: 8px;
-
-  margin-top: 47px;
-}
-
-.nav-item {
-  position: relative;
-
-  display: flex;
-
-  min-height: 41px;
-
-  align-items: center;
-
-  gap: 13px;
-
-  padding: 0 11px;
-
-  color: var(--muted-foreground);
-
-  font-size: 13px;
-
-  transition:
-    color 160ms ease,
-    background-color 160ms ease;
-}
-
-.nav-item svg {
-  width: 17px;
-
-  height: 17px;
-
-  flex-shrink: 0;
-
-  stroke-width: 1.5;
-}
-
-.nav-item:hover {
-  color: var(--primary);
-}
-
-.nav-item.active {
-  background: color-mix(in oklab, var(--primary) 7%, transparent);
-
-  color: var(--primary);
-}
-
-.nav-item.active::before {
-  position: absolute;
-
-  inset: 9px auto 9px 0;
-
-  width: 2px;
-
-  background: var(--primary);
-
-  content: '';
-}
-
-.side-section {
-  margin-top: 36px;
-
-  padding-top: 25px;
-
-  border-top: 1px solid var(--border);
-}
-
-.eyebrow {
-  color: var(--muted-foreground);
-
-  font-size: 10px;
-
-  font-weight: 500;
-
-  letter-spacing: 1.6px;
-
-  text-transform: uppercase;
-}
-
-.side-collection {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  margin-top: 18px;
-
-  color: var(--muted-foreground);
-
-  font-family: var(--font-serif);
-
-  font-size: 12px;
-
-  transition: color 160ms ease;
-}
-
-.side-collection:hover {
-  color: var(--primary);
-}
-
-.side-collection-name {
   min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.dock-link {
+  position: relative;
+  display: inline-flex;
+  min-width: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 9px;
+  border-radius: 18px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  isolation: isolate;
+}
+
+.dock-link > svg,
+.dock-link > span:not(.dock-active-pill) {
+  position: relative;
+  z-index: 1;
+}
+
+.dock-link svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke-width: 1.6;
+}
+
+.dock-link:hover,
+.dock-link:focus-visible,
+.dock-link.is-active {
+  color: var(--primary);
+}
+
+.dock-link:focus-visible,
+.dock-icon-button:focus-visible,
+.dock-write-button:focus-visible,
+.dock-brand:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.dock-active-pill {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--primary) 9%, var(--card));
+}
+
+.dock-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+}
+
+.dock-icon-button,
+.dock-write-button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  color: var(--foreground);
+}
+
+.dock-icon-button {
+  width: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dock-icon-button:hover,
+.dock-icon-button.is-active {
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
+  color: var(--primary);
+}
+
+.dock-icon-button svg,
+.dock-write-button svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  stroke-width: 1.6;
+}
+
+.dock-write-button {
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.dock-write-button:hover {
+  background: color-mix(in oklab, var(--primary) 88%, black);
+}
+
+.dock-account {
+  position: relative;
+}
+
+.dock-account-menu {
+  position: absolute;
+  z-index: 70;
+  top: calc(100% + 14px);
+  right: 0;
+  width: 230px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--background);
+  background-image: var(--texture);
+  box-shadow: 0 18px 46px color-mix(in oklab, var(--foreground) 12%, transparent);
+  transform-origin: top right;
+}
+
+.dock-account-menu > a,
+.dock-account-menu > button {
+  display: flex;
+  width: 100%;
+  min-height: 39px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dock-account-menu > a:hover,
+.dock-account-menu > button:hover,
+.dock-account-menu > a:focus-visible,
+.dock-account-menu > button:focus-visible {
+  background: var(--secondary);
+  color: var(--primary);
+  outline: none;
+}
+
+.dock-account-menu svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.6;
+}
+
+.dock-account-summary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+  padding: 9px 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dock-account-summary > span:last-child {
+  min-width: 0;
+}
+
+.dock-account-summary strong,
+.dock-account-summary small {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.side-collection-status {
-  font-style: italic;
+.dock-account-summary strong {
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.side-collections-all {
-  display: inline-block;
-  margin-top: 16px;
-  color: var(--primary);
-  font-size: 10px;
-  letter-spacing: 0.04em;
-}
-
-.side-collections-all:hover {
-  text-decoration: underline;
-}
-
-.collection-dot {
-  width: 7px;
-
-  height: 7px;
-
-  flex-shrink: 0;
-
-  border-radius: 50%;
-
-  background: var(--faded);
-}
-
-.collection-dot.red {
-  background: var(--primary);
-}
-
-.collection-dot.sage {
-  background: var(--secondary);
-}
-
-.collection-icon {
-  display: grid;
-  width: 25px;
-  height: 25px;
-  flex-shrink: 0;
-  place-items: center;
-  border-radius: 50%;
-  background: color-mix(in oklab, var(--faded) 18%, transparent);
-  color: var(--faded);
-}
-
-.collection-icon.red {
-  background: color-mix(in oklab, var(--primary) 13%, transparent);
-  color: var(--primary);
-}
-
-.collection-icon.sage {
-  background: color-mix(in oklab, var(--secondary) 36%, transparent);
-  color: color-mix(in oklab, var(--foreground) 58%, var(--secondary));
-}
-
-.collection-icon svg {
-  width: 13px;
-  height: 13px;
-  stroke-width: 1.5;
-}
-
-.side-note {
-  position: relative;
-
-  display: flex;
-
-  flex: 1;
-
-  flex-direction: column;
-
-  justify-content: flex-end;
-
-  gap: 10px;
-
-  padding-bottom: 28px;
-
+.dock-account-summary small,
+.dock-menu-status {
+  margin-top: 3px;
   color: var(--muted-foreground);
+  font-size: 10px;
 }
 
-.side-note-quote {
-  font-family: 'Caveat', cursive;
-
-  font-size: 1.35rem;
-
-  font-weight: 400;
-
-  line-height: 1.35;
+.dock-menu-status,
+.dock-menu-error {
+  padding: 9px 10px;
 }
 
-.side-note p {
-  color: var(--faded);
-
-  font-family: var(--font-hand);
-
-  font-size: 23px;
-
-  font-weight: 400;
-
-  line-height: 1.35;
-
-  transform: rotate(-5deg);
+.dock-menu-error {
+  color: var(--destructive);
+  font-size: 10px;
 }
 
-.side-note svg {
-  width: 55px;
+/* Shared brand and action treatments used outside the application shell. */
 
-  height: 55px;
-
-  margin-top: 10px;
-
-  color: var(--faded);
-
-  stroke-width: 1;
-}
-
-.side-user {
-  display: flex;
-
-  flex-shrink: 0;
-
+.brand {
+  display: inline-flex;
   align-items: center;
+  gap: 12px;
+  color: var(--foreground);
+}
 
-  gap: 11px;
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 49px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -1.8px;
+}
 
-  margin-top: auto;
-
-  padding-top: 17px;
-
-  border-top: 1px solid var(--border);
+.brand-urdu {
+  color: var(--primary);
+  font-family: serif;
+  font-size: 25px;
+  line-height: 1;
 }
 
 .avatar-mark {
   display: grid;
-
   width: 34px;
-
   height: 34px;
-
   flex-shrink: 0;
-
   place-items: center;
-
   border: 1px solid var(--border);
-
   border-radius: 50%;
-
   background: var(--card);
-
   color: var(--primary);
-
   font-family: var(--font-display);
-
   font-size: 22px;
-
   font-style: italic;
 }
 
-.side-user strong,
-.side-user small {
-  display: block;
-}
-
-.side-user strong {
-  font-family: var(--font-serif);
-
-  font-size: 12px;
-
-  font-weight: 500;
-}
-
-.side-user small {
-  margin-top: 4px;
-
-  color: var(--muted-foreground);
-
-  font-size: 10px;
-}
-
-.sidebar-toggle {
-  display: flex;
-
-  min-height: 36px;
-
-  flex-shrink: 0;
-
-  align-items: center;
-
-  gap: 10px;
-
-  margin-top: 16px;
-
-  padding: 8px 9px 0;
-
-  border: 0;
-
-  border-top: 1px solid var(--border);
-
-  background: transparent;
-
-  color: var(--muted-foreground);
-
-  font-size: 10px;
-
-  letter-spacing: 1.1px;
-
-  text-transform: uppercase;
-
-  cursor: pointer;
-}
-
-.sidebar-toggle:hover,
-.sidebar-toggle:focus-visible {
-  color: var(--primary);
-}
-
-.sidebar-toggle svg {
-  width: 17px;
-
-  height: 17px;
-
-  flex-shrink: 0;
-}
-
-@media (min-width: 681px) {
-  .sidebar-collapsed {
-    --sidebar-width: 76px;
-  }
-
-  .sidebar-collapsed .sidebar {
-    padding-right: 17px;
-
-    padding-left: 17px;
-  }
-
-  .sidebar-collapsed .sidebar:hover,
-  .sidebar-collapsed .sidebar:focus-within {
-    width: 240px;
-
-    padding-right: 30px;
-
-    padding-left: 30px;
-  }
-
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand {
-    display: flex;
-
-    justify-content: center;
-  }
-
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-name,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-urdu,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .brand-caption,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .nav-item span,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-note,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user > span:not(.avatar-mark),
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user > svg,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .sidebar-toggle span {
-    display: none;
-  }
-
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-navigation {
-    margin-top: 47px;
-  }
-
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .nav-item,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .side-user,
-  .sidebar-collapsed .sidebar:not(:hover):not(:focus-within) .sidebar-toggle {
-    justify-content: center;
-
-    padding-right: 0;
-
-    padding-left: 0;
-  }
-}
-
-/* Main content and top navigation */
-
-.main-shell {
-  min-width: 0;
-
-  min-height: 100vh;
-
-  margin-left: var(--sidebar-width);
-
-  transition: margin-left 220ms ease;
-}
-
-.topbar {
-  position: sticky;
-
-  z-index: 10;
-
-  top: 0;
-
-  display: flex;
-
-  min-height: 76px;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  gap: 24px;
-
-  padding: 0 42px;
-
-  background: color-mix(in oklab, var(--background) 92%, transparent);
-
-  backdrop-filter: blur(12px);
-
-  box-shadow:
-    0 6px 18px color-mix(in oklab, var(--foreground) 4%, transparent),
-    0 18px 42px color-mix(in oklab, var(--foreground) 3%, transparent);
-}
-
-.sidebar-collapsed .topbar {
-  padding-left: 24px;
-}
-
-.mobile-brand {
-  display: none;
-}
-
-.topbar-note {
-  display: flex;
-
-  align-items: center;
-
-  gap: 9px;
-
-  color: var(--muted-foreground);
-
-  font-family: var(--font-serif);
-
-  font-size: 13px;
-
-  font-style: italic;
-}
-
-.topbar-note span {
-  color: var(--primary);
-
-  font-style: normal;
-}
-
-.topbar-actions {
-  display: flex;
-
-  align-items: center;
-
-  gap: 13px;
-
-  margin-left: auto;
-}
-
-.icon-button,
 .literary-button {
   display: inline-flex;
   min-height: 38px;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  background: transparent;
-  color: var(--foreground);
-  transition:
-    background-color 160ms ease,
-    color 160ms ease,
-    border-color 160ms ease;
-}
-
-.icon-button {
-  width: 38px;
-
-  padding: 0;
-}
-
-.icon-button svg,
-.literary-button svg {
-  width: 16px;
-
-  height: 16px;
-
-  stroke-width: 1.6;
-}
-
-.icon-button:hover {
-  border-color: var(--primary);
-
-  color: var(--primary);
-}
-
-.literary-button {
   padding: 0 15px;
-
-  border-color: var(--primary);
-
+  border: 1px solid var(--primary);
   background: var(--primary);
-
   color: var(--primary-foreground);
-
   font-size: 12px;
 }
 
 .literary-button:hover {
   background: color-mix(in oklab, var(--primary) 88%, black);
+}
+
+.literary-button svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.6;
+}
+
+@media (max-width: 1080px) {
+  .floating-dock {
+    gap: 8px;
+  }
+
+  .dock-brand small,
+  .dock-link > span:not(.dock-active-pill),
+  .dock-write-button span {
+    display: none;
+  }
+
+  .dock-link {
+    width: 36px;
+    padding-inline: 0;
+  }
+
+  .dock-write-button {
+    width: 36px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .main-shell {
+    padding-top: 70px;
+    padding-bottom: 0;
+  }
+
+  .route-transition {
+    min-height: calc(100vh - 70px);
+  }
+
+  .floating-dock-frame {
+    top: 6px;
+    padding-inline: 8px;
+  }
+
+  .floating-dock {
+    min-height: 50px;
+    gap: 4px;
+    padding: 4px 5px;
+    border-radius: 22px;
+  }
+
+  .dock-brand {
+    padding: 2px;
+  }
+
+  .dock-brand img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .dock-brand > span {
+    display: none;
+  }
+
+  .dock-navigation {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .dock-navigation::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dock-link,
+  .dock-icon-button,
+  .dock-write-button {
+    width: 34px;
+    min-width: 34px;
+    min-height: 36px;
+  }
+
+  .dock-actions {
+    gap: 1px;
+  }
+
+  .dock-account-menu {
+    position: fixed;
+    top: 64px;
+    right: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-dock {
+    scroll-behavior: auto;
+  }
 }
