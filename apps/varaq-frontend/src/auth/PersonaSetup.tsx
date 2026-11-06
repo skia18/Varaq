@@ -8,14 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AccountScene } from '@/layouts/AccountScene';
 import { createClient } from '@/lib/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 
 export function PersonaGate({ children }: { children: ReactNode }) {
   const { user, persona, isLoading, isPersonaLoading, personaError, refreshPersona } = useAuth();
   if (isLoading || (user && isPersonaLoading)) {
     return (
-      <p className="wall-status" role="status">
-        Loading your account…
-      </p>
+      <LoadingState
+        variant="page"
+        label="Opening your account…"
+        detail="Gathering your writing identity."
+      />
     );
   }
   if (user && personaError) {
@@ -171,7 +174,7 @@ function PersonaSetup() {
               </p>
             )}
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? 'Creating persona…' : 'Create persona'}
+              {busy ? <LoadingLabel>Creating persona</LoadingLabel> : 'Create persona'}
             </Button>
           </form>
         </CardContent>

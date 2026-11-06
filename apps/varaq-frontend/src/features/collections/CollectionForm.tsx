@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { FolderPlus, LockKeyhole, Globe2 } from 'lucide-react';
 import type { Collection, CollectionInput } from './CollectionsContext';
+import { LoadingLabel } from '@/components/ui/LoadingState';
 export function CollectionForm({
   initial,
   onSubmit,
@@ -96,7 +97,13 @@ export function CollectionForm({
           type="submit"
           className="varaq-action varaq-action--primary"
         >
-          {busy ? 'Saving…' : initial ? 'Save changes' : 'Create collection'}
+          {busy ? (
+            <LoadingLabel>Saving collection</LoadingLabel>
+          ) : initial ? (
+            'Save changes'
+          ) : (
+            'Create collection'
+          )}
         </button>
         <button
           className="varaq-action collection-action-quiet"

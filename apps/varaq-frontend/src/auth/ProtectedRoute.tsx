@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 export function ProtectedRoute() {
   const { user, isLoading } = useAuth();
@@ -7,9 +8,11 @@ export function ProtectedRoute() {
 
   if (isLoading) {
     return (
-      <main className="mx-auto flex min-h-[50vh] max-w-xl items-center justify-center px-6">
-        <p className="text-sm text-muted-foreground">Loading your account…</p>
-      </main>
+      <LoadingState
+        variant="page"
+        label="Opening your account…"
+        detail="Your pages are finding their way back to you."
+      />
     );
   }
 

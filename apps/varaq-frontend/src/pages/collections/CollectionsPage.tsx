@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useCollections } from '@/features/collections/CollectionsContext';
 import { CollectionForm } from '@/features/collections/CollectionForm';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 
 export function CollectionsPage() {
   const { collections, loading, error, create, refresh, membership } = useCollections();
@@ -88,7 +89,7 @@ export function CollectionsPage() {
             disabled={loading || importing}
             onClick={() => void importSaved()}
           >
-            {importing ? 'Importing…' : 'Import browser saves'}
+            {importing ? <LoadingLabel>Importing saves</LoadingLabel> : 'Import browser saves'}
           </button>
         </section>
       )}
@@ -117,9 +118,10 @@ export function CollectionsPage() {
         </span>
       </div>
       {loading ? (
-        <p className="collection-notice" role="status">
-          Loading collections…
-        </p>
+        <LoadingState
+          label="Gathering your collections…"
+          detail="Making room for the pages you keep."
+        />
       ) : error ? (
         <p className="collection-notice collection-notice--error" role="alert">
           {error}{' '}

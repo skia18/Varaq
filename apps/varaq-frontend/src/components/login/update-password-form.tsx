@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingLabel } from '@/components/ui/LoadingState';
 
 export function UpdatePasswordForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const [success, setSuccess] = useState(false);
@@ -77,7 +78,11 @@ export function UpdatePasswordForm({ className, ...props }: React.ComponentProps
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Saving...' : 'Save new password'}
+                  {isLoading ? (
+                    <LoadingLabel>Saving new password</LoadingLabel>
+                  ) : (
+                    'Save new password'
+                  )}
                 </Button>
               </div>
             </form>

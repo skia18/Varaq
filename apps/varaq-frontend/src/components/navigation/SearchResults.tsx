@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import type { Writing } from '@/features/feed/writings';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 export function SearchResults({
   matches,
@@ -30,7 +31,7 @@ export function SearchResults({
         </span>
       </div>
       {loading ? (
-        <p role="status">Searching pages…</p>
+        <LoadingState variant="compact" label="Searching the pages…" />
       ) : error ? (
         <p role="alert">{error}</p>
       ) : (

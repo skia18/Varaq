@@ -1,0 +1,167 @@
+.varaq-loader {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  color: var(--muted-foreground);
+}
+
+.varaq-loader--page {
+  min-height: min(66vh, 620px);
+  flex-direction: column;
+  padding: 72px 24px;
+  text-align: center;
+}
+
+.varaq-loader--section {
+  min-height: 190px;
+  padding: 42px 24px;
+}
+
+.varaq-loader--compact {
+  min-height: 72px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 12px 4px;
+}
+
+.varaq-loader-mark {
+  position: relative;
+  display: block;
+  width: 92px;
+  height: 66px;
+  flex: 0 0 auto;
+}
+
+.varaq-loader--compact .varaq-loader-mark {
+  width: 58px;
+  height: 42px;
+}
+
+.varaq-loader-slip {
+  position: absolute;
+  top: 9px;
+  left: 24px;
+  width: 45px;
+  height: 48px;
+  border: 1px solid color-mix(in oklab, var(--border) 78%, transparent);
+  background-color: var(--card);
+  background-image: var(--texture);
+  box-shadow: 0 8px 18px color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+.varaq-loader-slip:first-child {
+  left: 8px;
+  background-color: color-mix(in oklab, var(--secondary) 72%, var(--card));
+}
+
+.varaq-loader-slip:nth-child(3) {
+  left: 40px;
+  background-color: color-mix(in oklab, var(--primary) 18%, var(--card));
+}
+
+.varaq-loader--compact .varaq-loader-slip {
+  top: 6px;
+  left: 17px;
+  width: 28px;
+  height: 31px;
+}
+
+.varaq-loader--compact .varaq-loader-slip:first-child {
+  left: 7px;
+}
+
+.varaq-loader--compact .varaq-loader-slip:nth-child(3) {
+  left: 27px;
+}
+
+.varaq-loader-feather {
+  position: absolute;
+  right: 3px;
+  bottom: 0;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 5px 14px color-mix(in oklab, var(--primary) 24%, transparent);
+  place-items: center;
+}
+
+.varaq-loader-feather svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.6;
+}
+
+.varaq-loader--compact .varaq-loader-feather {
+  width: 20px;
+  height: 20px;
+}
+
+.varaq-loader--compact .varaq-loader-feather svg {
+  width: 11px;
+  height: 11px;
+}
+
+.varaq-loader-copy {
+  display: grid;
+  max-width: 360px;
+  gap: 5px;
+}
+
+.varaq-loader-copy strong {
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.varaq-loader--page .varaq-loader-copy strong {
+  font-size: clamp(29px, 3vw, 40px);
+}
+
+.varaq-loader--compact .varaq-loader-copy strong {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.varaq-loader-copy small {
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.varaq-loading-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.varaq-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.varaq-loading-dots > span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+@media (max-width: 600px) {
+  .varaq-loader--section {
+    min-height: 150px;
+    flex-direction: column;
+    padding-inline: 14px;
+    text-align: center;
+  }
+}

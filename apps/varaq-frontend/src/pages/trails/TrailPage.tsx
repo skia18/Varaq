@@ -3,6 +3,7 @@ import { ArrowLeft, Feather } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { getTrail, type TrailGraph } from '@/lib/api';
 import { TrailGraphView, TrailLegend } from '@/components/literary/TrailView';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 export function TrailPage() {
   const { pieceId = '' } = useParams();
@@ -69,7 +70,7 @@ export function TrailPage() {
           )}
         </>
       ) : (
-        <p role="status">Following the thread…</p>
+        <LoadingState label="Following the thread…" detail="Gathering every page in this Trail." />
       )}
     </section>
   );

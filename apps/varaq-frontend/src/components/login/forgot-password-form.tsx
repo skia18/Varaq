@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingLabel } from '@/components/ui/LoadingState';
 
 export function ForgotPasswordForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
   const [email, setEmail] = useState('');
@@ -93,7 +94,11 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                   </p>
                 )}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Sending...' : 'Send reset email'}
+                  {isLoading ? (
+                    <LoadingLabel>Sending reset email</LoadingLabel>
+                  ) : (
+                    'Send reset email'
+                  )}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">

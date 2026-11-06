@@ -15,6 +15,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import varaqMark from '@/assets/varaq-mark.png';
 import { useAuth } from '@/auth/AuthProvider';
 import { useVault } from '@/features/vault/VaultProvider';
+import { LoadingLabel } from '@/components/ui/LoadingState';
 import { SearchDialog } from './SearchDialog';
 
 const dockSpring = { type: 'spring', stiffness: 420, damping: 34 } as const;
@@ -158,7 +159,9 @@ export function FloatingDock() {
                     transition={{ duration: reduceMotion ? 0 : 0.16, ease: 'easeOut' }}
                   >
                     {isLoading ? (
-                      <p className="dock-menu-status">Loading account…</p>
+                      <p className="dock-menu-status">
+                        <LoadingLabel>Loading account</LoadingLabel>
+                      </p>
                     ) : user ? (
                       <>
                         <div className="dock-account-summary">
@@ -168,11 +171,13 @@ export function FloatingDock() {
                           <span>
                             <strong>{persona?.displayName ?? user.email ?? 'Your account'}</strong>
                             <small>
-                              {isPersonaLoading
-                                ? 'Loading profile…'
-                                : persona
-                                  ? `@${persona.handle}`
-                                  : 'No public profile yet'}
+                              {isPersonaLoading ? (
+                                <LoadingLabel>Loading profile</LoadingLabel>
+                              ) : persona ? (
+                                `@${persona.handle}`
+                              ) : (
+                                'No public profile yet'
+                              )}
                             </small>
                           </span>
                         </div>

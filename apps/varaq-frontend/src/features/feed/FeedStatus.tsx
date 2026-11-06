@@ -1,4 +1,5 @@
 import type { usePublicFeed } from './usePublicFeed';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 export function FeedStatus({
   feed,
@@ -10,7 +11,13 @@ export function FeedStatus({
   return (
     <div ref={feed.endRef} className="feed-status" role="status">
       {feed.isLoading ? (
-        <p>Loading pages…</p>
+        <LoadingState
+          variant={visibleItemCount === 0 ? 'section' : 'compact'}
+          label={
+            visibleItemCount === 0 ? 'Gathering pages from the Commons…' : 'Turning the next pages…'
+          }
+          detail={visibleItemCount === 0 ? 'Words from strangers are on their way.' : undefined}
+        />
       ) : feed.error ? (
         <>
           <p>{feed.error}</p>

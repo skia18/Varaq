@@ -11,6 +11,7 @@ import {
 import { Link } from 'react-router-dom';
 import type { FeedPiece, PieceMedium, TrailGraph, TrailRelation } from '@/lib/api';
 import { publicMediaUrl } from '@/features/media/storage';
+import { LoadingState } from '@/components/ui/LoadingState';
 
 const mediumLabel = (medium?: PieceMedium) =>
   medium === 'photography'
@@ -114,6 +115,7 @@ export function TrailTeaser({
               : 'No echoes yet'}
         </span>
       </div>
+      {loading && <LoadingState variant="compact" label="Following the thread…" />}
       {source && sourceEdge && (
         <Link className="source-chip" to={`/piece/${source.id}`}>
           <ArrowUpLeft />

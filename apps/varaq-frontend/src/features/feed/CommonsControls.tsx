@@ -28,6 +28,7 @@ export function CommonsControls({
   const [revealedCategory, setRevealedCategory] = useState<FeedCategoryId | null>(null);
   const hoverTimer = useRef<number | null>(null);
   const reduceMotion = useReducedMotion();
+  const [mobileFilters, setMobileFilters] = useState(false);
   const layoutTransition = reduceMotion ? { duration: 0 } : controlSpring;
 
   function clearHoverTimer() {
@@ -48,7 +49,16 @@ export function CommonsControls({
     setRevealedCategory(null);
   }
 
-  useEffect(() => () => clearHoverTimer(), []);
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 680px)');
+    const update = () => setMobileFilters(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => {
+      clearHoverTimer();
+      query.removeEventListener('change', update);
+    };
+  }, []);
 
   function toggleFilters() {
     const nextOpen = !filtersOpen;
@@ -66,7 +76,7 @@ export function CommonsControls({
   return (
     <LayoutGroup id="commons-controls">
       <div className="commons-controls" aria-label="Browse the commons">
-        <motion.div className="filter-control">
+        <motion.div className={`filter-control${mobileFilters ? ' is-mobile' : ''}`}>
           <motion.button
             layout="position"
             type="button"
@@ -87,14 +97,30 @@ export function CommonsControls({
                 id="commons-category-filters"
                 className="category-filter-list"
                 aria-label="Filter pages by category"
-                initial={reduceMotion ? false : { width: 0, opacity: 0 }}
-                animate={{ width: 'auto', opacity: 1 }}
-                exit={reduceMotion ? { opacity: 0 } : { width: 0, opacity: 0 }}
+                initial={
+                  reduceMotion
+                    ? false
+                    : mobileFilters
+                      ? { height: 0, y: -8, opacity: 0 }
+                      : { width: 0, opacity: 0 }
+                }
+                animate={
+                  mobileFilters
+                    ? { height: 'auto', y: 0, opacity: 1 }
+                    : { width: 'auto', opacity: 1 }
+                }
+                exit={
+                  reduceMotion
+                    ? { opacity: 0 }
+                    : mobileFilters
+                      ? { height: 0, y: -8, opacity: 0 }
+                      : { width: 0, opacity: 0 }
+                }
                 transition={reduceMotion ? { duration: 0 } : unfoldTransition}
               >
-                {feedCategories.map(({ id, label, icon: Icon }) => {
+                {feedCategories.map(({ id, label, icon: Icon }, index) => {
                   const selected = selectedCategory === id;
-                  const revealLabel = selected || revealedCategory === id;
+                  const revealLabel = mobileFilters || selected || revealedCategory === id;
                   return (
                     <motion.button
                       layout="position"
@@ -109,8 +135,15 @@ export function CommonsControls({
                       onMouseLeave={hideRevealedCategory}
                       onFocus={() => setRevealedCategory(id)}
                       onBlur={hideRevealedCategory}
+                      initial={mobileFilters && !reduceMotion ? { y: -6, opacity: 0 } : false}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={mobileFilters && !reduceMotion ? { y: -4, opacity: 0 } : undefined}
                       whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-                      transition={layoutTransition}
+                      transition={
+                        mobileFilters && !reduceMotion
+                          ? { ...unfoldTransition, delay: index * 0.035 }
+                          : layoutTransition
+                      }
                     >
                       <Icon aria-hidden="true" />
                       <AnimatePresence initial={false}>

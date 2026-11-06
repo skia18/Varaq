@@ -5,9 +5,10 @@ import { ReadingDialog } from '@/components/literary/ReadingDialog';
 import { toWriting } from '@/features/feed/writings';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Feather, RefreshCw } from 'lucide-react';
+import { ArrowRight, Feather } from 'lucide-react';
 import { WritingCard } from '@/components/literary/WritingCard';
 import { postItTone } from '@/features/feed/postItTones';
+import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
 
@@ -115,11 +116,11 @@ function PublicWallContent() {
 
   if (isLoading) {
     return (
-      <section className="page-section">
-        <p className="eyebrow">A writer’s wall</p>
-        <h1 className="font-heading text-4xl">A moment, please…</h1>
-        <p className="mt-4 text-muted-foreground">Gathering this little corner of Varaq.</p>
-      </section>
+      <LoadingState
+        variant="page"
+        label="Gathering this writer’s wall…"
+        detail="A little corner of Varaq is taking shape."
+      />
     );
   }
 
@@ -242,10 +243,7 @@ function PublicWallContent() {
                 className="wall-load-button"
               >
                 {isLoadingMore ? (
-                  <>
-                    <RefreshCw size={14} className="animate-spin" />
-                    Loading…
-                  </>
+                  <LoadingLabel>Turning more pages</LoadingLabel>
                 ) : (
                   <>
                     Load more pages
@@ -273,9 +271,11 @@ export function PublicWallPage() {
   const [params] = useSearchParams();
   if (isLoading || (user && isPersonaLoading))
     return (
-      <section className="page-section">
-        <p role="status">Opening the wall…</p>
-      </section>
+      <LoadingState
+        variant="page"
+        label="Opening the wall…"
+        detail="Paper, ink, and a quiet moment."
+      />
     );
   return user && persona && persona.handle === handle && params.get('tab') !== 'collections' ? (
     <ProfilePage key={`${user.id}:${persona.id}`} />
@@ -285,7 +285,8 @@ export function PublicWallPage() {
 }
 export function MyWallRedirect() {
   const { user, persona, isLoading, isPersonaLoading } = useAuth();
-  if (isLoading || isPersonaLoading) return <p role="status">Opening your wall…</p>;
+  if (isLoading || isPersonaLoading)
+    return <LoadingState variant="page" label="Opening your wall…" />;
   return (
     <Navigate
       replace
