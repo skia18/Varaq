@@ -1748,11 +1748,14 @@ components:
           required:
             - author
             - handle
+            - trailConnected
           properties:
             author:
               type: string
             handle:
               type: string
+            trailConnected:
+              type: boolean
     FeedPage:
       type: object
       required:

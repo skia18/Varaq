@@ -243,7 +243,7 @@ export function getPublicPersona(handle: string): Promise<Persona> {
   return apiRequest<Persona>(`/api/v1/personas/${encodeURIComponent(handle)}`);
 }
 
-export type FeedPiece = Piece & { author: string; handle: string };
+export type FeedPiece = Piece & { author: string; handle: string; trailConnected?: boolean };
 export type FeedPage = { items: FeedPiece[]; nextCursor: string | null };
 export function getFeed(
   options: {

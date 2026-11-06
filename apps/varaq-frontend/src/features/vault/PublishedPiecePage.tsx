@@ -70,10 +70,16 @@ export function PublishedPiecePage() {
         <p role="alert">{error}</p>
       ) : piece ? (
         <article className="published-piece">
-          <Link to="/" className="varaq-action varaq-action--small piece-back"><ArrowLeft />The commons</Link>
+          <Link to="/" className="varaq-action varaq-action--small piece-back">
+            <ArrowLeft />
+            The commons
+          </Link>
           <div className="piece-heading-meta">
             <span className="eyebrow">{literaryFormLabel(forms[piece.type])}</span>
-            <span className="piece-visibility">{piece.visibility === 'unlisted' ? <Link2 /> : <Globe2 />}{piece.visibility === 'unlisted' ? 'Unlisted' : 'Public'}</span>
+            <span className="piece-visibility">
+              {piece.visibility === 'unlisted' ? <Link2 /> : <Globe2 />}
+              {piece.visibility === 'unlisted' ? 'Unlisted' : 'Public'}
+            </span>
           </div>
           <h1>{piece.title}</h1>
           {piece.visibility === 'public' && <BookmarkPicker pieceId={piece.id} />}
@@ -131,7 +137,10 @@ export function PublishedPiecePage() {
                   <AudioPlayer
                     src={publicMediaUrl(piece.mediaPath)}
                     duration={piece.audioDuration ?? undefined}
-                    artwork={piece.coverUrl ?? (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined)}
+                    artwork={
+                      piece.coverUrl ??
+                      (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined)
+                    }
                     fullscreen
                   />
                 </div>

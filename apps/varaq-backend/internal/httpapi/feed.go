@@ -13,8 +13,9 @@ import (
 
 type FeedPiece struct {
 	Piece
-	Author string `json:"author"`
-	Handle string `json:"handle"`
+	Author         string `json:"author"`
+	Handle         string `json:"handle"`
+	TrailConnected bool   `json:"trailConnected"`
 }
 
 type FeedPage struct {
@@ -36,7 +37,8 @@ func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 	query := `SELECT p.id, p.persona_id, p.slug, p.title, p.body, p.type,
  p.status, p.visibility, p.published_at, p.created_at, p.updated_at,
  p.medium, p.media_path, p.media_mime_type, p.media_byte_size, p.cover_path, p.cover_mime_type, p.cover_byte_size,
- persona.display_name, persona.handle
+ persona.display_name, persona.handle,
+ EXISTS(SELECT 1 FROM public.piece_trails trail WHERE trail.source_id=p.id OR trail.response_id=p.id)
  FROM public.pieces p JOIN public.personas persona ON persona.id = p.persona_id
  WHERE p.status = 'published' AND p.visibility = 'public'`
 	args := []any{}
@@ -106,7 +108,7 @@ func (h PieceHandler) ListFeed(w http.ResponseWriter, r *http.Request) {
 	items := make([]FeedPiece, 0, limit+1)
 	for rows.Next() {
 		var item FeedPiece
-		if err := rows.Scan(&item.ID, &item.PersonaID, &item.Slug, &item.Title, &item.Body, &item.Type, &item.Status, &item.Visibility, &item.PublishedAt, &item.CreatedAt, &item.UpdatedAt, &item.Medium, &item.MediaPath, &item.MediaMime, &item.MediaBytes, &item.CoverPath, &item.CoverMime, &item.CoverBytes, &item.Author, &item.Handle); err != nil {
+		if err := rows.Scan(&item.ID, &item.PersonaID, &item.Slug, &item.Title, &item.Body, &item.Type, &item.Status, &item.Visibility, &item.PublishedAt, &item.CreatedAt, &item.UpdatedAt, &item.Medium, &item.MediaPath, &item.MediaMime, &item.MediaBytes, &item.CoverPath, &item.CoverMime, &item.CoverBytes, &item.Author, &item.Handle, &item.TrailConnected); err != nil {
 			writeInternalError(w)
 			return
 		}

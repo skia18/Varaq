@@ -77,6 +77,7 @@ LIMIT 60`)
 			writeInternalError(w)
 			return
 		}
+		item.Root.TrailConnected = true
 		items = append(items, item)
 	}
 	if rows.Err() != nil {
@@ -132,6 +133,7 @@ func (h PieceHandler) GetTrail(w http.ResponseWriter, r *http.Request) {
 			writeInternalError(w)
 			return
 		}
+		n.TrailConnected = true
 		nodes = append(nodes, n)
 	}
 	if err = rows.Err(); err != nil {

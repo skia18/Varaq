@@ -65,7 +65,11 @@ export function ReadingDialog({
                   </figure>
                 )}
                 {reading.audioUrl && (
-                  <AudioPlayer src={reading.audioUrl} duration={reading.audioDuration} artwork={reading.coverUrl} />
+                  <AudioPlayer
+                    src={reading.audioUrl}
+                    duration={reading.audioDuration}
+                    artwork={reading.coverUrl}
+                  />
                 )}
                 <div className="reading-body">{reading.body}</div>
                 {reading.credits && reading.credits.length > 0 && (

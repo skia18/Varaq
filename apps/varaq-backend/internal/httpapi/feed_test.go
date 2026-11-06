@@ -17,7 +17,7 @@ func TestFeedQueryVisibilityAndOrdering(t *testing.T) {
 	if limit != 10 || args[len(args)-1] != 11 {
 		t.Fatalf("expected 10 results with lookahead: %v %v", limit, args)
 	}
-	for _, required := range []string{"p.status = 'published'", "p.visibility = 'public'", "ORDER BY p.published_at DESC, p.id DESC"} {
+	for _, required := range []string{"p.status = 'published'", "p.visibility = 'public'", "FROM public.piece_trails trail", "trail.source_id=p.id OR trail.response_id=p.id", "ORDER BY p.published_at DESC, p.id DESC"} {
 		if !strings.Contains(query, required) {
 			t.Fatalf("missing public feed constraint %q", required)
 		}

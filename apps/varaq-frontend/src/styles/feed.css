@@ -327,14 +327,6 @@
   margin: 0;
 }
 
-.commons-note:nth-child(3n + 2) .writing-card {
-  transform: rotate(1.2deg);
-}
-
-.commons-note:nth-child(3n) .writing-card {
-  transform: rotate(-0.7deg);
-}
-
 /* Margin notes */
 
 .field-notes {

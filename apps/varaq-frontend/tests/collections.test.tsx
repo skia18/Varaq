@@ -68,7 +68,7 @@ function checkbox(name: string) {
 }
 test('opening bookmarks saves once, allows independent memberships, and reopening preserves them', async () => {
   await mount();
-  await click(host.querySelector('[aria-label="Save and organize piece"]'));
+  await click(host.querySelector('[aria-label="Save to collections"]'));
   expect(checkbox('Saved').checked).toBe(true);
   expect(mocks.apiRequest).toHaveBeenCalledWith('/api/v1/collections/saved/pieces/piece', {
     method: 'PUT',
@@ -83,7 +83,7 @@ test('opening bookmarks saves once, allows independent memberships, and reopenin
     )!,
   );
   const before = mocks.apiRequest.mock.calls.length;
-  await click(host.querySelector('[aria-label="Save and organize piece"]'));
+  await click(host.querySelector('[aria-label="Save to collections"]'));
   expect(mocks.apiRequest.mock.calls.length).toBe(before);
   expect(checkbox('Saved').checked).toBe(false);
   expect(checkbox('After Midnight').checked).toBe(true);
@@ -92,7 +92,7 @@ test('opening bookmarks saves once, allows independent memberships, and reopenin
 test('failed save shows feedback and retains unchecked membership', async () => {
   await mount();
   mocks.apiRequest.mockRejectedValueOnce(new Error('offline'));
-  await click(host.querySelector('[aria-label="Save and organize piece"]'));
+  await click(host.querySelector('[aria-label="Save to collections"]'));
   expect(checkbox('Saved').checked).toBe(false);
   expect(document.querySelector('.bookmark-popover [role="status"]')?.textContent).toContain(
     'Could not update',
@@ -100,7 +100,7 @@ test('failed save shows feedback and retains unchecked membership', async () => 
 });
 test('new collection includes the piece in the create request and starts private', async () => {
   await mount();
-  await click(host.querySelector('[aria-label="Save and organize piece"]'));
+  await click(host.querySelector('[aria-label="Save to collections"]'));
   await click(
     Array.from(document.querySelectorAll('.bookmark-popover button')).find(
       (b) => b.textContent?.trim() === 'New collection',
@@ -142,7 +142,7 @@ test('new collection includes the piece in the create request and starts private
 });
 test('sign out immediately hides the previous account collections', async () => {
   await mount();
-  await click(host.querySelector('[aria-label="Save and organize piece"]'));
+  await click(host.querySelector('[aria-label="Save to collections"]'));
   mocks.user = null;
   await mount();
   expect(document.body.textContent).not.toContain('After Midnight');
@@ -151,7 +151,7 @@ test('sign out immediately hides the previous account collections', async () => 
 
 test('picker stays in the viewport outside transformed cards and closes with Escape', async () => {
   await mount();
-  const trigger = host.querySelector('[aria-label="Save and organize piece"]') as HTMLButtonElement;
+  const trigger = host.querySelector('[aria-label="Save to collections"]') as HTMLButtonElement;
   vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({
     left: 900,
     right: 932,
@@ -179,7 +179,7 @@ test('picker stays in the viewport outside transformed cards and closes with Esc
 
 test('clicks inside the picker preserve it; clicks outside dismiss it', async () => {
   await mount();
-  await click(host.querySelector('[aria-label="Save and organize piece"]'));
+  await click(host.querySelector('[aria-label="Save to collections"]'));
   await act(async () =>
     document
       .querySelector('.bookmark-popover h2')!

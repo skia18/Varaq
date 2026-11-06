@@ -146,16 +146,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .writing-card {
-    transition: none;
-  }
-
-  .writing-card:hover {
-    transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {

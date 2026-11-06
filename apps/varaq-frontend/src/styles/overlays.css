@@ -182,7 +182,12 @@
 .audio-player--fullscreen::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(12 10 9 / 12%) 0%, rgb(12 10 9 / 8%) 42%, rgb(12 10 9 / 68%) 100%);
+  background: linear-gradient(
+    180deg,
+    rgb(12 10 9 / 12%) 0%,
+    rgb(12 10 9 / 8%) 42%,
+    rgb(12 10 9 / 68%) 100%
+  );
   content: '';
   pointer-events: none;
 }

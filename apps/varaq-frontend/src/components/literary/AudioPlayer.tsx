@@ -39,7 +39,13 @@ export function AudioPlayer({
   return (
     <div
       className={`audio-player${artwork ? ' has-artwork' : ' has-hue-background'}${fullscreen ? ' audio-player--fullscreen' : ''}`}
-      style={artwork ? { backgroundImage: `linear-gradient(rgb(20 16 13 / 38%), rgb(20 16 13 / 72%)), url("${artwork.replaceAll('"', '\\"')}")` } : undefined}
+      style={
+        artwork
+          ? {
+              backgroundImage: `linear-gradient(rgb(20 16 13 / 38%), rgb(20 16 13 / 72%)), url("${artwork.replaceAll('"', '\\"')}")`,
+            }
+          : undefined
+      }
     >
       <button
         type="button"

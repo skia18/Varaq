@@ -22,10 +22,11 @@ const writings = Array.from({ length: 10 }, (_, i) => ({
   excerpt: 'A published page.',
   minutes: 1,
   tone: 'paper',
+  medium: 'writing',
   date: '2026-10-18',
 }));
 
-test('all ten commons cards remain in publication order in the wall flow', () => {
+test('commons Post-its remain in publication order in the wall flow', () => {
   const html = renderToString(
     React.createElement(
       MemoryRouter,
@@ -41,18 +42,45 @@ test('all ten commons cards remain in publication order in the wall flow', () =>
   assert.ok(html.includes('class="saved-writing-grid commons-wall"'));
   assert.ok(!html.includes('writing-column')); // old mobile CSS hides the third column
   assert.equal((html.match(/class="commons-note"/g) ?? []).length, 10);
-  assert.ok(html.includes('tone-paper'));
-  assert.ok(html.includes('tone-sage'));
-  assert.ok(html.includes('tone-red'));
-  assert.ok(html.includes('tone-blue'));
-  assert.ok(html.includes('tone-blush'));
-  assert.ok(html.includes('tone-ochre'));
   let last = -1;
   for (const writing of writings) {
     const position = html.indexOf(`<h2>${writing.title}</h2>`);
     assert.ok(position > last, `${writing.title} is missing or out of order`);
     last = position;
   }
+});
+
+test('a connected photo Post-it places artwork above metadata and keeps its footer actions', () => {
+  const photo = {
+    ...writings[0],
+    medium: 'photography',
+    imageUrl: '/threshold.jpg',
+    imageAlt: 'A figure crossing a bright threshold',
+    trailConnected: true,
+  };
+  const html = renderToString(
+    React.createElement(
+      MemoryRouter,
+      null,
+      React.createElement(
+        CollectionsProvider,
+        null,
+        React.createElement(FeedGrid, { writings: [photo], onRead() {} }),
+      ),
+    ),
+  );
+
+  const imagePosition = html.indexOf('class="media-card-image"');
+  const metadataPosition = html.indexOf('class="card-meta"');
+  const contentPosition = html.indexOf('class="card-read"');
+  const footerPosition = html.indexOf('class="card-footer"');
+  assert.ok(imagePosition !== -1 && imagePosition < metadataPosition);
+  assert.ok(metadataPosition < contentPosition && contentPosition < footerPosition);
+  assert.ok(html.includes('@a_writer'));
+  assert.ok(html.includes('aria-label="Connected to a Trail"'));
+  assert.ok(html.includes('aria-label="Photography"'));
+  assert.ok(html.includes('1 min read'));
+  assert.ok(html.includes('aria-label="Save to collections"'));
 });
 
 function renderSearch(overrides = {}) {
