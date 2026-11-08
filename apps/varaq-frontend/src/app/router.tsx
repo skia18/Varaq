@@ -1,75 +1,145 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
+import type { ComponentType } from 'react';
 
-import { AuthLayout } from '../layouts/AuthLayout';
-import { PublicLayout } from '../layouts/PublicLayout';
-import { DiscoverPage } from '../pages/discover/DiscoverPage';
-import { HomePage } from '../pages/home/HomePage';
-import { NotFoundPage } from '../pages/NotFoundPage';
-import { CollectionsPage } from '../pages/collections/CollectionsPage';
-import { CollectionDetailPage } from '../pages/collections/CollectionDetailPage';
-import { VaultGate } from '@/features/vault/VaultProvider';
-import { ReturnToVaultPage } from '@/features/vault/ReturnToVaultPage';
-import { VaultPage } from '@/features/vault/VaultPage';
-import { PublishedPiecePage } from '@/features/vault/PublishedPiecePage';
-import { PublicWallPage, MyWallRedirect } from '../pages/profile/PublicWallPage';
-import { PublishedWritingRoomPage } from '../pages/write/PublishedWritingRoomPage';
-import { WritingRoomPage } from '../pages/write/WritingRoomPage';
-import { LoginForm } from '@/components/login/login-form';
-import { SignUpForm } from '@/components/login/sign-up-form';
-import { ForgotPasswordForm } from '@/components/login/forgot-password-form';
-import { UpdatePasswordForm } from '@/components/login/update-password-form';
-import { ProtectedRoute } from '@/auth/ProtectedRoute';
-import { TrailPage } from '../pages/trails/TrailPage';
-import { VaultDraftPage } from '@/features/vault/VaultDraftPage';
+function lazyComponent(importer: () => Promise<unknown>, exportName: string): RouteObject['lazy'] {
+  return async () => {
+    const module = (await importer()) as Record<string, unknown>;
+    return { Component: module[exportName] as ComponentType };
+  };
+}
 
 export const router = createBrowserRouter([
   {
-    element: <AuthLayout />,
+    lazy: lazyComponent(() => import('../layouts/AuthLayout'), 'AuthLayout'),
     children: [
-      { path: '/login', element: <LoginForm /> },
-      { path: '/signup', element: <SignUpForm /> },
-      { path: '/forgot-password', element: <ForgotPasswordForm /> },
-      { path: '/update-password', element: <UpdatePasswordForm /> },
+      {
+        path: '/login',
+        lazy: lazyComponent(() => import('@/components/login/login-form'), 'LoginForm'),
+      },
+      {
+        path: '/signup',
+        lazy: lazyComponent(() => import('@/components/login/sign-up-form'), 'SignUpForm'),
+      },
+      {
+        path: '/forgot-password',
+        lazy: lazyComponent(
+          () => import('@/components/login/forgot-password-form'),
+          'ForgotPasswordForm',
+        ),
+      },
+      {
+        path: '/update-password',
+        lazy: lazyComponent(
+          () => import('@/components/login/update-password-form'),
+          'UpdatePasswordForm',
+        ),
+      },
     ],
   },
   {
-    element: <PublicLayout />,
+    lazy: lazyComponent(() => import('../layouts/PublicLayout'), 'PublicLayout'),
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/discover', element: <DiscoverPage /> },
-      { path: '/collections/:collectionId', element: <CollectionDetailPage /> },
+      { path: '/', lazy: lazyComponent(() => import('../pages/home/HomePage'), 'HomePage') },
+      {
+        path: '/discover',
+        lazy: lazyComponent(() => import('../pages/discover/DiscoverPage'), 'DiscoverPage'),
+      },
+      {
+        path: '/collections/:collectionId',
+        lazy: lazyComponent(
+          () => import('../pages/collections/CollectionDetailPage'),
+          'CollectionDetailPage',
+        ),
+      },
 
       // Public writer wall.
-      { path: '/wall/:handle', element: <PublicWallPage /> },
-      { path: '/piece/:pieceId', element: <PublishedPiecePage /> },
+      {
+        path: '/wall/:handle',
+        lazy: lazyComponent(() => import('../pages/profile/PublicWallPage'), 'PublicWallPage'),
+      },
+      {
+        path: '/piece/:pieceId',
+        lazy: lazyComponent(
+          () => import('@/features/vault/PublishedPiecePage'),
+          'PublishedPiecePage',
+        ),
+      },
       { path: '/trails', element: <Navigate to="/?view=trails" replace /> },
-      { path: '/trail/:pieceId', element: <TrailPage /> },
+      {
+        path: '/trail/:pieceId',
+        lazy: lazyComponent(() => import('../pages/trails/TrailPage'), 'TrailPage'),
+      },
 
       {
-        element: <ProtectedRoute />,
+        lazy: lazyComponent(() => import('@/auth/ProtectedRoute'), 'ProtectedRoute'),
         children: [
-          { path: '/collections', element: <CollectionsPage /> },
+          {
+            path: '/collections',
+            lazy: lazyComponent(
+              () => import('../pages/collections/CollectionsPage'),
+              'CollectionsPage',
+            ),
+          },
           { path: '/saved', element: <Navigate to="/collections" replace /> },
 
           // Published-content management.
-          { path: '/published', element: <MyWallRedirect /> },
-          { path: '/wall/manage/edit', element: <PublishedWritingRoomPage /> },
-          { path: '/published/edit', element: <PublishedWritingRoomPage /> },
           {
-            element: <VaultGate />,
+            path: '/published',
+            lazy: lazyComponent(() => import('../pages/profile/PublicWallPage'), 'MyWallRedirect'),
+          },
+          {
+            path: '/wall/manage/edit',
+            lazy: lazyComponent(
+              () => import('../pages/write/PublishedWritingRoomPage'),
+              'PublishedWritingRoomPage',
+            ),
+          },
+          {
+            path: '/published/edit',
+            lazy: lazyComponent(
+              () => import('../pages/write/PublishedWritingRoomPage'),
+              'PublishedWritingRoomPage',
+            ),
+          },
+          {
+            lazy: lazyComponent(() => import('@/features/vault/VaultProvider'), 'VaultRoute'),
             children: [
-              { path: '/vault', element: <VaultPage /> },
-              { path: '/vault/draft/:pieceId', element: <VaultDraftPage /> },
-              { path: '/vault/return/:pieceId', element: <ReturnToVaultPage /> },
+              {
+                path: '/vault',
+                lazy: lazyComponent(() => import('@/features/vault/VaultPage'), 'VaultPage'),
+              },
+              {
+                path: '/vault/draft/:pieceId',
+                lazy: lazyComponent(
+                  () => import('@/features/vault/VaultDraftPage'),
+                  'VaultDraftPage',
+                ),
+              },
+              {
+                path: '/vault/return/:pieceId',
+                lazy: lazyComponent(
+                  () => import('@/features/vault/ReturnToVaultPage'),
+                  'ReturnToVaultPage',
+                ),
+              },
 
               // Writing room.
-              { path: '/write', element: <WritingRoomPage /> },
+              {
+                path: '/write',
+                lazy: lazyComponent(
+                  () => import('../pages/write/WritingRoomPage'),
+                  'WritingRoomPage',
+                ),
+              },
             ],
           },
         ],
       },
 
-      { path: '*', element: <NotFoundPage /> },
+      {
+        path: '*',
+        lazy: lazyComponent(() => import('../pages/NotFoundPage'), 'NotFoundPage'),
+      },
     ],
   },
 ]);

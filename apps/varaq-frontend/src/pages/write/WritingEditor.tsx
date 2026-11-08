@@ -5,6 +5,7 @@ import type { DraftContent } from '@/features/vault/crypto';
 import type { Piece } from '@/lib/api';
 import { MediaUploadField } from '@/features/media/MediaUploadField';
 import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/pages.css';
 
 type Props = {
   content: DraftContent;

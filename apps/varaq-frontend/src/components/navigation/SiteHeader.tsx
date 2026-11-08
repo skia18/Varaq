@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import {
   BookOpen,
   Feather,
@@ -12,18 +12,20 @@ import {
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import varaqMark from '@/assets/varaq-mark.png';
+import varaqMark from '@/assets/varaq-mark.webp';
 import { useAuth } from '@/auth/AuthProvider';
-import { useVault } from '@/features/vault/VaultProvider';
 import { LoadingLabel } from '@/components/ui/LoadingState';
-import { SearchDialog } from './SearchDialog';
+
+const SearchDialog = lazy(() =>
+  import('./SearchDialog').then((module) => ({ default: module.SearchDialog })),
+);
 
 const dockSpring = { type: 'spring', stiffness: 420, damping: 34 } as const;
 
 function Brand() {
   return (
     <Link to="/" className="dock-brand" aria-label="Varaq home">
-      <img src={varaqMark} alt="" width={1024} height={1024} />
+      <img src={varaqMark} alt="" width={128} height={128} />
       <span>varaq</span>
       <small lang="ur">ورق</small>
     </Link>
@@ -31,9 +33,9 @@ function Brand() {
 }
 
 export function FloatingDock() {
-  const { lock } = useVault();
   const { user, persona, isLoading, isPersonaLoading, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoaded, setSearchLoaded] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const location = useLocation();
@@ -71,8 +73,6 @@ export function FloatingDock() {
 
   async function handleSignOut() {
     setSignOutError(null);
-    lock();
-
     try {
       await signOut();
       setAccountMenuOpen(false);
@@ -129,7 +129,10 @@ export function FloatingDock() {
               className="dock-icon-button"
               aria-label="Search writing"
               title="Search writing"
-              onClick={() => setSearchOpen(true)}
+              onClick={() => {
+                setSearchLoaded(true);
+                setSearchOpen(true);
+              }}
             >
               <Search aria-hidden="true" />
             </button>
@@ -213,7 +216,11 @@ export function FloatingDock() {
         </motion.header>
       </div>
 
-      <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchLoaded && (
+        <Suspense fallback={null}>
+          <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      )}
     </>
   );
 }

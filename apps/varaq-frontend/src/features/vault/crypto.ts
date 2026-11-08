@@ -1,8 +1,18 @@
 import { argon2idAsync } from '@noble/hashes/argon2.js';
 import type { PieceType, TrailRelation } from '@/lib/api';
 
-import type { Sealed, VaultConfig, VaultEnvelope as Envelope } from '@/generated/api';
-export type { Sealed, VaultConfig, Envelope };
+export type Sealed = { iv: string; data: string };
+export type VaultConfig = {
+  version: 1;
+  salt: string;
+  passphrase: Sealed;
+  recovery: Sealed;
+};
+export type Envelope = {
+  version: 1;
+  content: Sealed;
+  key: Sealed;
+};
 export type DraftMedium = 'writing' | 'photography' | 'artwork' | 'audio';
 export type DraftMedia = {
   uploadId: string;

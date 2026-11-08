@@ -6,6 +6,8 @@ import { forms, toWriting } from '@/features/feed/writings';
 import { usePublicFeed } from '@/features/feed/usePublicFeed';
 import { FeedStatus } from '@/features/feed/FeedStatus';
 import type { PieceType } from '@/lib/api';
+import '@/styles/feed.css';
+import '@/styles/search.css';
 
 export function DiscoverPage() {
   const [searchParams, setSearchParams] = useSearchParams();

@@ -33,38 +33,42 @@ function useCollectionsState() {
   const userId = user?.id;
   const currentUser = useRef(userId);
   currentUser.current = userId;
-  const [state, setState] = useState<{ userId?: string; items: Collection[] }>({ items: [] });
+  const [state, setState] = useState<{ userId?: string; items: Collection[]; loaded: boolean }>({
+    items: [],
+    loaded: false,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const collections = state.userId === userId ? state.items : [];
   const refresh = useCallback(async () => {
-    if (!userId) return;
-    const items = await apiRequest<Collection[]>(base);
-    if (currentUser.current === userId) {
-      setState({ userId, items });
-      setError('');
+    if (!userId) return [];
+    setLoading(true);
+    try {
+      const items = await apiRequest<Collection[]>(base);
+      if (currentUser.current === userId) {
+        setState({ userId, items, loaded: true });
+        setError('');
+      }
+      return items;
+    } catch (requestError) {
+      if (currentUser.current === userId) {
+        setError('Could not load collections. Please try again.');
+      }
+      throw requestError;
+    } finally {
+      if (currentUser.current === userId) setLoading(false);
     }
   }, [userId]);
   useEffect(() => {
-    let active = true;
     setError('');
-    if (!userId) {
-      setState({ items: [] });
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    void refresh()
-      .catch(() => {
-        if (active) setError('Could not load collections. Please try again.');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [userId, refresh]);
+    setState({ userId, items: [], loaded: !userId });
+    setLoading(false);
+  }, [userId]);
+  const loaded = state.userId === userId && state.loaded;
+  const ensureLoaded = useCallback(
+    () => (loaded ? Promise.resolve(state.items) : refresh()),
+    [loaded, refresh, state.items],
+  );
   async function membership(collectionId: string, pieceId: string, add: boolean) {
     await apiRequest(`${base}/${collectionId}/pieces/${pieceId}`, {
       method: add ? 'PUT' : 'DELETE',
@@ -90,7 +94,7 @@ function useCollectionsState() {
       body: JSON.stringify(input),
     });
     if (currentUser.current === userId)
-      setState((previous) => ({ userId, items: [...previous.items, collection] }));
+      setState((previous) => ({ userId, items: [...previous.items, collection], loaded: true }));
     return collection;
   }
   async function update(id: string, input: CollectionInput) {
@@ -101,7 +105,7 @@ function useCollectionsState() {
     await apiRequest(`${base}/${id}`, { method: 'DELETE' });
     await refresh();
   }
-  return { collections, loading, error, refresh, membership, create, update, remove };
+  return { collections, loading, error, refresh, ensureLoaded, membership, create, update, remove };
 }
 const Context = createContext<ReturnType<typeof useCollectionsState> | null>(null);
 export function CollectionsProvider({ children }: { children: ReactNode }) {

@@ -59,12 +59,13 @@ func (h PersonaHandler) Search(w http.ResponseWriter, r *http.Request) {
 		writeBadRequest(w, "Invalid pagination cursor.")
 		return
 	}
+	pattern := literalSearchPattern(q)
 	rows, err := h.DB.Query(r.Context(), `WITH matches AS (
  SELECT id,handle,display_name,bio,created_at,
  CASE WHEN handle=$1 THEN 0 WHEN starts_with(handle,$1) OR starts_with(lower(display_name),$1) THEN 1 ELSE 2 END AS rank
- FROM public.personas WHERE $1='' OR strpos(handle,$1)>0 OR strpos(lower(display_name),$1)>0)
+ FROM public.personas WHERE $1='' OR lower(handle || ' ' || display_name) LIKE $2 ESCAPE E'\\')
  SELECT id,handle,display_name,bio,created_at,rank FROM matches
- WHERE NOT $2 OR (rank,handle)>($3,$4) ORDER BY rank,handle LIMIT $5`, q, hasCursor, cursor.Rank, cursor.Handle, limit+1)
+	WHERE NOT $3 OR (rank,handle)>($4,$5) ORDER BY rank,handle LIMIT $6`, q, pattern, hasCursor, cursor.Rank, cursor.Handle, limit+1)
 	if err != nil {
 		writeInternalError(w)
 		return

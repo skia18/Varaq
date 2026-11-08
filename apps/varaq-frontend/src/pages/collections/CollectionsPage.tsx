@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowUpRight,
   Bookmark,
@@ -13,9 +13,12 @@ import { Link } from 'react-router-dom';
 import { useCollections } from '@/features/collections/CollectionsContext';
 import { CollectionForm } from '@/features/collections/CollectionForm';
 import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/pages.css';
+import '@/styles/collections.css';
 
 export function CollectionsPage() {
-  const { collections, loading, error, create, refresh, membership } = useCollections();
+  const { collections, loading, error, create, refresh, ensureLoaded, membership } =
+    useCollections();
   const [creating, setCreating] = useState(false),
     [query, setQuery] = useState(''),
     [message, setMessage] = useState(''),
@@ -36,6 +39,9 @@ export function CollectionsPage() {
       return [];
     }
   });
+  useEffect(() => {
+    void ensureLoaded().catch(() => {});
+  }, [ensureLoaded]);
   async function importSaved() {
     const saved = collections.find((c) => c.systemType === 'saved');
     if (!saved) return;

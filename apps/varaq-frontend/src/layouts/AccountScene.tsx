@@ -1,7 +1,7 @@
 import { ArrowLeft, Feather } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import landscape from '@/assets/auth-landscape.jpg';
+import landscape from '@/assets/auth-landscape.webp';
 import '@/styles/auth.css';
 
 export function AccountScene({ children }: { children: ReactNode }) {

@@ -12,7 +12,7 @@ The repository contains a React frontend, a Go REST API, and a version-controlle
 - The API supports persona creation and lookup, draft creation and editing, publishing, deletion, and public listings for a writer's wall.
 - The frontend includes a writing room, a private vault, public writer walls, and discovery, collection, and saved-page screens.
 - The Commons loads the 10 most recently published public pieces from `GET /api/v1/feed`. Each subsequent page loads only on a new downward scroll near the end. When the page does not overflow, downward wheel, touch, or keyboard scroll gestures can request the next batch. There is no automatic viewport filling or background prefetch.
-- Discovery and search use the public feed API. Saved IDs remain in browser storage; their piece content is fetched from the API. Collections currently show an empty state until a collections data model is implemented.
+- Discovery and search use the public feed API. Signed-in readers can save public pieces into private or public collections.
 - Private drafts and unlisted pieces do not appear in the public feed. Deploy both the API and frontend changes together when updating the feed.
 
 Semantic discovery with pgvector, MCP integration, and expanded moderation and library features remain planned.
@@ -168,7 +168,6 @@ Run these from the repository root:
 | `npm run build:web` | Type-check and build the frontend |
 | `npm run build:go` | Build all Go packages |
 | `npm test` | Run all frontend and Go tests |
-| `npm test` | Run frontend and Go tests |
 | `npm run test:web` | Run frontend tests with Vitest |
 | `npm run test:watch` | Run frontend tests in Vitest watch mode |
 | `npm run test:go` | Run Go tests |
@@ -181,9 +180,8 @@ Run these from the repository root:
 | `npm run lint:go` | Run Go vet |
 | `npm run format:check --workspace=varaq-frontend` | Check frontend formatting |
 | `npm run api:validate-spec` | Validate the OpenAPI specification |
-| `npm run api:generate:web` | Generate a TypeScript Fetch client from OpenAPI |
 
-The OpenAPI Generator commands require Java. The current frontend uses the hand-written client at `apps/varaq-frontend/src/lib/api.ts`; generating a client does not automatically switch the application to it.
+Redocly validates the OpenAPI contract. The frontend uses the authenticated hand-written client at `apps/varaq-frontend/src/lib/api.ts` for all API calls.
 
 ## Frontend routes
 
@@ -191,7 +189,7 @@ The OpenAPI Generator commands require Java. The current frontend uses the hand-
 | --- | --- | --- |
 | `/` | Commons feed | No |
 | `/discover` | Discovery screen | No |
-| `/collections` | Collection browsing | No |
+| `/collections` | Your collections | Yes |
 | `/wall/:handle` | Public writer wall | No |
 | `/saved` | Saved pages | Yes |
 | `/vault` | Writer's private workspace | Yes |

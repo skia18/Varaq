@@ -85,6 +85,27 @@ func TestPersonaValidation(t *testing.T) {
 		})
 	}
 }
+func TestPersonaRejectsTrailingAndOversizedJSON(t *testing.T) {
+	for _, tc := range []struct {
+		name, body, message string
+	}{
+		{"trailing object", `{"handle":"writer","displayName":"Writer"} {}`, "single JSON object"},
+		{"oversized body", `{"handle":"writer","displayName":"Writer","bio":"` + strings.Repeat("a", 400_001) + `"}`, "Invalid JSON"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			PersonaHandler{}.Create(w, authenticatedRequest(tc.body))
+			assertAPIError(t, w, 400, "bad_request", tc.message)
+		})
+	}
+}
+
+func TestPieceRejectsOversizedJSON(t *testing.T) {
+	w := httptest.NewRecorder()
+	body := `{"title":"Title","body":"` + strings.Repeat("a", 400_001) + `","type":"poem"}`
+	PieceHandler{}.UpdateOwnerPiece(w, authenticatedRequest(body))
+	assertAPIError(t, w, 400, "bad_request", "Invalid JSON")
+}
 func TestPaginationRejectsInvalidInputsBeforeDatabaseAccess(t *testing.T) {
 	for _, query := range []string{"limit=0", "limit=51", "limit=abc"} {
 		t.Run(query, func(t *testing.T) {

@@ -3,8 +3,7 @@ import { useAuth } from '@/auth/AuthProvider';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Dialog } from '@base-ui/react/dialog';
-import { ResponseError } from '@/generated/api';
-import { getOwnerPiece, type Piece } from '@/lib/api';
+import { ApiError, getOwnerPiece, type Piece } from '@/lib/api';
 import { useVault } from './VaultProvider';
 import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 import { encryptDraft, decryptDraft, type DraftContent, type DraftMedia } from './crypto';
@@ -36,7 +35,7 @@ export function ReturnToVaultPage() {
       try {
         receipt = await api.returnStatus(pieceId);
       } catch (e) {
-        if (!(e instanceof ResponseError && e.response.status === 404)) throw e;
+        if (!(e instanceof ApiError && e.status === 404)) throw e;
       }
       if (n !== epoch.current) return;
       if (receipt?.completed) {

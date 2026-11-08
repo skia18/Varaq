@@ -19,6 +19,8 @@ import {
   type VaultConfig,
 } from './crypto';
 import { saveConfig, vaultConfig } from './api';
+import '@/styles/overlays.css';
+import '@/styles/pages.css';
 
 type VaultSession = { userId: string; key: CryptoKey };
 const Context = createContext<{ session: VaultSession | null; lock: () => void }>({
@@ -101,6 +103,13 @@ export function VaultProvider({ children }: { children: ReactNode }) {
 }
 const UnlockContext = createContext<(session: UnlockedSession) => void>(() => {});
 export const useVault = () => useContext(Context);
+export function VaultRoute() {
+  return (
+    <VaultProvider>
+      <VaultGate />
+    </VaultProvider>
+  );
+}
 export function VaultGate() {
   const { pathname } = useLocation();
   const { session, lock } = useVault();

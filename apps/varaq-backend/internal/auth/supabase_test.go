@@ -97,6 +97,60 @@ func TestSupabaseVerifierTransportAndInputErrors(t *testing.T) {
 	}
 }
 
+func TestSupabaseVerifierCachesSuccessfulVerificationBriefly(t *testing.T) {
+	now := time.Date(2026, time.November, 8, 12, 0, 0, 0, time.UTC)
+	v := NewSupabaseVerifier("https://auth.example.test", "key")
+	v.Now = func() time.Time { return now }
+	calls := 0
+	v.Client.Transport = transportFunc(func(*http.Request) (*http.Response, error) {
+		calls++
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(`{"id":"user-123"}`)),
+			Header:     make(http.Header),
+		}, nil
+	})
+
+	for range 2 {
+		user, err := v.VerifyToken(context.Background(), "same-token")
+		if err != nil || user.ID != "user-123" {
+			t.Fatalf("user=%+v err=%v", user, err)
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("remote verification calls=%d want=1", calls)
+	}
+
+	now = now.Add(v.CacheTTL)
+	if _, err := v.VerifyToken(context.Background(), "same-token"); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 2 {
+		t.Fatalf("expired cache calls=%d want=2", calls)
+	}
+}
+
+func TestSupabaseVerifierDoesNotCacheRejections(t *testing.T) {
+	v := NewSupabaseVerifier("https://auth.example.test", "key")
+	calls := 0
+	v.Client.Transport = transportFunc(func(*http.Request) (*http.Response, error) {
+		calls++
+		return &http.Response{
+			StatusCode: http.StatusUnauthorized,
+			Body:       io.NopCloser(strings.NewReader(`{}`)),
+			Header:     make(http.Header),
+		}, nil
+	})
+	for range 2 {
+		if _, err := v.VerifyToken(context.Background(), "bad-token"); err == nil {
+			t.Fatal("rejected token unexpectedly verified")
+		}
+	}
+	if calls != 2 {
+		t.Fatalf("rejection calls=%d want=2", calls)
+	}
+}
+
 func TestUserContext(t *testing.T) {
 	parent := context.Background()
 	if _, ok := UserFromContext(parent); ok {
