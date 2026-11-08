@@ -174,12 +174,28 @@
   background: var(--border);
 }
 
+.search-result-mark.tone-paper {
+  background: var(--postit-paper);
+}
+
 .search-result-mark.tone-sage {
-  background: var(--secondary);
+  background: var(--postit-sage);
+}
+
+.search-result-mark.tone-blue {
+  background: var(--postit-blue);
+}
+
+.search-result-mark.tone-blush {
+  background: var(--postit-blush);
+}
+
+.search-result-mark.tone-ochre {
+  background: var(--postit-ochre);
 }
 
 .search-result-mark.tone-red {
-  background: var(--primary);
+  background: var(--postit-red);
 }
 
 .search-result-mark.tone-photo {
