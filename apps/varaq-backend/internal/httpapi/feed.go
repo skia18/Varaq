@@ -23,6 +23,11 @@ type FeedPage struct {
 	NextCursor *string     `json:"nextCursor"`
 }
 
+func literalSearchPattern(value string) string {
+	escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(value)
+	return "%" + escaped + "%"
+}
+
 // buildFeedQuery keeps visibility enforcement common to browsing, search and saved pages.
 func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 	values := r.URL.Query()
@@ -34,7 +39,12 @@ func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 		}
 		limit = n
 	}
-	query := `SELECT p.id, p.persona_id, p.slug, p.title, p.body, p.type,
+	bodyExpression := "left(p.body, 600)"
+	if values.Get("ids") != "" {
+		// Direct lookups open a complete piece; browsing and search only need a card summary.
+		bodyExpression = "p.body"
+	}
+	query := `SELECT p.id, p.persona_id, p.slug, p.title, ` + bodyExpression + `, p.type,
  p.status, p.visibility, p.published_at, p.created_at, p.updated_at,
  p.medium, p.media_path, p.media_mime_type, p.media_byte_size, p.cover_path, p.cover_mime_type, p.cover_byte_size,
  persona.display_name, persona.handle,
@@ -59,8 +69,8 @@ func buildFeedQuery(r *http.Request) (string, []any, int, error) {
 		if len(search) > 300 {
 			return "", nil, 0, fmt.Errorf("Search must be at most 300 bytes.")
 		}
-		// strpos searches literal text, so percent and underscore are not wildcards.
-		query += " AND strpos(lower(p.title || ' ' || p.body || ' ' || persona.display_name || ' ' || persona.handle), lower(" + add(search) + ")) > 0"
+		placeholder := add(literalSearchPattern(search))
+		query += " AND (lower(p.title || ' ' || p.body) LIKE lower(" + placeholder + ") ESCAPE E'\\\\' OR lower(persona.handle || ' ' || persona.display_name) LIKE lower(" + placeholder + ") ESCAPE E'\\\\')"
 	}
 	if raw := values.Get("ids"); raw != "" {
 		ids := strings.Split(raw, ",")

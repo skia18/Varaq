@@ -8,7 +8,15 @@ import { CollectionForm } from './CollectionForm';
 
 export function BookmarkPicker({ pieceId }: { pieceId: string }) {
   const { user } = useAuth();
-  const { collections, loading, error: loadError, membership, create, refresh } = useCollections();
+  const {
+    collections,
+    loading,
+    error: loadError,
+    membership,
+    create,
+    refresh,
+    ensureLoaded,
+  } = useCollections();
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -78,7 +86,13 @@ export function BookmarkPicker({ pieceId }: { pieceId: string }) {
   async function click() {
     setOpen(!open);
     if (!open && user && !saved) {
-      const defaults = collections.find((c) => c.systemType === 'saved');
+      let available = collections;
+      try {
+        available = await ensureLoaded();
+      } catch {
+        return;
+      }
+      const defaults = available.find((c) => c.systemType === 'saved');
       if (defaults) await change(defaults.id, true);
     }
   }

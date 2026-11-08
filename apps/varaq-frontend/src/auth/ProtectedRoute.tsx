@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { LoadingState } from '@/components/ui/LoadingState';
+import { PersonaGate } from './PersonaSetup';
 
 export function ProtectedRoute() {
   const { user, isLoading } = useAuth();
@@ -22,5 +23,9 @@ export function ProtectedRoute() {
     return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <PersonaGate>
+      <Outlet />
+    </PersonaGate>
+  );
 }

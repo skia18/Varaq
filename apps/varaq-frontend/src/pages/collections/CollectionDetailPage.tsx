@@ -11,7 +11,14 @@ import { LoadingState } from '@/components/ui/LoadingState';
 export function CollectionDetailPage() {
   const { collectionId } = useParams();
   const navigate = useNavigate();
-  const { collections, loading: ownerLoading, membership, update, remove } = useCollections();
+  const {
+    collections,
+    loading: ownerLoading,
+    ensureLoaded,
+    membership,
+    update,
+    remove,
+  } = useCollections();
   const owned = collections.find((c) => c.id === collectionId);
   const [shared, setShared] = useState<Collection | null>(null),
     [pieces, setPieces] = useState<FeedPiece[]>([]),
@@ -23,6 +30,9 @@ export function CollectionDetailPage() {
     [message, setMessage] = useState(''),
     [attempt, setAttempt] = useState(0);
   const collection = owned ?? shared;
+  useEffect(() => {
+    void ensureLoaded().catch(() => {});
+  }, [ensureLoaded]);
   useEffect(() => {
     setShared(null);
     setEditing(false);

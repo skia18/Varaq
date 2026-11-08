@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -48,11 +49,17 @@ func (h PersonaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req createPersonaRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 400_000)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(&req); err != nil {
 		writeBadRequest(w, "Invalid JSON request body.")
+		return
+	}
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		writeBadRequest(w, "Request body must contain a single JSON object.")
 		return
 	}
 

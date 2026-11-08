@@ -12,9 +12,8 @@ import {
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import varaqMark from '@/assets/varaq-mark.png';
+import varaqMark from '@/assets/varaq-mark.webp';
 import { useAuth } from '@/auth/AuthProvider';
-import { useVault } from '@/features/vault/VaultProvider';
 import { LoadingLabel } from '@/components/ui/LoadingState';
 import { SearchDialog } from './SearchDialog';
 
@@ -23,7 +22,7 @@ const dockSpring = { type: 'spring', stiffness: 420, damping: 34 } as const;
 function Brand() {
   return (
     <Link to="/" className="dock-brand" aria-label="Varaq home">
-      <img src={varaqMark} alt="" width={1024} height={1024} />
+      <img src={varaqMark} alt="" width={128} height={128} />
       <span>varaq</span>
       <small lang="ur">ورق</small>
     </Link>
@@ -31,7 +30,6 @@ function Brand() {
 }
 
 export function FloatingDock() {
-  const { lock } = useVault();
   const { user, persona, isLoading, isPersonaLoading, signOut } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -71,8 +69,6 @@ export function FloatingDock() {
 
   async function handleSignOut() {
     setSignOutError(null);
-    lock();
-
     try {
       await signOut();
       setAccountMenuOpen(false);

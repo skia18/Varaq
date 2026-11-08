@@ -452,6 +452,7 @@ func (h PieceHandler) UpdateOwnerPiece(w http.ResponseWriter, r *http.Request) {
 
 	var req updatePieceRequest
 
+	r.Body = http.MaxBytesReader(w, r.Body, 400_000)
 	decoder := json.NewDecoder(r.Body)
 	decoder.DisallowUnknownFields()
 

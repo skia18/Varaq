@@ -68,6 +68,7 @@ function checkbox(name: string) {
 }
 test('opening bookmarks saves once, allows independent memberships, and reopening preserves them', async () => {
   await mount();
+  expect(mocks.apiRequest).not.toHaveBeenCalled();
   await click(host.querySelector('[aria-label="Save to collections"]'));
   expect(checkbox('Saved').checked).toBe(true);
   expect(mocks.apiRequest).toHaveBeenCalledWith('/api/v1/collections/saved/pieces/piece', {
@@ -91,7 +92,19 @@ test('opening bookmarks saves once, allows independent memberships, and reopenin
 });
 test('failed save shows feedback and retains unchecked membership', async () => {
   await mount();
-  mocks.apiRequest.mockRejectedValueOnce(new Error('offline'));
+  mocks.apiRequest.mockImplementation(async (_path: string, options?: RequestInit) => {
+    if (options) throw new Error('offline');
+    return [
+      {
+        id: 'saved',
+        name: 'Saved',
+        description: '',
+        systemType: 'saved',
+        visibility: 'private',
+        pieceIds: [],
+      },
+    ];
+  });
   await click(host.querySelector('[aria-label="Save to collections"]'));
   expect(checkbox('Saved').checked).toBe(false);
   expect(document.querySelector('.bookmark-popover [role="status"]')?.textContent).toContain(

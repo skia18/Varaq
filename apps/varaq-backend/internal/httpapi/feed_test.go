@@ -22,6 +22,9 @@ func TestFeedQueryVisibilityAndOrdering(t *testing.T) {
 			t.Fatalf("missing public feed constraint %q", required)
 		}
 	}
+	if !strings.Contains(query, "left(p.body, 600)") {
+		t.Fatal("feed browsing must return a bounded body summary")
+	}
 }
 func TestFeedInvalidParameters(t *testing.T) {
 	cursor := base64.RawURLEncoding.EncodeToString([]byte(`{"publishedAt":"2026-10-18T12:00:00Z","id":"not-a-uuid"}`))
@@ -47,7 +50,7 @@ func TestFeedCursorAndFiltersAreParameterized(t *testing.T) {
 	if strings.Contains(query, search) || strings.Contains(query, id) {
 		t.Fatal("user data interpolated into SQL")
 	}
-	for _, required := range []string{"p.type = $1", "p.medium = $2", "lower($3)", "ANY($4::uuid[])", "(p.published_at, p.id) < ($5, $6::uuid)", "LIMIT $7"} {
+	for _, required := range []string{"p.type = $1", "p.medium = $2", "lower($3)", "ANY($4::uuid[])", "(p.published_at, p.id) < ($5, $6::uuid)", "LIMIT $7", "p.body"} {
 		if !strings.Contains(query, required) {
 			t.Fatalf("missing %q in %s", required, query)
 		}

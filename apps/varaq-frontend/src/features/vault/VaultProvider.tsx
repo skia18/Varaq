@@ -101,6 +101,13 @@ export function VaultProvider({ children }: { children: ReactNode }) {
 }
 const UnlockContext = createContext<(session: UnlockedSession) => void>(() => {});
 export const useVault = () => useContext(Context);
+export function VaultRoute() {
+  return (
+    <VaultProvider>
+      <VaultGate />
+    </VaultProvider>
+  );
+}
 export function VaultGate() {
   const { pathname } = useLocation();
   const { session, lock } = useVault();
