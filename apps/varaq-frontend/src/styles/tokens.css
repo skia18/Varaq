@@ -70,4 +70,6 @@
   --shadow-paper: 1px 3px 9px oklch(0.261 0.005 89 / 8%);
 
   --texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23888888' opacity='.09' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+
+  --mehendi-pattern: url('../assets/mehendi-pattern.svg');
 }
