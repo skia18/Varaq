@@ -1202,6 +1202,8 @@
   position: absolute;
   inset: 0;
   color: var(--faded);
+  overflow: visible;
+  pointer-events: none;
 }
 .trail-line {
   fill: none;
@@ -1213,6 +1215,25 @@
 .trail-line.is-continues {
   stroke: var(--primary);
   stroke-dasharray: none;
+}
+.trail-glow-layer {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+.trail-glow-layer.is-visible {
+  opacity: 1;
+}
+.trail-line-glow,
+.trail-line-highlight {
+  fill: none;
+  stroke-linecap: round;
+}
+.trail-line-glow {
+  stroke-width: 10;
+  opacity: 0.62;
+}
+.trail-line-highlight {
+  stroke-width: 2.4;
 }
 .trail-node {
   position: absolute;
@@ -1258,6 +1279,104 @@
 .trail-node-card.is-root {
   outline: 1.5px solid var(--primary);
   outline-offset: 3px;
+}
+.trail-hover-preview {
+  position: fixed;
+  z-index: 80;
+  width: 276px;
+  height: 200px;
+  overflow: hidden;
+  padding: 7px;
+  border: 1px solid color-mix(in oklab, var(--primary) 34%, var(--border));
+  border-radius: 3px 6px 3px 5px;
+  background: color-mix(in oklab, var(--card) 96%, transparent);
+  background-image: var(--texture);
+  box-shadow: 3px 12px 32px color-mix(in oklab, var(--foreground) 18%, transparent);
+  pointer-events: none;
+  transform: rotate(-0.5deg);
+  animation: trail-preview-arrive 180ms ease-out both;
+}
+.trail-mini-piece {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 13px 14px 10px;
+  border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
+  background: var(--background);
+  box-shadow: inset 0 0 20px color-mix(in oklab, var(--foreground) 3%, transparent);
+  color: var(--foreground);
+}
+.trail-mini-piece-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 7px;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+.trail-mini-piece h3 {
+  margin-top: 9px;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1;
+}
+.trail-mini-piece-media {
+  position: relative;
+  height: 67px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.trail-mini-piece-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.trail-mini-piece-media svg {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--background);
+  color: var(--primary);
+}
+.trail-mini-piece p {
+  display: -webkit-box;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 9px;
+  color: var(--muted-foreground);
+  font-family: var(--font-serif);
+  font-size: 9px;
+  line-height: 1.55;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.trail-mini-piece footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+  color: var(--faded);
+  font-size: 7px;
+}
+.trail-mini-piece footer span:last-child {
+  color: var(--primary);
+}
+@keyframes trail-preview-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(5px) rotate(-0.5deg);
+  }
 }
 .trail-root-tag {
   position: absolute;
@@ -1363,5 +1482,13 @@
   }
   .teaser-list {
     grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trail-glow-layer {
+    transition: none;
+  }
+  .trail-hover-preview {
+    animation: none;
   }
 }

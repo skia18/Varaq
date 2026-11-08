@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   ArrowDownRight,
   ArrowRight,
@@ -21,6 +22,16 @@ const mediumLabel = (medium?: PieceMedium) =>
       : medium === 'audio'
         ? 'Audio'
         : 'Writing';
+const pieceTypeLabel = (type: FeedPiece['type']) =>
+  type === 'poem'
+    ? 'Poem'
+    : type === 'story'
+      ? 'Short story'
+      : type === 'essay'
+        ? 'Essay'
+        : type === 'letter'
+          ? 'Letter'
+          : 'Fragment';
 const relationLabel = (relation: TrailRelation) =>
   relation === 'continues' ? 'Continues the thread' : 'Inspired by';
 function MediumIcon({ medium }: { medium?: PieceMedium }) {
@@ -38,6 +49,40 @@ function imageFor(piece: FeedPiece) {
   return piece.medium === 'audio'
     ? (piece.coverUrl ?? (piece.coverPath ? publicMediaUrl(piece.coverPath) : undefined))
     : (piece.imageUrl ?? (piece.mediaPath ? publicMediaUrl(piece.mediaPath) : undefined));
+}
+
+function TrailPostMiniature({ piece }: { piece: FeedPiece }) {
+  const image = imageFor(piece);
+  return (
+    <article className={`trail-mini-piece is-${piece.medium ?? 'writing'}`}>
+      <div className="trail-mini-piece-meta">
+        <span>{pieceTypeLabel(piece.type)}</span>
+        <span>Public · {mediumLabel(piece.medium)}</span>
+      </div>
+      <h3>{piece.title}</h3>
+      {image && piece.medium !== 'writing' && (
+        <div className="trail-mini-piece-media">
+          <img
+            src={image}
+            alt={
+              piece.medium === 'audio'
+                ? `Cover art for ${piece.title}`
+                : (piece.imageAlt ?? piece.title)
+            }
+          />
+          {piece.medium === 'audio' && <AudioLines aria-hidden="true" />}
+        </div>
+      )}
+      <p>
+        {piece.body.slice(0, 220)}
+        {piece.body.length > 220 ? '…' : ''}
+      </p>
+      <footer>
+        <span>by {piece.author}</span>
+        <span>Open post →</span>
+      </footer>
+    </article>
+  );
 }
 
 function TrailNodeCard({
@@ -249,6 +294,15 @@ function LineageBranch({
 }
 
 export function TrailGraphView({ graph }: { graph: TrailGraph }) {
+  const svgId = useId().replaceAll(':', '');
+  const glowGradientRef = useRef<SVGRadialGradientElement>(null);
+  const glowLayerRef = useRef<SVGGElement>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [preview, setPreview] = useState<{
+    piece: FeedPiece;
+    left: number;
+    top: number;
+  } | null>(null);
   const depths = trailDepths(graph),
     columns = new Map<number, FeedPiece[]>(),
     byId = new Map(graph.nodes.map((node) => [node.id, node])),
@@ -276,14 +330,98 @@ export function TrailGraphView({ graph }: { graph: TrailGraph }) {
     );
   }
   const root = byId.get(graph.rootId);
+
+  function pathForEdge(edge: TrailGraph['edges'][number]) {
+    const from = positions.get(edge.sourceId),
+      to = positions.get(edge.responseId);
+    if (!from || !to) return null;
+    const x1 = from.x + NODE_W / 2,
+      y1 = from.y,
+      x2 = to.x - NODE_W / 2,
+      y2 = to.y,
+      bend = Math.max(40, Math.abs(x2 - x1) / 2);
+    return `M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`;
+  }
+
+  function moveTrailGlow(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === 'touch') return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    glowGradientRef.current?.setAttribute('cx', String(event.clientX - rect.left));
+    glowGradientRef.current?.setAttribute('cy', String(event.clientY - rect.top));
+    glowLayerRef.current?.classList.add('is-visible');
+  }
+
+  function hideTrailGlow() {
+    glowLayerRef.current?.classList.remove('is-visible');
+  }
+
+  function clearPreviewTimer() {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    hoverTimerRef.current = null;
+  }
+
+  function showPreview(piece: FeedPiece, target: HTMLElement) {
+    const rect = target.getBoundingClientRect();
+    const previewWidth = 276;
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const left = Math.min(
+      Math.max(12, rect.left + rect.width / 2 - previewWidth / 2),
+      Math.max(12, viewportWidth - previewWidth - 12),
+    );
+    const top = rect.top > 230 ? rect.top - 212 : rect.bottom + 12;
+    setPreview({ piece, left, top });
+  }
+
+  function beginPreviewDwell(piece: FeedPiece, target: HTMLElement) {
+    clearPreviewTimer();
+    setPreview(null);
+    hoverTimerRef.current = setTimeout(() => {
+      showPreview(piece, target);
+      hoverTimerRef.current = null;
+    }, 1000);
+  }
+
+  function endPreviewDwell(pieceId: string) {
+    clearPreviewTimer();
+    setPreview((current) => (current?.piece.id === pieceId ? null : current));
+  }
+
+  useEffect(() => () => clearPreviewTimer(), []);
+
   return (
     <div className="trail-wrap">
       {root && (
-        <div className="trail-stage" style={{ width, height }}>
+        <div
+          className="trail-stage"
+          style={{ width, height }}
+          onPointerMove={moveTrailGlow}
+          onPointerLeave={hideTrailGlow}
+        >
           <svg className="trail-lines" width={width} height={height} aria-hidden="true">
             <defs>
+              <radialGradient
+                ref={glowGradientRef}
+                id={`trail-cursor-gradient-${svgId}`}
+                cx="0"
+                cy="0"
+                r="78"
+                gradientUnits="userSpaceOnUse"
+              >
+                <stop offset="0" stopColor="var(--primary)" stopOpacity="1" />
+                <stop offset="0.48" stopColor="var(--primary)" stopOpacity="0.8" />
+                <stop offset="1" stopColor="var(--primary)" stopOpacity="0" />
+              </radialGradient>
+              <filter
+                id={`trail-cursor-blur-${svgId}`}
+                x="-40%"
+                y="-40%"
+                width="180%"
+                height="180%"
+              >
+                <feGaussianBlur stdDeviation="2.8" />
+              </filter>
               <marker
-                id="trail-arrow"
+                id={`trail-arrow-${svgId}`}
                 viewBox="0 0 10 10"
                 refX="9"
                 refY="5"
@@ -301,25 +439,46 @@ export function TrailGraphView({ graph }: { graph: TrailGraph }) {
               </marker>
             </defs>
             {graph.edges.map((edge) => {
-              const from = positions.get(edge.sourceId),
-                to = positions.get(edge.responseId);
-              if (!from || !to) return null;
-              const x1 = from.x + NODE_W / 2,
-                y1 = from.y,
-                x2 = to.x - NODE_W / 2,
-                y2 = to.y,
-                bend = Math.max(40, Math.abs(x2 - x1) / 2);
+              const path = pathForEdge(edge);
+              if (!path) return null;
               return (
                 <path
                   key={`${edge.sourceId}-${edge.responseId}`}
                   className={`trail-line${edge.relation === 'continues' ? ' is-continues' : ''}`}
-                  d={`M ${x1} ${y1} C ${x1 + bend} ${y1}, ${x2 - bend} ${y2}, ${x2} ${y2}`}
-                  markerEnd="url(#trail-arrow)"
+                  d={path}
+                  markerEnd={`url(#trail-arrow-${svgId})`}
                 >
                   <title>{relationLabel(edge.relation)}</title>
                 </path>
               );
             })}
+            <g ref={glowLayerRef} className="trail-glow-layer">
+              {graph.edges.map((edge) => {
+                const path = pathForEdge(edge);
+                if (!path) return null;
+                return (
+                  <path
+                    key={`${edge.sourceId}-${edge.responseId}-glow`}
+                    className="trail-line-glow"
+                    d={path}
+                    stroke={`url(#trail-cursor-gradient-${svgId})`}
+                    filter={`url(#trail-cursor-blur-${svgId})`}
+                  />
+                );
+              })}
+              {graph.edges.map((edge) => {
+                const path = pathForEdge(edge);
+                if (!path) return null;
+                return (
+                  <path
+                    key={`${edge.sourceId}-${edge.responseId}-highlight`}
+                    className="trail-line-highlight"
+                    d={path}
+                    stroke={`url(#trail-cursor-gradient-${svgId})`}
+                  />
+                );
+              })}
+            </g>
           </svg>
           {graph.nodes.map((node, index) => {
             const spot = positions.get(node.id);
@@ -329,6 +488,14 @@ export function TrailGraphView({ graph }: { graph: TrailGraph }) {
                 key={node.id}
                 className={`trail-node trail-node-${index % 2 ? 'even' : 'odd'}`}
                 style={{ left: spot.x - NODE_W / 2, top: spot.y - NODE_H / 2 }}
+                onPointerEnter={(event) => {
+                  if (event.pointerType !== 'touch') beginPreviewDwell(node, event.currentTarget);
+                }}
+                onPointerLeave={() => endPreviewDwell(node.id)}
+                onFocus={(event) => showPreview(node, event.currentTarget)}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) endPreviewDwell(node.id);
+                }}
               >
                 <TrailNodeCard
                   piece={node}
@@ -339,6 +506,16 @@ export function TrailGraphView({ graph }: { graph: TrailGraph }) {
             );
           })}
         </div>
+      )}
+      {preview && (
+        <aside
+          className="trail-hover-preview"
+          style={{ left: preview.left, top: preview.top }}
+          role="status"
+          aria-live="polite"
+        >
+          <TrailPostMiniature piece={preview.piece} />
+        </aside>
       )}
       <div className="trail-lineage" aria-label="Trail as a vertical lineage">
         {root && <TrailNodeCard piece={root} root />}
