@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import { ResponseError } from '@/generated/api';
+import { ApiError } from '@/lib/api';
 import { ReturnToVaultPage } from '@/features/vault/ReturnToVaultPage';
 const mocks = vi.hoisted(() => ({
   getOwnerPiece: vi.fn(),
@@ -14,7 +14,10 @@ const mocks = vi.hoisted(() => ({
   decryptDraft: vi.fn(),
 }));
 vi.mock('@/auth/AuthProvider', () => ({ useAuth: () => ({ persona: { handle: 'writer' } }) }));
-vi.mock('@/lib/api', () => ({ getOwnerPiece: mocks.getOwnerPiece }));
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getOwnerPiece: mocks.getOwnerPiece,
+}));
 vi.mock('@/features/vault/api', () => mocks);
 vi.mock('@/features/vault/crypto', () => ({
   encryptDraft: mocks.encryptDraft,
@@ -46,7 +49,7 @@ beforeEach(() => {
     updatedAt: stamp,
     ...content,
   });
-  mocks.returnStatus.mockRejectedValueOnce(new ResponseError(new Response(null, { status: 404 })));
+  mocks.returnStatus.mockRejectedValueOnce(new ApiError('not found', 404));
   mocks.encryptDraft.mockResolvedValue(envelope);
   mocks.decryptDraft.mockResolvedValue(content);
   mocks.stageReturn.mockResolvedValue({ draftId: 'fresh', completed: false });

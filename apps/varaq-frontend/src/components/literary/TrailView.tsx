@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import type { FeedPiece, PieceMedium, TrailGraph, TrailRelation } from '@/lib/api';
 import { publicMediaUrl } from '@/features/media/storage';
 import { LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/pages.css';
 
 const mediumLabel = (medium?: PieceMedium) =>
   medium === 'photography'

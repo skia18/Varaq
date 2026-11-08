@@ -9,6 +9,8 @@ import { forms, literaryFormLabel } from '@/features/feed/writings';
 import { publicMediaUrl } from '@/features/media/storage';
 import { TrailTeaser } from '@/components/literary/TrailView';
 import { LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/pages.css';
+import '@/styles/overlays.css';
 export function PublishedPiecePage() {
   const { pieceId } = useParams();
   const [piece, setPiece] = useState<Piece | null>(null);

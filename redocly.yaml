@@ -1,0 +1,8 @@
+extends:
+  - recommended
+
+rules:
+  # The checked-in server is deliberately the local development API.
+  no-server-example.com: off
+  # Health endpoints and public listings do not manufacture client errors.
+  operation-4xx-response: off

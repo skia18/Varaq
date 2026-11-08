@@ -2,10 +2,12 @@ package auth
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -18,9 +20,20 @@ type Verifier interface {
 }
 
 type SupabaseVerifier struct {
-	BaseURL        string
-	PublishableKey string
-	Client         *http.Client
+	BaseURL         string
+	PublishableKey  string
+	Client          *http.Client
+	CacheTTL        time.Duration
+	MaxCacheEntries int
+	Now             func() time.Time
+
+	cacheMu sync.Mutex
+	cache   map[[sha256.Size]byte]cachedVerification
+}
+
+type cachedVerification struct {
+	User      User
+	ExpiresAt time.Time
 }
 
 func NewSupabaseVerifier(baseURL, publishableKey string) *SupabaseVerifier {
@@ -30,13 +43,69 @@ func NewSupabaseVerifier(baseURL, publishableKey string) *SupabaseVerifier {
 		Client: &http.Client{
 			Timeout: 5 * time.Second,
 		},
+		CacheTTL:        30 * time.Second,
+		MaxCacheEntries: 1_024,
+		Now:             time.Now,
+		cache:           make(map[[sha256.Size]byte]cachedVerification),
 	}
+}
+
+func (v *SupabaseVerifier) cachedUser(token string) (User, bool) {
+	if v.CacheTTL <= 0 {
+		return User{}, false
+	}
+	now := time.Now()
+	if v.Now != nil {
+		now = v.Now()
+	}
+	key := sha256.Sum256([]byte(token))
+	v.cacheMu.Lock()
+	defer v.cacheMu.Unlock()
+	entry, ok := v.cache[key]
+	if !ok || !now.Before(entry.ExpiresAt) {
+		delete(v.cache, key)
+		return User{}, false
+	}
+	return entry.User, true
+}
+
+func (v *SupabaseVerifier) cacheUser(token string, user User) {
+	if v.CacheTTL <= 0 || v.MaxCacheEntries <= 0 {
+		return
+	}
+	now := time.Now()
+	if v.Now != nil {
+		now = v.Now()
+	}
+	key := sha256.Sum256([]byte(token))
+	v.cacheMu.Lock()
+	defer v.cacheMu.Unlock()
+	if v.cache == nil {
+		v.cache = make(map[[sha256.Size]byte]cachedVerification)
+	}
+	if len(v.cache) >= v.MaxCacheEntries {
+		for cachedKey, entry := range v.cache {
+			if !now.Before(entry.ExpiresAt) {
+				delete(v.cache, cachedKey)
+			}
+		}
+	}
+	if len(v.cache) >= v.MaxCacheEntries {
+		for cachedKey := range v.cache {
+			delete(v.cache, cachedKey)
+			break
+		}
+	}
+	v.cache[key] = cachedVerification{User: user, ExpiresAt: now.Add(v.CacheTTL)}
 }
 
 func (v *SupabaseVerifier) VerifyToken(ctx context.Context, token string) (User, error) {
 	token = strings.TrimSpace(token)
 	if token == "" {
 		return User{}, fmt.Errorf("missing token")
+	}
+	if user, ok := v.cachedUser(token); ok {
+		return user, nil
 	}
 
 	req, err := http.NewRequestWithContext(
@@ -74,6 +143,7 @@ func (v *SupabaseVerifier) VerifyToken(ctx context.Context, token string) (User,
 	if user.ID == "" {
 		return User{}, fmt.Errorf("Supabase response did not contain a user ID")
 	}
+	v.cacheUser(token, user)
 
 	return user, nil
 }

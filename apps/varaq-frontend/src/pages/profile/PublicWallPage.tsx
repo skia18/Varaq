@@ -11,6 +11,8 @@ import { postItTone } from '@/features/feed/postItTones';
 import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
 
 import { getPublicPersona, getPublicPieces, type Persona, type Piece } from '@/lib/api';
+import '@/styles/pages.css';
+import '@/styles/search.css';
 
 const PAGE_SIZE = 20;
 

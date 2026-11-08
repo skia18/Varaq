@@ -19,6 +19,8 @@ import {
   type VaultConfig,
 } from './crypto';
 import { saveConfig, vaultConfig } from './api';
+import '@/styles/overlays.css';
+import '@/styles/pages.css';
 
 type VaultSession = { userId: string; key: CryptoKey };
 const Context = createContext<{ session: VaultSession | null; lock: () => void }>({

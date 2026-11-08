@@ -28,7 +28,7 @@ The Go API derives ownership from the verified JWT. All mutations are owner scop
 - Backend: `internal/httpapi/collections.go`, router registration, and `apispec/openapi.yaml` in `apps/varaq-backend`.
 - Frontend: `src/features/collections/`, `src/pages/collections/`, bookmark integrations in WritingCard and PublishedPiecePage, routes/navigation, PublicLayout, and collection styles in `apps/varaq-frontend`.
 - Retired: SavedPagesPage and SavedPagesContext. Existing feed/reading tests now use CollectionsProvider.
-- Generated client: CollectionsApi and Collection/CollectionInput models plus exports and generator manifest.
+- API client: the shared authenticated request layer in `src/lib/api.ts`.
 
 ## Verification
 
@@ -37,8 +37,7 @@ Commands used:
 - `npm run build:web`
 - `npm run test:web` — 37 tests passed across 10 files.
 - `npm run lint:web`
-- `npm run api:validate-spec` — valid; existing unused UpdatePersona model recommendation.
-- `npm run api:generate:web` — generated collection client/types; unrelated generated formatting changes discarded.
+- `npm run api:validate-spec` — valid.
 - `go test ./...` from `apps/varaq-backend` — passed; database lifecycle tests skipped without VARAQ_TEST_DATABASE_URL.
 - `go test ./internal/httpapi -run 'TestCollection' -v` — authentication and validation passed; database lifecycle skipped.
 - `git diff --check`

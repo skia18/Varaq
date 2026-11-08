@@ -2,6 +2,9 @@ openapi: 3.1.0
 info:
   title: Varaq API
   version: 0.1.0
+  license:
+    name: ISC
+    identifier: ISC
   description: >
     REST API for Varaq, a literary writing and discovery platform. Writers can
     create pseudonymous personas, draft and publish pieces, and discover
@@ -1481,14 +1484,6 @@ components:
         minLength: 3
         maxLength: 30
         pattern: ^[a-z0-9_]+$
-    PieceId:
-      name: id
-      in: path
-      required: true
-      description: UUID of the piece
-      schema:
-        type: string
-        format: uuid
   schemas:
     PersonaPage:
       type: object
@@ -1497,7 +1492,8 @@ components:
         items:
           type: array
           items: {$ref: '#/components/schemas/Persona'}
-        nextCursor: {type: string, nullable: true}
+        nextCursor:
+          type: [string, "null"]
     PublicCollectionSummary:
       type: object
       required: [id, name, description, pieceCount, createdAt]
@@ -1514,7 +1510,8 @@ components:
         items:
           type: array
           items: {$ref: '#/components/schemas/PublicCollectionSummary'}
-        nextCursor: {type: string, nullable: true}
+        nextCursor:
+          type: [string, "null"]
     Collection:
       type: object
       required: [id, name, description, systemType, visibility, pieceIds, createdAt, updatedAt]
@@ -1605,20 +1602,6 @@ components:
           minLength: 3
           maxLength: 30
           pattern: ^[a-z0-9_]+$
-        displayName:
-          type: string
-          minLength: 1
-          maxLength: 80
-        bio:
-          type:
-            - string
-            - "null"
-          maxLength: 500
-    UpdatePersona:
-      type: object
-      minProperties: 1
-      additionalProperties: false
-      properties:
         displayName:
           type: string
           minLength: 1
@@ -2163,12 +2146,6 @@ components:
             $ref: "#/components/schemas/Error"
     Unauthorized:
       description: Missing or invalid access token
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-    Forbidden:
-      description: Operation not permitted
       content:
         application/json:
           schema:

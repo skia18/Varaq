@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { Writing } from '@/features/feed/writings';
 import { literaryFormLabel } from '@/features/feed/writings';
 import { AudioPlayer } from './AudioPlayer';
+import '@/styles/overlays.css';
 
 type Reading = Pick<Writing, 'title' | 'form' | 'minutes' | 'author' | 'date' | 'body'> & {
   handle?: string;

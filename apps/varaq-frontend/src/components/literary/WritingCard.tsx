@@ -10,6 +10,7 @@ import { TrailPathIcon } from '@/components/icons/TrailPathIcon';
 import { feedCategory, type FeedCategoryId } from '@/features/feed/categories';
 import { pauseOtherAudioPlayers } from './audio-playback';
 import { AudioWaveform } from './AudioWaveform';
+import '@/styles/writing-card.css';
 
 type WritingCardProps = {
   writing: Writing;

@@ -7,6 +7,8 @@ import { apiRequest, getFeed, type FeedPiece } from '@/lib/api';
 import { toWriting } from '@/features/feed/writings';
 import { WritingCard } from '@/components/literary/WritingCard';
 import { LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/pages.css';
+import '@/styles/collections.css';
 
 export function CollectionDetailPage() {
   const { collectionId } = useParams();

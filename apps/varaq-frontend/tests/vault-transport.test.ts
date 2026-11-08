@@ -12,7 +12,7 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 import { saveDraft } from '@/features/vault/api';
 afterEach(() => vi.unstubAllGlobals());
-it('the generated client sends only the encrypted draft envelope and bearer authentication', async () => {
+it('the API client sends only the encrypted draft envelope and bearer authentication', async () => {
   const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
     'encrypt',
     'decrypt',
@@ -33,7 +33,7 @@ it('the generated client sends only the encrypted draft envelope and bearer auth
   await saveDraft('id', 'persona', 0, envelope);
   const [url, options] = fetch.mock.calls[0];
   expect(url).toContain('/owner/vault/drafts/id');
-  expect(options.headers.Authorization).toBe('Bearer test-auth-token');
+  expect(new Headers(options.headers).get('Authorization')).toBe('Bearer test-auth-token');
   expect(JSON.parse(options.body)).toEqual({ personaId: 'persona', revision: 0, envelope });
   expect(options.body).not.toContain(content.title);
   expect(options.body).not.toContain(content.body);

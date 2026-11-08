@@ -13,6 +13,8 @@ import { Link } from 'react-router-dom';
 import { useCollections } from '@/features/collections/CollectionsContext';
 import { CollectionForm } from '@/features/collections/CollectionForm';
 import { LoadingLabel, LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/pages.css';
+import '@/styles/collections.css';
 
 export function CollectionsPage() {
   const { collections, loading, error, create, refresh, ensureLoaded, membership } =

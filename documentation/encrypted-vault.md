@@ -32,14 +32,13 @@ Failed/uncertain publication preserves ciphertext. Failed cleanup is shown as pe
 ## Validation
 
 - `npm run api:validate-spec`
-- `npm run api:generate:web` (pinned generator; finalization marks upstream generated code unchecked while app consumers remain type checked)
 - `npm run build:web`
 - `npm run test:web`
 - `npm run lint:web`
 - `npm run test:go`
 - `VARAQ_TEST_DATABASE_URL=<isolated migrated PostgreSQL URL> go test ./... -race -count=1` from `apps/varaq-backend`
 
-The database integration test inserts synthetic Auth users and removes them afterward; only point it at a disposable database. It tests actual SQL revision conflicts, exact retries, ownership, publication uniqueness, rollback injection, cleanup, privileges, source-import conflicts, and tombstones. Unit/browser-component tests cover crypto tampering/context binding, fresh-key recovery, ciphertext-only generated-client transport, explicit confirmation, and uncertain publication/cleanup UI.
+The database integration test inserts synthetic Auth users and removes them afterward; only point it at a disposable database. It tests actual SQL revision conflicts, exact retries, ownership, publication uniqueness, rollback injection, cleanup, privileges, source-import conflicts, and tombstones. Unit/browser-component tests cover crypto tampering/context binding, fresh-key recovery, ciphertext-only API transport, explicit confirmation, and uncertain publication/cleanup UI.
 
 Production release still needs an actual-browser exercise with local Supabase Auth (including logout/account switching and refresh), network/log/storage canary inspection, low-end-device KDF benchmarking, deployment-role review, and backup/retention confirmation. Tests here do not amount to a cryptographic audit or prove resistance to malicious application delivery.
 

@@ -14,6 +14,7 @@ import { useTrailStarts } from '@/features/feed/useTrailStarts';
 import { toWriting, type Writing } from '@/features/feed/writings';
 import { getFeed } from '@/lib/api';
 import { LoadingState } from '@/components/ui/LoadingState';
+import '@/styles/feed.css';
 
 export function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<FeedCategoryId>('all');

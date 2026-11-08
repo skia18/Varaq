@@ -1,5 +1,3 @@
-import { Configuration, PiecesApi } from '@/generated/api';
-import { createClient } from '@/lib/supabase/client';
 import type { Envelope, VaultConfig, DraftContent } from './crypto';
 import { apiRequest } from '@/lib/api';
 export type EncryptedDraft = {
@@ -10,40 +8,45 @@ export type EncryptedDraft = {
   createdAt: string;
   updatedAt: string;
 };
-const client = new PiecesApi(
-  new Configuration({
-    basePath: (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/+$/, ''),
-    accessToken: async () => {
-      const { data, error } = await createClient().auth.getSession();
-      if (error || !data.session) throw new Error('Sign in to access the Vault.');
-      return data.session.access_token;
-    },
-  }),
-);
-export const vaultConfig = () => client.getVaultConfig();
+type VaultConfigState = { config: VaultConfig | null; revision: number };
+type VaultRevision = { revision: number };
+type VaultTransfer = { published: boolean; pieceId?: string; cleanupPending?: boolean };
+type VaultReturn = {
+  draftId: string;
+  personaId: string;
+  updatedAt: string;
+  envelope: Envelope | null;
+  completed: boolean;
+};
+type VaultReturnResult = { draftId: string; completed: boolean };
+
+const vaultBase = '/api/v1/owner/vault';
+const draftPath = (id: string) => `${vaultBase}/drafts/${encodeURIComponent(id)}`;
+const transferPath = (id: string) => `${vaultBase}/transfers/${encodeURIComponent(id)}`;
+const returnPath = (id: string) => `/api/v1/owner/pieces/${encodeURIComponent(id)}/vault`;
+
+export const vaultConfig = () => apiRequest<VaultConfigState>(vaultBase);
 export const saveConfig = (config: VaultConfig, revision: number) =>
-  client.saveVaultConfig({ vaultConfigWrite: { config, revision } });
-export const drafts = async () => {
-  const page = await client.getVaultDrafts();
-  return {
-    items: page.items.map((d) => ({
-      ...d,
-      createdAt: d.createdAt.toISOString(),
-      updatedAt: d.updatedAt.toISOString(),
-    })),
-  };
-};
-export const draft = async (id: string): Promise<EncryptedDraft> => {
-  const d = await client.getVaultDraft({ pieceID: id });
-  return { ...d, createdAt: d.createdAt.toISOString(), updatedAt: d.updatedAt.toISOString() };
-};
+  apiRequest<VaultRevision>(vaultBase, {
+    method: 'PUT',
+    body: JSON.stringify({ config, revision }),
+  });
+export const drafts = () => apiRequest<{ items: EncryptedDraft[] }>(`${vaultBase}/drafts`);
+export const draft = (id: string) => apiRequest<EncryptedDraft>(draftPath(id));
 export const saveDraft = (id: string, personaId: string, revision: number, envelope: Envelope) =>
-  client.saveVaultDraft({ pieceID: id, vaultDraftWrite: { personaId, revision, envelope } });
+  apiRequest<VaultRevision>(draftPath(id), {
+    method: 'PUT',
+    body: JSON.stringify({ personaId, revision, envelope }),
+  });
 export const removeDraft = (id: string, revision: number) =>
-  client.deleteVaultDraft({ pieceID: id, vaultDelete: { revision } });
-export const transferStatus = (id: string) => client.getVaultTransfer({ pieceID: id });
-export const pendingTransfers = () => client.getPendingVaultTransfers();
-export const finalize = (id: string) => client.finalizeVaultTransfer({ pieceID: id });
+  apiRequest<void>(draftPath(id), {
+    method: 'DELETE',
+    body: JSON.stringify({ revision }),
+  });
+export const transferStatus = (id: string) => apiRequest<VaultTransfer>(transferPath(id));
+export const pendingTransfers = () => apiRequest<{ ids: string[] }>(`${vaultBase}/transfers`);
+export const finalize = (id: string) =>
+  apiRequest<void>(`${transferPath(id)}/finalize`, { method: 'POST' });
 export const publish = (
   id: string,
   operationId: string,
@@ -86,12 +89,19 @@ export const publish = (
     },
   );
 
-export const returnStatus = (pieceID: string) => client.getVaultReturn({ pieceID });
+export const returnStatus = (pieceID: string) => apiRequest<VaultReturn>(returnPath(pieceID));
 export const stageReturn = (
   pieceID: string,
   draftId: string,
   updatedAt: string,
   envelope: Envelope,
-) => client.stageVaultReturn({ pieceID, vaultReturnStage: { draftId, updatedAt, envelope } });
+) =>
+  apiRequest<VaultReturnResult>(returnPath(pieceID), {
+    method: 'POST',
+    body: JSON.stringify({ draftId, updatedAt, envelope }),
+  });
 export const finalizeReturn = (pieceID: string, draftId: string, updatedAt: string) =>
-  client.finalizeVaultReturn({ pieceID, vaultReturnFinalize: { draftId, updatedAt } });
+  apiRequest<VaultReturnResult>(`${returnPath(pieceID)}/finalize`, {
+    method: 'POST',
+    body: JSON.stringify({ draftId, updatedAt }),
+  });

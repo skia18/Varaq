@@ -2,6 +2,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { FloatingDock } from '../components/navigation/SiteHeader';
 import { CollectionsProvider } from '../features/collections/CollectionsContext';
+import '@/styles/layout.css';
+import '@/styles/responsive.css';
 
 function LiteraryMargins() {
   return (

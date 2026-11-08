@@ -8,8 +8,7 @@
   ],
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "api:validate-spec": "openapi-generator-cli validate -i apps/varaq-backend/apispec/openapi.yaml",
-    "api:generate:web": "openapi-generator-cli generate -i apps/varaq-backend/apispec/openapi.yaml -g typescript-fetch -o apps/varaq-frontend/src/generated/api && node scripts/finalize-generated-api.mjs",
+    "api:validate-spec": "redocly lint apps/varaq-backend/apispec/openapi.yaml",
     "dev:web": "npm run dev --workspace=varaq-frontend",
     "build": "npm run build:web && npm run build:go",
     "build:web": "npm run build --workspace=varaq-frontend",
@@ -38,7 +37,7 @@
   },
   "homepage": "https://github.com/skia18/Varaq#readme",
   "devDependencies": {
-    "@openapitools/openapi-generator-cli": "^2.14.0",
+    "@redocly/cli": "^2.76.0",
     "supabase": "^2.121.0"
   }
 }

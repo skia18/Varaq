@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/auth/AuthProvider';
 import { useCollections } from './CollectionsContext';
 import { CollectionForm } from './CollectionForm';
+import '@/styles/collections.css';
 
 export function BookmarkPicker({ pieceId }: { pieceId: string }) {
   const { user } = useAuth();
