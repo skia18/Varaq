@@ -24,7 +24,13 @@
 
     background-color: var(--background);
 
-    background-image: var(--texture);
+    background-image: var(--texture), var(--mehendi-pattern);
+    background-position:
+      0 0,
+      center top;
+    background-size:
+      auto,
+      360px 360px;
 
     color: var(--foreground);
 

@@ -23,7 +23,10 @@
 .account-scene-wash {
   position: absolute;
   inset: 0;
-  background: rgb(38 32 27 / 20%);
+  background-color: rgb(38 32 27 / 20%);
+  background-image: var(--mehendi-pattern);
+  background-size: 360px 360px;
+  background-blend-mode: soft-light;
   z-index: -2;
 }
 .account-back {

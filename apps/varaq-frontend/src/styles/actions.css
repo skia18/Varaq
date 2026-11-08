@@ -93,30 +93,30 @@
   padding-top: 14px;
   border-top: 1px solid var(--border);
 }
-.tone-red .vault-card-actions {
-  border-color: color-mix(in oklab, var(--primary-foreground) 30%, transparent);
+.writing-card:not(.tone-plain) .vault-card-actions {
+  border-color: color-mix(in oklab, var(--postit-ink) 24%, transparent);
 }
-.tone-red .vault-card-action {
-  color: var(--primary-foreground);
-  background: color-mix(in oklab, var(--primary-foreground) 10%, transparent);
-  border-color: color-mix(in oklab, var(--primary-foreground) 40%, transparent);
+.writing-card:not(.tone-plain) .vault-card-action {
+  color: var(--postit-ink);
+  background: color-mix(in oklab, var(--postit-ink) 7%, transparent);
+  border-color: color-mix(in oklab, var(--postit-ink) 36%, transparent);
 }
-.tone-red .vault-card-action:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--primary-foreground) 22%, transparent);
-  color: var(--primary-foreground);
-  border-color: var(--primary-foreground);
+.writing-card:not(.tone-plain) .vault-card-action:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--postit-ink) 14%, transparent);
+  color: var(--postit-ink);
+  border-color: var(--postit-ink);
 }
-.tone-red .vault-card-action--primary {
-  color: var(--primary);
-  background: var(--primary-foreground);
-  border-color: var(--primary-foreground);
+.writing-card:not(.tone-plain) .vault-card-action--primary {
+  color: var(--postit-ink);
+  background: color-mix(in oklab, var(--postit-paper) 66%, transparent);
+  border-color: var(--postit-ink);
 }
-.tone-red .vault-card-action--primary:hover:not(:disabled) {
-  color: var(--primary);
-  background: color-mix(in oklab, var(--primary-foreground) 90%, var(--primary));
+.writing-card:not(.tone-plain) .vault-card-action--primary:hover:not(:disabled) {
+  color: var(--postit-ink);
+  background: var(--postit-paper);
 }
-.tone-red .vault-card-action:focus-visible {
-  outline-color: var(--primary-foreground);
+.writing-card:not(.tone-plain) .vault-card-action:focus-visible {
+  outline-color: var(--postit-ink);
 }
 .vault-lock-toolbar {
   display: flex;

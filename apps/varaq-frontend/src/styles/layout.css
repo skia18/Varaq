@@ -20,7 +20,13 @@ html {
   margin-inline: auto;
   padding-top: 80px;
   background-color: color-mix(in oklab, var(--background) 91%, var(--card));
-  background-image: var(--texture);
+  background-image: var(--texture), var(--mehendi-pattern);
+  background-position:
+    0 0,
+    center top;
+  background-size:
+    auto,
+    360px 360px;
 }
 
 .route-transition-stack {

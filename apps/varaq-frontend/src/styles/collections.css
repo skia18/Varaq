@@ -594,8 +594,8 @@
 .bookmark-picker > .bookmark-trigger.is-active {
   color: var(--primary);
 }
-.tone-red .bookmark-picker > .bookmark-trigger.is-active {
-  color: var(--primary-foreground);
+.writing-card:not(.tone-plain) .bookmark-picker > .bookmark-trigger.is-active {
+  color: var(--postit-ink);
 }
 .bookmark-trigger:disabled {
   opacity: 0.5;

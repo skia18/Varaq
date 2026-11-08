@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test, vi } from 'vitest';
 import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
@@ -69,4 +69,36 @@ test('trail view renders source, response, and relationship label', async () => 
   expect(host.textContent).toContain('The first page');
   expect(host.textContent).toContain('What followed');
   expect(host.textContent).toContain('Inspired by');
+});
+
+test('hovering a Trail Post-it for one second reveals a miniature post preview', async () => {
+  vi.useFakeTimers();
+  try {
+    await render(
+      <MemoryRouter>
+        <TrailGraphView graph={graph} />
+      </MemoryRouter>,
+    );
+    const node = host.querySelector<HTMLElement>('.trail-node');
+    expect(node).not.toBeNull();
+
+    await act(async () => {
+      node?.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }));
+    });
+    await act(async () => vi.advanceTimersByTime(999));
+    expect(host.querySelector('.trail-hover-preview')).toBeNull();
+
+    await act(async () => vi.advanceTimersByTime(1));
+    expect(host.querySelector('.trail-hover-preview')?.textContent).toContain('The first page');
+    expect(host.querySelector('.trail-mini-piece')).not.toBeNull();
+
+    await act(async () => {
+      node?.dispatchEvent(
+        new MouseEvent('pointerout', { bubbles: true, relatedTarget: document.body }),
+      );
+    });
+    expect(host.querySelector('.trail-hover-preview')).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
 });

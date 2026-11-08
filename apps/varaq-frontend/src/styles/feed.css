@@ -342,11 +342,25 @@
   padding-top: 10px;
   margin-bottom: 14px;
   break-inside: avoid;
+  perspective: 900px;
+  perspective-origin: 50% 0;
 }
 
-.commons-note .writing-card {
+.commons-note-flutter {
+  transform-origin: 50% 8%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.commons-note-flutter .writing-card {
   width: 100%;
   margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commons-note-flutter {
+    will-change: auto;
+  }
 }
 
 /* Margin notes */

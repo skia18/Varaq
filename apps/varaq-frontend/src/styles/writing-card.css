@@ -3,6 +3,8 @@
 .writing-card {
   position: relative;
 
+  isolation: isolate;
+
   display: flex;
 
   min-width: 0;
@@ -11,11 +13,22 @@
 
   padding: 23px 22px 15px;
 
-  background-color: var(--card);
+  border: 0;
 
-  background-image: var(--texture);
+  border-radius: 2px 5px 2px 4px;
 
-  box-shadow: var(--shadow-paper);
+  background-color: var(--postit-paper);
+
+  background-image:
+    linear-gradient(105deg, transparent 72%, rgb(69 47 29 / 5%)),
+    radial-gradient(circle at 12% 9%, rgb(255 255 255 / 28%), transparent 24%), var(--texture);
+
+  box-shadow:
+    1px 2px 0 rgb(70 48 30 / 9%),
+    3px 7px 16px rgb(55 38 25 / 12%),
+    inset 0 0 18px rgb(91 61 34 / 5%);
+
+  color: var(--postit-ink);
 }
 
 .writing-card:hover {
@@ -25,51 +38,54 @@
 .writing-card.tone-sage {
   margin-top: 13px;
 
-  background-color: var(--secondary);
+  background-color: var(--postit-sage);
 }
 
 .writing-card.tone-blue {
-  background-color: color-mix(in oklab, #789092 62%, var(--card));
+  background-color: var(--postit-blue);
 }
 
 .writing-card.tone-blush {
-  background-color: color-mix(in oklab, #b86f5a 58%, var(--card));
+  background-color: var(--postit-blush);
 }
 
 .writing-card.tone-ochre {
-  background-color: color-mix(in oklab, #ad8242 64%, var(--card));
+  background-color: var(--postit-ochre);
 }
 
 .commons-wall .writing-card.tone-paper {
-  background-color: color-mix(in oklab, #c7ad7f 22%, var(--card));
+  background-color: var(--postit-paper);
 }
 
 .commons-wall .writing-card.tone-sage {
-  background-color: color-mix(in oklab, #7f8761 55%, var(--card));
+  background-color: var(--postit-sage);
 }
 
 .commons-wall .writing-card.tone-red {
-  background-color: #914b3a;
+  background-color: var(--postit-red);
 }
 
 .writing-card.tone-red {
-  background-color: var(--primary);
-
-  color: var(--primary-foreground);
+  background-color: var(--postit-red);
 }
 
 .writing-card.tone-plain {
   padding: 14px 10px 15px;
 
+  border: 0;
+
   border-bottom: 1px solid var(--border);
+
+  border-radius: 0;
 
   background: transparent;
 
   box-shadow: none;
+
+  color: var(--foreground);
 }
 
-.writing-card.tone-paper::before,
-.commons-wall .writing-card::before {
+.writing-card:not(.tone-plain, .media-card)::before {
   position: absolute;
 
   z-index: 2;
@@ -82,15 +98,38 @@
 
   height: 19px;
 
-  background: color-mix(in oklab, var(--accent) 65%, transparent);
+  border-right: 1px solid rgb(88 67 34 / 8%);
+
+  border-left: 1px solid rgb(88 67 34 / 7%);
+
+  background: var(--postit-tape);
+
+  box-shadow: 0 1px 2px rgb(60 42 24 / 9%);
 
   content: '';
 
   transform: rotate(-5deg);
 }
 
-.commons-wall .writing-card::before {
-  top: -9px;
+.writing-card:not(.tone-plain, .media-card)::after {
+  position: absolute;
+
+  z-index: -1;
+
+  inset: 0;
+
+  border-radius: inherit;
+
+  background:
+    radial-gradient(circle at 82% 76%, rgb(77 49 26 / 7%) 0 1px, transparent 2px),
+    radial-gradient(circle at 19% 34%, rgb(255 255 255 / 17%) 0 1px, transparent 2px),
+    repeating-linear-gradient(4deg, transparent 0 7px, rgb(71 48 28 / 2%) 8px 9px);
+
+  content: '';
+
+  opacity: 0.72;
+
+  pointer-events: none;
 }
 
 .card-meta {
@@ -109,6 +148,11 @@
   font-weight: 600;
 }
 
+.writing-card:not(.tone-plain) .card-meta,
+.writing-card:not(.tone-plain) .card-footer {
+  color: var(--postit-ink);
+}
+
 .card-author {
   display: inline-flex;
 
@@ -124,6 +168,11 @@
   text-underline-offset: 3px;
 }
 
+.writing-card:not(.tone-plain) .card-author:hover,
+.writing-card:not(.tone-plain) .card-author:focus-visible {
+  color: var(--postit-ink);
+}
+
 .card-author::before {
   width: 4px;
 
@@ -131,7 +180,7 @@
 
   border-radius: 50%;
 
-  background: var(--primary);
+  background: var(--postit-mark);
 
   content: '';
 }
@@ -212,16 +261,6 @@
   line-height: 1.65;
 }
 
-.tone-red .card-meta {
-  color: var(--primary-foreground);
-
-  opacity: 0.8;
-}
-
-.tone-red .card-author::before {
-  background: var(--primary-foreground);
-}
-
 .tone-red .card-excerpt {
   font-size: 13px;
 
@@ -288,14 +327,8 @@
   color: var(--primary);
 }
 
-.tone-red .card-footer {
-  border-color: color-mix(in oklab, var(--primary-foreground) 30%, transparent);
-
-  color: var(--primary-foreground);
-}
-
-.tone-red .card-footer button.is-active {
-  color: var(--primary-foreground);
+.writing-card:not(.tone-plain) .card-footer button.is-active {
+  color: var(--postit-ink);
 }
 
 /* Media cards */
